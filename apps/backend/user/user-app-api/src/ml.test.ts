@@ -157,6 +157,49 @@ test('declared and streamed responses are bounded before schema parsing', async 
   );
 });
 
+test('financially incoherent ML responses fail502 while a valid interest-bearing schedule is accepted', async () => {
+  for (const invalid of [
+    {
+      ...fixture,
+      adaptive_schedule: fixture.adaptive_schedule.map((row) => ({
+        ...row,
+        installment_index: 0,
+      })),
+    },
+    {
+      ...fixture,
+      recommended_loan: {
+        ...fixture.recommended_loan,
+        suggested_principal_index: 0,
+      },
+    },
+    {
+      ...fixture,
+      flags: ['zero_interest_mvp'],
+      adaptive_schedule: fixture.adaptive_schedule.map((row) => ({
+        ...row,
+        installment_index: 11,
+      })),
+    },
+  ]) {
+    await assert.rejects(
+      client(async () => json(invalid)).score(request, 'request'),
+      status(502),
+    );
+  }
+  const interestBearing = {
+    ...fixture,
+    adaptive_schedule: fixture.adaptive_schedule.map((row) => ({
+      ...row,
+      installment_index: 11,
+    })),
+  };
+  assert.deepEqual(
+    await client(async () => json(interestBearing)).score(request, 'request'),
+    interestBearing,
+  );
+});
+
 test('timeout aborts a slow upstream and reports504', async () => {
   const ml = new MlClient(
     { ML_SERVICE_URL: 'http://localhost:8000', ML_TIMEOUT_MS: 10 },

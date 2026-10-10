@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './auth-fixtures';
 import { request as httpRequest } from 'node:http';
 import {
   AssessmentListSchema,
@@ -39,52 +39,55 @@ test('health and synthetic portfolio comply with the shared API contract', async
   ).toBeTruthy();
 });
 
-test('the unconfigured ML service persists a failed attempt and never returns a model output', async ({
-  request,
-}) => {
-  const health = HealthSchema.parse(
-    await (await request.get(`${NO_ML_API_URL}/health`)).json(),
-  );
-  expect(health.ml_configured).toBe(false);
-  const business = await importBusiness(
+test.describe('unconfigured ML', () => {
+  test.use({ authApiUrl: NO_ML_API_URL });
+  test('the unconfigured ML service persists a failed attempt and never returns a model output', async ({
     request,
-    'No ML configuration',
-    NO_ML_API_URL,
-  );
-  const response = await request.post(`${NO_ML_API_URL}/assessments`, {
-    data: {
-      business_id: business.id,
-      as_of_date: AS_OF_DATE,
-      requested_amount: null,
-    },
+  }) => {
+    const health = HealthSchema.parse(
+      await (await request.get(`${NO_ML_API_URL}/health`)).json(),
+    );
+    expect(health.ml_configured).toBe(false);
+    const business = await importBusiness(
+      request,
+      'No ML configuration',
+      NO_ML_API_URL,
+    );
+    const response = await request.post(`${NO_ML_API_URL}/assessments`, {
+      data: {
+        business_id: business.id,
+        as_of_date: AS_OF_DATE,
+        requested_amount: null,
+      },
+    });
+    expect(response.status()).toBe(503);
+    const problem = ProblemSchema.parse(await response.json());
+    expect(problem.title).toBe('ML service not configured');
+    const history = AssessmentListSchema.parse(
+      await (
+        await request.get(`${NO_ML_API_URL}/assessments`, {
+          params: { business_id: business.id },
+        })
+      ).json(),
+    );
+    expect(history.items).toHaveLength(1);
+    expect(history.items[0]?.status).toBe('failed');
+    expect(history.items[0]?.result).toBeNull();
+    expect(history.items[0]?.request_id).toBe(problem.request_id);
+    const audit = AuditListSchema.parse(
+      await (
+        await request.get(`${NO_ML_API_URL}/audit`, {
+          params: { business_id: business.id },
+        })
+      ).json(),
+    );
+    expect(
+      audit.items.filter((event) => event.event_type === 'assessment_failed'),
+    ).toHaveLength(1);
+    expect(
+      audit.items.some((event) => event.event_type === 'assessment_completed'),
+    ).toBe(false);
   });
-  expect(response.status()).toBe(503);
-  const problem = ProblemSchema.parse(await response.json());
-  expect(problem.title).toBe('ML service not configured');
-  const history = AssessmentListSchema.parse(
-    await (
-      await request.get(`${NO_ML_API_URL}/assessments`, {
-        params: { business_id: business.id },
-      })
-    ).json(),
-  );
-  expect(history.items).toHaveLength(1);
-  expect(history.items[0]?.status).toBe('failed');
-  expect(history.items[0]?.result).toBeNull();
-  expect(history.items[0]?.request_id).toBe(problem.request_id);
-  const audit = AuditListSchema.parse(
-    await (
-      await request.get(`${NO_ML_API_URL}/audit`, {
-        params: { business_id: business.id },
-      })
-    ).json(),
-  );
-  expect(
-    audit.items.filter((event) => event.event_type === 'assessment_failed'),
-  ).toHaveLength(1);
-  expect(
-    audit.items.some((event) => event.event_type === 'assessment_completed'),
-  ).toBe(false);
 });
 
 test('import rejects malformed and impossible timestamps and real data provenance', async ({

@@ -30,6 +30,7 @@ const ConfigSchema = z.object({
     'postgresql://wiut:wiut_dev@localhost:55432/wiut',
   ),
   API_HOST: z.string().min(1).default('127.0.0.1'),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(1).default(0),
   API_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   ML_SERVICE_URL: url(['http:', 'https:'])
     .refine((value) => {
@@ -43,9 +44,19 @@ const ConfigSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .default('http://localhost:5173,http://127.0.0.1:5173'),
+  AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(20),
+  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(168),
+  SESSION_COOKIE_SECURE: z.enum(['true', 'false']).optional(),
 });
 
 export type AppConfig = ReturnType<typeof loadConfig>;
+export function trustProxyPolicy(
+  config: AppConfig,
+): false | ((address: string, hop: number) => boolean) {
+  // Fastify numeric hop trust intentionally fails closed. This explicit policy
+  // is opt-in only for an API reachable exclusively through the trusted proxy.
+  return config.TRUST_PROXY_HOPS === 1 ? (_address, hop) => hop === 0 : false;
+}
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
   if (environment === process.env) {
@@ -81,5 +92,11 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     throw new Error(
       'Invalid environment: CORS_ORIGINS must be a comma-separated list of HTTP origins',
     );
-  return { ...result.data, corsOrigins: origins };
+  return {
+    ...result.data,
+    SESSION_COOKIE_SECURE: result.data.SESSION_COOKIE_SECURE
+      ? result.data.SESSION_COOKIE_SECURE === 'true'
+      : result.data.NODE_ENV === 'production',
+    corsOrigins: origins,
+  };
 }

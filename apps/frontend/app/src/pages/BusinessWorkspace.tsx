@@ -113,12 +113,14 @@ import {
 
 export function BusinessWorkspace({
   businessId,
+  reviewerName,
   initialAssessmentId,
   mlConfigured,
   onBack,
   onSelectAssessment,
 }: {
   businessId: string;
+  reviewerName: string;
   initialAssessmentId: string | null;
   mlConfigured: boolean | undefined;
   onBack: () => void;
@@ -154,7 +156,6 @@ export function BusinessWorkspace({
   const [transactionPage, setTransactionPage] = useState(0);
   const [decision, setDecision] =
     useState<DecisionInput['decision']>('needs_information');
-  const [reviewer, setReviewer] = useState('');
   const [notes, setNotes] = useState('');
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [pendingDecision, setPendingDecision] = useState<{
@@ -1338,6 +1339,40 @@ export function BusinessWorkspace({
                   </div>
                 </div>
                 <Separator />
+                {result.forecast_provenance && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium">Forecast evidence</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">
+                        Public revenue forecast{' '}
+                        {indexNumber(
+                          result.forecast_provenance.real_revenue_weight * 100,
+                        )}
+                        %
+                      </Badge>
+                      <Badge variant="outline">
+                        Synthetic net forecast{' '}
+                        {indexNumber(
+                          result.forecast_provenance.synthetic_net_weight * 100,
+                        )}
+                        %
+                      </Badge>
+                    </div>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {result.flags.includes('zero_revenue_history_guard')
+                        ? 'No inflow was observed in the latest 12 months. The public branch uses a zero-revenue guard without running a trained revenue estimator; costs are projected from the observed expenses.'
+                        : [
+                              'observed_cost_regression',
+                              'observed_cost_projection',
+                            ].includes(result.forecast_provenance.expense_mode)
+                          ? 'Costs are projected from this business’s observed transactions. Public data supports revenue patterns and supplies no expense or repayment outcomes.'
+                          : result.forecast_provenance.expense_mode ===
+                              'synthetic_trained'
+                            ? 'Costs use a synthetic training model. Public data supports revenue patterns and supplies no expense or repayment outcomes.'
+                            : 'This forecast uses the synthetic net model selected during validation.'}
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <p className="text-xs font-medium">Model rationale</p>
                   <p className="text-sm leading-relaxed text-muted-foreground">
@@ -1751,7 +1786,6 @@ export function BusinessWorkspace({
                     setDecisionError(null);
                     const parsed = DecisionInputSchema.safeParse({
                       decision,
-                      reviewer_name: reviewer,
                       notes,
                     });
                     if (!parsed.success) {
@@ -1794,17 +1828,19 @@ export function BusinessWorkspace({
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="reviewer-name">Reviewer name</Label>
+                      <Label htmlFor="reviewer-name">Reviewer</Label>
                       <Input
                         id="reviewer-name"
-                        value={reviewer}
-                        onChange={(event) => setReviewer(event.target.value)}
-                        placeholder="Your full name"
-                        required
-                        minLength={2}
-                        maxLength={100}
-                        disabled={decisionMutation.isPending}
+                        value={reviewerName}
+                        readOnly
+                        aria-describedby="reviewer-description"
                       />
+                      <p
+                        id="reviewer-description"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Recorded from your signed-in account.
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -1879,9 +1915,7 @@ export function BusinessWorkspace({
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Reviewer</p>
-                <p className="mt-1 text-sm font-medium">
-                  {pendingDecision.data.reviewer_name}
-                </p>
+                <p className="mt-1 text-sm font-medium">{reviewerName}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Review notes</p>

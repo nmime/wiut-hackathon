@@ -7,9 +7,13 @@ import {
   ScoreRequestSchema,
   ScoreResponseSchema,
   TransactionSchema,
+  AuthRegisterSchema,
+  AuthLoginSchema,
+  InvitationCreateSchema,
+  AuthSessionSchema,
 } from './index.js';
 
-test('transaction input rejects invalid dates, negative amounts and unknown fields', () => {
+test('transaction input rejects invalid dates, unsupported amounts and unknown fields', () => {
   const transaction = {
     ts: '2026-10-01T12:00:00',
     direction: 'in',
@@ -17,6 +21,18 @@ test('transaction input rejects invalid dates, negative amounts and unknown fiel
     amount_index: 50,
   };
   assert.equal(TransactionSchema.safeParse(transaction).success, true);
+  for (const amount_index of [1e-12, 1e12]) {
+    assert.equal(
+      TransactionSchema.safeParse({ ...transaction, amount_index }).success,
+      true,
+    );
+  }
+  for (const amount_index of [0, 1e-13, 1e-300, 1e12 + 1]) {
+    assert.equal(
+      TransactionSchema.safeParse({ ...transaction, amount_index }).success,
+      false,
+    );
+  }
   assert.equal(
     TransactionSchema.safeParse({ ...transaction, ts: '2026-99-01T12:00:00' })
       .success,
@@ -85,7 +101,14 @@ test('score input enforces a historical cutoff and synthetic import declaration'
   );
 });
 
-test('human decisions require a reviewer and substantive notes', () => {
+test('human decisions accept an optional legacy reviewer field and require substantive notes', () => {
+  assert.equal(
+    DecisionInputSchema.safeParse({
+      decision: 'approved',
+      notes: 'Reviewed cash flow.',
+    }).success,
+    true,
+  );
   assert.equal(
     DecisionInputSchema.safeParse({
       decision: 'approved',
@@ -104,8 +127,74 @@ test('human decisions require a reviewer and substantive notes', () => {
   );
 });
 
-test('ML contract rejects impossible confidence and incoherent payment schedules', () => {
-  const response = {
+test('registration has one workspace destination, bounded password and normalized email', () => {
+  const input = {
+    email: '  Officer@Example.test  ',
+    password: 'correct-horse-battery',
+    display_name: '  Test Officer  ',
+    tenant_name: '  Test bank  ',
+  };
+  const parsed = AuthRegisterSchema.parse(input);
+  assert.equal(parsed.email, 'officer@example.test');
+  assert.equal(parsed.display_name, 'Test Officer');
+  assert.equal(parsed.tenant_name, 'Test bank');
+  assert.equal(
+    AuthRegisterSchema.safeParse({ ...input, invitation_token: 'a'.repeat(43) })
+      .success,
+    false,
+  );
+  const { tenant_name: _name, ...withoutTenant } = input;
+  assert.equal(AuthRegisterSchema.safeParse(withoutTenant).success, false);
+  assert.equal(
+    AuthRegisterSchema.safeParse({
+      ...withoutTenant,
+      invitation_token: 'a'.repeat(43),
+    }).success,
+    true,
+  );
+  assert.equal(
+    AuthRegisterSchema.safeParse({ ...input, password: 'short' }).success,
+    false,
+  );
+  assert.equal(
+    AuthRegisterSchema.safeParse({ ...input, role: 'admin' }).success,
+    false,
+  );
+});
+
+test('authentication and invitations reject privilege fields and malformed secrets', () => {
+  assert.equal(
+    AuthLoginSchema.safeParse({
+      email: 'officer@example.test',
+      password: 'correct-horse-battery',
+      tenant_id: 'forged',
+    }).success,
+    false,
+  );
+  assert.equal(
+    InvitationCreateSchema.safeParse({
+      email: 'join@example.test',
+      role: 'owner',
+    }).success,
+    false,
+  );
+  assert.equal(
+    AuthSessionSchema.safeParse({
+      user: {
+        id: 'user',
+        email: 'officer@example.test',
+        display_name: 'Officer',
+      },
+      tenant: { id: 'tenant', name: 'Bank', role: 'admin' },
+      tenants: [],
+      csrf_token: 'short',
+    }).success,
+    false,
+  );
+});
+
+function responseFixture() {
+  return {
     business_id: 'demo',
     as_of_date: '2026-10-10',
     capacity_score: 60,
@@ -138,7 +227,49 @@ test('ML contract rejects impossible confidence and incoherent payment schedules
     model_version: 'test',
     request_id: 'test',
   };
+}
+
+test('ML contract rejects impossible confidence and incoherent payment schedules', () => {
+  const response = responseFixture();
   assert.equal(ScoreResponseSchema.safeParse(response).success, true);
+  const provenance = {
+    real_revenue_weight: 0.5,
+    synthetic_net_weight: 0.5,
+    expense_mode: 'observed_cost_regression',
+    revenue_candidate: 'validated-real-ensemble',
+    real_training_targets: 40000,
+  };
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...response,
+      forecast_provenance: provenance,
+    }).success,
+    true,
+  );
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...response,
+      forecast_provenance: {
+        ...provenance,
+        expense_mode: 'observed_cost_projection',
+      },
+    }).success,
+    true,
+  );
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...response,
+      forecast_provenance: { ...provenance, synthetic_net_weight: 0.9 },
+    }).success,
+    false,
+  );
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...response,
+      forecast_provenance: { ...provenance, expense_mode: 'not_used' },
+    }).success,
+    false,
+  );
   assert.equal(
     ScoreResponseSchema.safeParse({ ...response, confidence: 80 }).success,
     false,
@@ -202,4 +333,45 @@ test('ML contract rejects impossible confidence and incoherent payment schedules
     }).success,
     false,
   );
+});
+
+test('loan payments agree with principal while allowing declared interest and floating-point rounding', () => {
+  const response = responseFixture();
+  const withPayments = (
+    principal: number,
+    payments: number[],
+    zeroInterest = false,
+  ) => ({
+    ...response,
+    recommended_loan: {
+      ...response.recommended_loan,
+      suggested_principal_index: principal,
+    },
+    adaptive_schedule: payments.map((installment_index, i) => ({
+      month_offset: i + 1,
+      installment_index,
+      note: 'normal',
+    })),
+    flags: zeroInterest ? ['zero_interest_mvp'] : [],
+  });
+  for (const invalid of [
+    withPayments(120, Array(12).fill(0)),
+    withPayments(0, Array(12).fill(10)),
+    withPayments(120, Array(12).fill(11), true),
+    withPayments(120, Array(12).fill(9), true),
+    withPayments(1e-10, Array(12).fill(1e-10 / 12 + 1e-12), true),
+    withPayments(1e308, Array(12).fill(1e308)),
+  ]) {
+    assert.equal(ScoreResponseSchema.safeParse(invalid).success, false);
+  }
+  for (const valid of [
+    withPayments(0, []),
+    withPayments(0, Array(12).fill(0), true),
+    withPayments(120, Array(12).fill(11)),
+    withPayments(120, Array(12).fill(10 + 1e-11), true),
+    withPayments(1e15, Array(12).fill(1e15 / 12 + 0.001), true),
+    withPayments(1e-10, Array(12).fill(1e-10 / 12 + 1e-14), true),
+  ]) {
+    assert.equal(ScoreResponseSchema.safeParse(valid).success, true);
+  }
 });

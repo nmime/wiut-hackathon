@@ -14,9 +14,11 @@ capability machinery, and tooling.
 - Keep product work on a topic branch. Do not merge or deploy without a user request.
 - Use official shadcn/ui components and Tailwind. Do not create custom reusable
   UI primitives or a second design system. Compose product pages from shadcn.
-- Borrower profiles and demo transactions must be synthetic. Licensed public
-  aggregates may calibrate the generator and support a separate revenue forecast
-  benchmark, with attribution and honest evaluation. Never invent model outputs
+- Borrower profiles and demo transactions must be synthetic. The maintainer also
+  authorizes licensed real public revenue data for direct forecast training,
+  generator calibration, and separate benchmarks. Attribute sources, preserve
+  temporal holdouts, and disclose transfer limitations. Revenue observations do
+  not supply expense, repayment, or default labels. Never invent model outputs
   or metrics.
 - The capacity score measures payment capacity, not default probability. A human
   records every final review decision.

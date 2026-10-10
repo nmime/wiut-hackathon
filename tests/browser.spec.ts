@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
-import { expect, test, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { expect, test } from './auth-fixtures';
 import { AssessmentSchema } from '../libs/common/api-contracts/src/index';
 import {
   AS_OF_DATE,
@@ -12,10 +13,20 @@ import {
 
 async function navigate(page: Page, label: string) {
   const button = page.getByRole('button', { name: new RegExp(`^${label}`) });
-  if (!(await button.isVisible()))
-    await page
-      .getByRole('button', { name: 'Toggle sidebar', exact: true })
-      .click();
+  const toggle = page.getByRole('button', {
+    name: 'Toggle sidebar',
+    exact: true,
+  });
+  await expect(toggle).toBeVisible();
+  const inViewport =
+    (await button.isVisible()) &&
+    (await button.evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return (
+        bounds.width > 0 && bounds.right > 0 && bounds.left < window.innerWidth
+      );
+    }));
+  if (!inViewport) await toggle.click();
   await button.click();
   const sidebarClose = page.getByRole('button', { name: 'Close', exact: true });
   if (await sidebarClose.isVisible()) await sidebarClose.click();
@@ -80,7 +91,6 @@ test('an officer imports synthetic history, assesses, records a decision, and re
   await page
     .getByRole('option', { name: 'Needs more information', exact: true })
     .click();
-  await page.getByLabel('Reviewer name').fill('Browser Officer');
   await page
     .getByLabel('Review notes')
     .fill(
@@ -98,7 +108,10 @@ test('an officer imports synthetic history, assesses, records a decision, and re
     .click();
   await expect(confirmation).toBeHidden();
   await expect(
-    page.getByText('Browser Officer', { exact: true }),
+    page
+      .getByRole('main')
+      .getByText('Integration Officer', { exact: true })
+      .first(),
   ).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Record decision', exact: true }),
@@ -114,14 +127,17 @@ test('an officer imports synthetic history, assesses, records a decision, and re
   const exported = AssessmentSchema.parse(
     JSON.parse(await readFile(downloadedPath, 'utf8')),
   );
-  expect(exported.decision?.reviewer_name).toBe('Browser Officer');
+  expect(exported.decision?.reviewer_name).toBe('Integration Officer');
   expect(exported.decision?.decision).toBe('needs_information');
   expect(exported.result?.model_version).toBe('test-only-fixture-v1');
 
   await page.reload();
   await openBusiness(page, input.name);
   await expect(
-    page.getByText('Browser Officer', { exact: true }),
+    page
+      .getByRole('main')
+      .getByText('Integration Officer', { exact: true })
+      .first(),
   ).toBeVisible();
   await expect(
     page.getByText(
@@ -159,7 +175,7 @@ test('opening an older reviewed assessment preserves its identity through reload
     {
       data: {
         decision: 'needs_information',
-        reviewer_name: 'Historical Officer',
+        reviewer_name: 'Integration Officer',
         notes: 'This older assessment has a distinct preserved human review.',
       },
     },
@@ -188,7 +204,10 @@ test('opening an older reviewed assessment preserves its identity through reload
     page.getByRole('heading', { name: business.name, exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText('Historical Officer', { exact: true }),
+    page
+      .getByRole('main')
+      .getByText('Integration Officer', { exact: true })
+      .first(),
   ).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Record decision', exact: true }),
@@ -198,7 +217,10 @@ test('opening an older reviewed assessment preserves its identity through reload
     page.getByRole('heading', { name: business.name, exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText('Historical Officer', { exact: true }),
+    page
+      .getByRole('main')
+      .getByText('Integration Officer', { exact: true })
+      .first(),
   ).toBeVisible();
 
   const event = page.waitForEvent('download');
@@ -213,7 +235,7 @@ test('opening an older reviewed assessment preserves its identity through reload
   );
   expect(exported.id).toBe(older.id);
   expect(exported.requested_amount).toBe(100);
-  expect(exported.decision?.reviewer_name).toBe('Historical Officer');
+  expect(exported.decision?.reviewer_name).toBe('Integration Officer');
 });
 
 test('invalid imports stay editable and show a useful validation error', async ({
@@ -251,36 +273,39 @@ test('invalid imports stay editable and show a useful validation error', async (
   await expect(dialog).toBeHidden();
 });
 
-test('before ML integration the interface shows the actual connection state and no score', async ({
-  page,
-  request,
-}) => {
-  const business = await importBusiness(
+test.describe('unconfigured ML browser', () => {
+  test.use({ authApiUrl: NO_ML_API_URL });
+  test('before ML integration the interface shows the actual connection state and no score', async ({
+    page,
     request,
-    'Awaiting teammate ML',
-    NO_ML_API_URL,
-  );
-  await page.route('**/api/**', async (route) => {
-    const original = new URL(route.request().url());
-    const response = await route.fetch({
-      url: `${NO_ML_API_URL.replace(/\/api$/, '')}${original.pathname}${original.search}`,
+  }) => {
+    const business = await importBusiness(
+      request,
+      'Awaiting teammate ML',
+      NO_ML_API_URL,
+    );
+    await page.route('**/api/**', async (route) => {
+      const original = new URL(route.request().url());
+      const response = await route.fetch({
+        url: `${NO_ML_API_URL.replace(/\/api$/, '')}${original.pathname}${original.search}`,
+      });
+      await route.fulfill({ response });
     });
-    await route.fulfill({ response });
-  });
-  await page.goto('/');
-  await expect(
-    page.getByText('ML service is awaiting connection', { exact: true }),
-  ).toBeVisible();
-  await openBusiness(page, business.name);
-  await expect(
-    page.getByText('test-only-fixture-v1', { exact: true }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole('button', { name: 'Record decision', exact: true }),
-  ).toBeHidden();
-  await page.screenshot({
-    path: test.info().outputPath('ml-awaiting-connection.png'),
-    fullPage: true,
+    await page.goto('/');
+    await expect(
+      page.getByText('ML service is awaiting connection', { exact: true }),
+    ).toBeVisible();
+    await openBusiness(page, business.name);
+    await expect(
+      page.getByText('test-only-fixture-v1', { exact: true }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Record decision', exact: true }),
+    ).toBeHidden();
+    await page.screenshot({
+      path: test.info().outputPath('ml-awaiting-connection.png'),
+      fullPage: true,
+    });
   });
 });
 

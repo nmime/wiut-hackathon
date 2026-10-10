@@ -3,6 +3,7 @@ import type { FastifyRequest } from 'fastify';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiProblem } from './problem.js';
 import { ProductService } from './service.js';
+import { Public } from './auth.js';
 
 function filterBusinessId(value: unknown): string | undefined {
   if (value === undefined) return undefined;
@@ -19,41 +20,56 @@ function filterBusinessId(value: unknown): string | undefined {
 @Controller()
 export class ProductController {
   constructor(private readonly product: ProductService) {}
-  @Get('health') health() {
+  @Public() @Get('health') health() {
     return this.product.health();
   }
-  @Get('businesses') businesses() {
-    return this.product.businesses();
+  @Get('businesses') businesses(@Req() request: FastifyRequest) {
+    return this.product.businesses(request.auth!);
   }
-  @Get('businesses/:id') business(@Param('id') id: string) {
-    return this.product.business(id);
+  @Get('businesses/:id') business(
+    @Param('id') id: string,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.product.business(id, request.auth!);
   }
   @Post('businesses') importBusiness(
     @Body() body: unknown,
     @Req() request: FastifyRequest,
   ) {
-    return this.product.importBusiness(body, request.id);
+    return this.product.importBusiness(body, request.id, request.auth!);
   }
   @Post('assessments') createAssessment(
     @Body() body: unknown,
     @Req() request: FastifyRequest,
   ) {
-    return this.product.createAssessment(body, request.id);
+    return this.product.createAssessment(body, request.id, request.auth!);
   }
-  @Get('assessments') assessments(@Query('business_id') businessId?: unknown) {
-    return this.product.assessments(filterBusinessId(businessId));
+  @Get('assessments') assessments(
+    @Req() request: FastifyRequest,
+    @Query('business_id') businessId?: unknown,
+  ) {
+    return this.product.assessments(
+      request.auth!,
+      filterBusinessId(businessId),
+    );
   }
-  @Get('assessments/:id') assessment(@Param('id') id: string) {
-    return this.product.assessment(id);
+  @Get('assessments/:id') assessment(
+    @Param('id') id: string,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.product.assessment(id, request.auth!);
   }
   @Post('assessments/:id/decisions') decide(
     @Param('id') id: string,
     @Body() body: unknown,
     @Req() request: FastifyRequest,
   ) {
-    return this.product.decide(id, body, request.id);
+    return this.product.decide(id, body, request.id, request.auth!);
   }
-  @Get('audit') audit(@Query('business_id') businessId?: unknown) {
-    return this.product.audit(filterBusinessId(businessId));
+  @Get('audit') audit(
+    @Req() request: FastifyRequest,
+    @Query('business_id') businessId?: unknown,
+  ) {
+    return this.product.audit(request.auth!, filterBusinessId(businessId));
   }
 }

@@ -1,4 +1,4 @@
-"""Measure future actual events once model selection is already fixed."""
+"""Run the legacy synthetic regression benchmark after validation selection."""
 
 import argparse
 import hashlib
@@ -86,7 +86,16 @@ def evaluate(model_path: str | Path) -> dict:
         [],
         {name: [] for name in ("seasonal_naive", "gradient_boosting", "blend_50")},
     )
-    rows, partial_actual, partial_predictions, inference_ms = [], [], [], []
+    rows, partial_actual, partial_predictions, inference_ms, serving_parts = (
+        [],
+        [],
+        [],
+        [],
+        [],
+    )
+    transfer_parts = {
+        weight: [] for weight in model.selection["transfer_validation_mae_index"]
+    }
     weak_precision, strong_precision = [], []
     digest = hashlib.sha256()
     for business in businesses:
@@ -98,10 +107,13 @@ def evaluate(model_path: str | Path) -> dict:
         digest.update(actual.astype("<f8").tobytes())
         for name, prediction in model.predict_candidates(history).items():
             candidate_parts[name].append(prediction)
+        for weight, prediction in model.predict_transfer_candidates(history).items():
+            transfer_parts[weight].append(prediction)
         started = time.perf_counter()
         response = score_request(request, model, "evaluation")
         inference_ms.append((time.perf_counter() - started) * 1000)
         forecast = np.asarray(response.seasonality.monthly_forecast_index)
+        serving_parts.append(forecast)
         plan = capacity_plan(history, forecast)
         payments = plan["payments"]
         assert np.all(payments >= 0)
@@ -203,6 +215,8 @@ def evaluate(model_path: str | Path) -> dict:
         "model_version": model.version,
         "selection": selection,
         "test_protocol": {
+            "status": "legacy_regression_benchmark_previously_reported",
+            "interpretation": "The fixed test cohort was reported before this model upgrade. It is excluded from fitting and selection, but is no longer a fresh confirmatory holdout. The external-provider final audit supplies the new real-revenue evaluation; previously reported international periods are also legacy regressions.",
             "businesses": TEST_COUNT,
             "future_months_per_business": 12,
             "business_disjoint": True,
@@ -214,7 +228,15 @@ def evaluate(model_path: str | Path) -> dict:
             "mape_policy": "Exclude abs(actual)<1 index. Negative actuals use absolute denominator. MAPE remains unstable near zero and is not the selection metric.",
         },
         "forecast_candidates": candidate_metrics,
-        "selected_forecast": candidate_metrics[selection["selected_candidate"]],
+        "transfer_candidates": {
+            weight: forecast_metrics(
+                np.concatenate(actual_parts), np.concatenate(parts)
+            )
+            for weight, parts in transfer_parts.items()
+        },
+        "selected_forecast": forecast_metrics(
+            np.concatenate(actual_parts), np.concatenate(serving_parts)
+        ),
         "partial_assessment_month_selected_forecast": forecast_metrics(
             np.concatenate(partial_actual), np.concatenate(partial_predictions)
         ),
@@ -263,19 +285,27 @@ def display(value: float | None) -> str:
 
 
 def markdown(report: dict) -> str:
-    selected = report["selection"]["selected_candidate"]
+    selection = report["selection"]
+    selected = selection["selected_candidate"]
+    policy = selection["serving_policy"]
+    policy_validation = selection["selected_transfer_validation"]
+    validation_weights = policy_validation["effective_real_weights"]
+    baseline_validation = selection["transfer_validation_mae_index"][0.0]
+    baseline_macro = selection["transfer_validation_macro_normalized_mae"][0.0]
     capacity = report["capacity_schedule"]
     latency = report["latency"]
     lines = [
-        "# Measured synthetic evaluation",
+        "# Measured synthetic regression evaluation",
         "",
         f"Measured {report['measured_at_utc']}. Model `{report['model_version']}`.",
         "",
         "All results below were produced by `uv run python -m capacity_ml.evaluate` on generated future transactions. They are synthetic engineering measurements, not evidence of bank performance or default prediction.",
         "",
-        "Public Uzbekistan SIAT 2020–2022 retail aggregates calibrate half the calendar component for four retail-like synthetic cohorts; test/validation aggregate years are excluded from calibration. Every business transaction, expense and future net-flow target remains synthetic. The separate public-data report measures actual aggregate revenue forecasts only.",
+        "This fixed synthetic test cohort was reported before the model upgrade and is now a **legacy regression benchmark**, not a fresh confirmatory holdout. Its labels remain excluded from fitting and validation selection. The [external-provider audit](external-metrics.md) measures real revenue against a separately reserved provider; the previously reported international evaluation is also a legacy regression.",
         "",
-        f"Selection used 180 training businesses (complete/partial rolling origins) and 60 separate validation businesses. The selected candidate is **{selected}** by validation MAE. The held-out 120 test businesses are disjoint from both sets and each contributes 12 future actual months. Test metrics did not change model selection, buffers, score weights or schedule policy.",
+        "Public Uzbekistan SIAT 2020–2022 retail aggregates calibrate half the calendar component for four retail-like synthetic cohorts; later aggregate years are excluded from generator calibration. Every borrower transaction, expense and future net-flow target remains synthetic. An additional real-revenue component is trained directly from licensed aggregates and transferred only if synthetic validation MAE improves; its separate report measures actual public revenue forecasts, never borrower capacity.",
+        "",
+        f"Selection used 180 training businesses (complete/partial rolling origins) and 60 separate validation businesses. The selected synthetic reference is **{selected}** by validation MAE; the final serving policy additionally blends its net forecast with the qualified real-revenue/expense component. The held-out 120 test businesses are disjoint from both sets and each contributes 12 future actual months. Test metrics did not change model selection, buffers, score weights or schedule policy.",
         "",
         "| Candidate | Validation MAE (index) | Test MAE (index) | Test MAPE (%) | Test WAPE (%) |",
         "| --- | ---: | ---: | ---: | ---: |",
@@ -283,6 +313,59 @@ def markdown(report: dict) -> str:
     for name, metrics in report["forecast_candidates"].items():
         lines.append(
             f"| {name} | {report['selection']['validation_mae_index'][name]:.2f} | {metrics['mae_index']:.2f} | {display(metrics['mape_abs_actual_ge_1_pct'])} | {display(metrics['wape_pct'])} |"
+        )
+    lines.extend(
+        [
+            "",
+            f"The actual serving policy is `{selection['selected_transfer_policy']}`, using real-revenue candidate `{policy['real_revenue_candidate']}` and expense policy `{selection['expense_mode']}`. Its configured real-component share is **{policy['base_weight']:.0%}**. The synthetic share is the remaining fraction. Expenses use either synthetic training or the borrower's observed cost relationship; no public expense, repayment or default labels are supplied.",
+        ]
+    )
+    if policy["kind"] == "observed_regime_guard":
+        lower, upper = policy["recent_three_to_prior_three_bounds"]
+        lines.extend(
+            [
+                "",
+                f"Real contribution becomes **{policy['short_weight']:.0%}** with fewer than {policy['minimum_history_months']} observed calendar months, or **{policy['regime_weight']:.0%}** when the positive prior-three-month inflow mean gives a recent-three/prior-three ratio outside [{lower:g}, {upper:g}]. Routing uses only observed history, with no future, provider or cohort labels. Histories with no activity in the latest 12 months receive a zero forecast without trained inference.",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "",
+                "The fixed serving share applies to every active history. Histories with no activity in the latest 12 months receive a zero forecast without trained inference.",
+            ]
+        )
+    cost_policy = selection["expense_policy"]
+    if cost_policy["kind"] == "observed_median_share":
+        lines.extend(
+            [
+                "",
+                f"The selected observed-cost projection multiplies predicted revenue by the median observed outflow/inflow ratio over the latest {cost_policy['history_months']} calendar months with positive inflow. If that window has no positive inflow, it uses mean observed outflow instead. Historical fixed costs are included implicitly in the ratio; proportional projection can overstate costs when revenue rises. This is an observation-based assumption, not a public-trained expense model.",
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            f"The policy's actual real contribution across development validation requests averaged **{validation_weights['mean']:.2%}**, ranging from **{validation_weights['min']:.0%} to {validation_weights['max']:.0%}**; counts by effective weight: `{validation_weights['by_weight']}`. This is a forecast-component contribution, not an accuracy percentage. The revenue ensemble itself contains real-trained residual estimators, statistical baselines and adaptation to observed borrower history.",
+            "",
+            "The bounded transfer grid contains 38 policies: eight fixed weights (0/0.1/0.25/0.5/0.6/0.65/0.75/1), plus 30 observed-history guards from five base shares (0.5/0.6/0.65/0.75/1), three regime shares (0/0.25/0.5), and two short-history shares (0.25/0.5). The original expense regression is now compared with three regularized observed regressions, 18 seasonal-outflow blends and two observed median-share projections: 24 observed-cost policies, plus the original synthetic expense benchmark. Every combination is measured only on original development validation; the externally audited real candidate remains fixed. Real provider-balanced normalized MAE must improve seasonal naive by at least 5%, no real provider may regress more than 2%, pooled net MAE must improve, macro normalized net MAE may regress at most 2%, and no validation cohort may regress more than 15%. Selection additionally requires a tighter 10% development cohort buffer, while the final audit retains its original 15% cohort tolerance. Development mean real contribution must be at least 55%, using math.fsum without threshold rounding, providing a cushion above the unchanged audit mean50 requirement. Revenue estimators never fit synthetic targets; legacy outcomes below did not select the policy.",
+            "",
+            "The first reserved engineering audit rejected the original 60%/25% guarded policy solely because its mean real contribution was below the frozen 50% requirement. A second separately reserved audit rejected the subsequent fixed50 policy on a cohort error guard. A third reserved audit rejected the subsequent median-share12 guard75/25/25 policy on a cohort guard. All three failed reports remain preserved. This fourth exploratory cycle selects the simple original-grid policy with a tighter 10% development cohort buffer, without reading consumed audit target labels or cohort errors. Two 7,296-combination local net-history grids found no majority-qualified policy (maximum share 41.25%). A 29,184-combination latest-origin variant qualified some policies but was rejected for complexity, missing supported local evidence in 31 of 60 histories and slightly worse pooled error. The externally audited real candidate and training recipe remain fixed. A fourth separately reserved engineering audit evaluates this policy under unchanged acceptance thresholds. Sequential development after aggregate audit rejection is exploratory; each consumed audit remains consumed.",
+            "",
+            "| Actual policy | Validation MAE (index) | Validation macro normalized MAE | Legacy regression MAE (index) |",
+            "| --- | ---: | ---: | ---: |",
+            f"| Synthetic reference | {baseline_validation:.2f} | {baseline_macro:.6f} | {report['forecast_candidates'][selected]['mae_index']:.2f} |",
+            f"| Selected serving policy | {policy_validation['pooled_mae_index']:.2f} | {policy_validation['macro_normalized_mae']:.6f} | {report['selected_forecast']['mae_index']:.2f} |",
+            "",
+            "The following fixed-weight comparisons are supporting regression measurements. Each row applies its weight uniformly; the selected guarded policy requires the separate actual-policy row above and differs from the fixed row at its configured base share.",
+            "",
+            "| Fixed public component weight | Synthetic validation MAE (index) | Legacy regression MAE (index) |",
+            "| --- | ---: | ---: |",
+        ]
+    )
+    for weight, values in report["transfer_candidates"].items():
+        lines.append(
+            f"| {weight} | {report['selection']['transfer_validation_mae_index'][weight]:.2f} | {values['mae_index']:.2f} |"
         )
     lines.extend(
         [
@@ -295,7 +378,7 @@ def markdown(report: dict) -> str:
             "",
             f"For the same principal, 12-month term and explicit 0% APR, adaptive schedules produce **{capacity['adaptive_overload_months']} overload months** versus **{capacity['annuity_overload_months']}** for equal installments (the zero-interest annuity). **{display(capacity['adaptive_fewer_overloads_businesses_pct'])}%** of eligible businesses improve, **{display(capacity['adaptive_same_overloads_businesses_pct'])}%** tie and **{display(capacity['adaptive_more_overloads_businesses_pct'])}%** worsen. Overload means payment exceeds actual net surplus; zero payments in negative months count too. Forecast-based caps cannot guarantee future affordability.",
             "",
-            f"The measured aggregate adaptive benefit is only **{capacity['annuity_overload_months'] - capacity['adaptive_overload_months']} fewer overload months** in this test. It is not a consistent advantage for every business and must not be marketed as proven repayment improvement. Model and buffer settings remain fixed rather than being retuned on these test outcomes.",
+            f"The measured overload reduction (equal minus adaptive) is **{capacity['annuity_overload_months'] - capacity['adaptive_overload_months']} months** in this test; a negative value means adaptive is worse. It is not a consistent advantage for every business and must not be marketed as proven repayment improvement. Model and buffer settings remain fixed rather than being retuned on these test outcomes.",
             "",
             f"Weak/strong-month precision against future realised quartiles is **{display(report['seasonality']['weak_month_precision_pct'])}% / {display(report['seasonality']['strong_month_precision_pct'])}%**. Many forecast labels miss the realised quartiles. The evaluator never reads hidden generator seasonal parameters as labels.",
             "",

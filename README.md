@@ -1,6 +1,6 @@
 # FlowCredit · WIUT Hackathon
 
-A credit-officer workspace for reviewing synthetic business cash flow,
+A bank/team workspace for reviewing synthetic business cash flow,
 explainable payment-capacity recommendations, and seasonal repayment schedules.
 An officer records the final decision. The capacity score is not a default
 probability.
@@ -27,6 +27,12 @@ with Swagger documentation at `/api/docs`. PostgreSQL uses localhost:55432.
 Tables and synthetic businesses are initialized automatically. Existing records
 and review decisions survive restarts.
 
+Create an account with a bank/team workspace name at the sign-up screen, or use
+an administrator's invitation link. Accounts use email and a password of at least
+12 characters. Each workspace has its own synthetic portfolio. The first account
+on an upgraded installation adopts the existing demo workspace and its saved
+assessments; later workspaces receive separate synthetic seeds.
+
 The ML service is optional during frontend/backend development. With
 `ML_SERVICE_URL` empty, business histories, imports, and audit views work;
 analysis returns a clear unavailable error and records the failed attempt.
@@ -34,9 +40,10 @@ No fabricated score or recommendation is substituted.
 
 ## Run the included local ML service
 
-The repository also includes an optional FastAPI service trained on synthetic
-businesses whose seasonality is calibrated with licensed public Uzbekistan
-retail data. To run the complete demo:
+The repository includes a local FastAPI service that trains its revenue forecast
+on licensed Uzbekistan, Australian, Canadian and European turnover data. Borrower expense
+projections and synthetic net-flow forecasts are validated separately. To run
+the complete demo:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build -d
@@ -56,6 +63,10 @@ uv sync --frozen
 uv run python -m capacity_ml.train
 uv run python -m capacity_ml.evaluate
 uv run python -m capacity_ml.evaluate_public
+uv run python -m capacity_ml.evaluate_revenue
+uv run python -m capacity_ml.evaluate_international
+uv run python -m capacity_ml.evaluate_external
+uv run python -m capacity_ml.evaluate_engineering
 uv run pytest
 uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
 ```
@@ -63,13 +74,58 @@ uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
 Set `ML_SERVICE_URL=http://127.0.0.1:8000` for the local NestJS process.
 See [ML implementation and measured evaluation](ml-service/README.md) for the
 generator, split, forecast selection, capacity factors, and limitations.
-The [public dataset declaration](ml-service/data/README.md) documents the official
-source, CC BY 4.0 attribution, quality issue, and 2020–2022 calibration window.
-A separate benchmark trains on actual regional revenues and evaluates future
-2024–2025 revenue. These public aggregates do not contain borrower expenses or
-repayment outcomes.
+The [public dataset declaration](ml-service/data/README.md) documents official
+sources, CC BY 4.0 attribution, quality exclusions, and calibration windows.
+The corpus includes Uzbekistan revenue, Australian/Canadian retail sales and
+30 European countries' nominal turnover indices. New European/UK snapshots add
+72,141 published observations; 90,819 missing entries remain null. Training
+rejects affected windows instead of inventing sales. Real training now uses
+86,976 rolling target examples (43,705 unique target observations), with equal
+provider loss weights. Overlapping windows are not independent businesses.
+A richer seasonal/harmonic residual ensemble adapts using only already observed
+borrower history. Joint validation selects its downstream blend and cost policy.
+The [external audit](ml-service/reports/external-metrics.md) covers reserved
+Eurostat countries plus the entire UK ONS provider; ONS is never fitted or used
+for selection. It measured 19.3% lower normalized revenue error than seasonal
+naive on 816 future observations in six usable country clusters. The real
+revenue component stays frozen after this audit; subsequent runs reproduce its
+measured result. A [synthetic engineering audit](ml-service/reports/engineering-metrics.md)
+checks the scoring path on 900 separately reserved businesses. The first
+180-business audit rejected a guarded blend because its average real contribution
+was 49.7%, below the frozen 50% requirement; its failed report is retained.
+A subsequent fixed 50/50 candidate improved overall error but worsened the
+pattern-break cohort by 20.7%, beyond the unchanged 15% limit. The third audit
+rejected a 75%/25% guarded candidate: overall error improved by 4.9%, but the
+pattern-break cohort worsened by 15.7%. All three failures are retained. Cost and
+blend revisions use the original development data,
+with the real-revenue component fixed. The final 65%/25% policy passed all
+unchanged guards on 900 newly reserved businesses: mean real contribution was
+53.2%, and macro normalized net-flow error improved by 5.5% (descriptive 95%
+interval 4.4–6.6%). Pattern-break error still worsened by 11.0%; the preset guard
+allows at most 15%. Short or recently unstable histories receive 25% real
+contribution; established histories receive 65%, reducing their synthetic share
+from 90% to 35%. These components include statistical forecasts and observed-cost
+assumptions, so their weights are not percentages of correct predictions.
+Each first audit uses separately reserved seeds; this fourth sequential cycle
+remains exploratory, and reruns reproduce consumed targets. Previously reported
+Uzbekistan, ABS/Canada and synthetic periods are explicit legacy regressions.
+Country clusters, short-history failures and uncertainty are reported honestly.
+Native currencies and publisher index points are never pooled across sources.
+Public revenues contain no borrower expense, repayment or default labels.
+The scoring model includes real-trained revenue only when validation improves
+the net forecast and passes normalized-error checks. Its actual blend and
+expense policy are disclosed in structured forecast provenance, model flags,
+rationale and `/health`, and visible in the review workspace.
+Fully inactive histories return zero without estimator provenance; expense-only
+histories disclose their zero-revenue guard instead of claiming learned revenue.
 The included repayment model uses explicitly declared **0% interest**;
 recommendations remain indices and require human review.
+Python and NestJS validate payment totals against the recommended principal;
+contradictory schedules fail the assessment rather than being saved as results.
+The ML health endpoint and durable audit identify the exact loaded artifact by
+SHA-256. Builds on different platforms can fit slightly different predictors;
+their consumed-cohort checks retain separate metrics and the same acceptance
+limits, rather than claiming identical model bytes or additional fresh evidence.
 
 ## Connect the teammate's ML service
 
@@ -84,18 +140,49 @@ service and does not require external AI calls.
 
 ## Main workflow
 
-1. Select a synthetic business or import a synthetic transaction JSON file.
+1. Sign in and select your bank/team workspace. Select a synthetic business or
+   import a synthetic transaction JSON file.
 2. Review the historical cash-flow chart and transaction records.
 3. Choose an assessment date and optionally enter the requested amount in UZS.
 4. Analyze using the connected ML service.
 5. Inspect capacity, confidence, warnings, explanations, forecast, and payments.
-6. Record approval, decline, or a request for more information with reviewer name
-   and reasoning. A recorded decision is immutable; reassess for a new review.
+6. Record approval, decline, or a request for more information with reasoning.
+   The API records the signed-in reviewer's identity. A recorded decision is
+   immutable; reassess for a new review.
 7. View assessment history and its audit trail, or download the result as JSON.
 
 Transaction sizes, historical flows, and recommendation amounts are **indices**.
 They are never relabeled as UZS. `requested_amount` is forwarded in UZS according
 to the teammate's contract; the API does not invent an index conversion.
+
+## Accounts and workspaces
+
+Administrators open **Team & access** to invite an officer or another
+administrator. Copy and share the returned invitation link; the application does
+not send emails. Invitations expire after seven days, are bound to the invited
+email, and can be revoked. A recipient can register with the link or sign in to
+an existing account and accept it. Officers can assess and review their
+workspace's businesses; team administration is restricted to administrators.
+
+The workspace selector switches between memberships. Creating a workspace adds
+an administrator membership there. Switching clears the browser query cache and
+rotates the session's CSRF token. Signing out revokes the session. Business,
+assessment, review, and audit queries are scoped to the active tenant. Foreign
+resource IDs return a not-found response.
+
+The API uses PostgreSQL sessions and HttpOnly, SameSite cookies. Authenticated
+mutations require `X-CSRF-Token` from `/api/auth/session`; account registration,
+login, and mutations also require a configured `Origin` header. Passwords are
+hashed with scrypt. Login and registration are rate-limited by IP and email.
+`SESSION_TTL_HOURS` defaults to 168 and `AUTH_RATE_LIMIT_MAX` to 20 attempts per
+15 minutes. For HTTPS hosting, set `SESSION_COOKIE_SECURE=true`, use a strong
+database password, and set `CORS_ORIGINS` to your exact application origin.
+The loopback Docker preview explicitly uses HTTP cookies.
+The API ignores forwarded client addresses by default. Compose enables exactly
+one trusted proxy hop and Nginx overwrites the forwarded address with its actual
+client address. Enable `TRUST_PROXY_HOPS=1` only when the API is reachable solely
+through a trusted proxy that replaces client-supplied forwarding headers.
+The limiter is process-local; run one API process per database for this MVP.
 
 ## Verify
 
@@ -109,8 +196,9 @@ pnpm test:e2e
 git diff --check
 ```
 
-Tests cover transport validation, synthetic generation, ML failures, durable
-human review, and the browser workflow. The browser-test ML fixture is exclusively
+Tests cover transport validation, synthetic generation, authentication, roles,
+invitations, CSRF, tenant isolation, ML failures, durable human review, and the
+browser workflow. The browser-test ML fixture is exclusively
 test infrastructure and is never started by the product's dev or Docker commands.
 `WIUT_TEST_DATABASE_URL` and `WIUT_NO_ML_DATABASE_URL` may override the browser-test
 connections. The second database verifies the actual disconnected-ML behavior.
@@ -152,9 +240,11 @@ seeds `7261 + business_index × 919` and a fixed October 2025–September 2026
 history window; the cold-start florist has only June–September 2026. Seeding is
 idempotent. Generator and transport tests verify reproducibility.
 
-This is a synthetic-data hackathon prototype with self-declared reviewer names.
-It has no production authentication, authorization, banking connector, or credit
-origination integration. Do not expose the prototype to real banking data.
+This is a synthetic-data hackathon MVP with authenticated tenant access. It has
+no email verification, password recovery, MFA, banking connector, or credit
+origination integration. Public revenues do not supply borrower default or
+repayment ground truth. Real banking deployment requires additional account
+and operational controls.
 Run one API process per database; startup recovers interrupted pending assessments
 as failed attempts. Use the separate `wiut_test` database for browser tests.
 List views show the newest 200 businesses, 100 assessment attempts, and 500 audit

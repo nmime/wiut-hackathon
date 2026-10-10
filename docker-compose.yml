@@ -27,6 +27,12 @@ services:
       DATABASE_URL: postgres://wiut:${POSTGRES_PASSWORD:-wiut_dev}@db:5432/wiut
       ML_SERVICE_URL: ${ML_SERVICE_URL:-}
       ML_TIMEOUT_MS: ${ML_TIMEOUT_MS:-8000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
+      AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-20}
+      # Only nginx can reach the unpublished API through the browser path.
+      TRUST_PROXY_HOPS: 1
     depends_on:
       db:
         condition: service_healthy

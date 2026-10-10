@@ -20,6 +20,7 @@ import { Database } from './database.js';
 import { MlClient } from './ml.js';
 import { ApiProblem, errorMessage, validate } from './problem.js';
 import { businessDetail } from './synthetic.js';
+import type { AuthContext } from './auth-types.js';
 
 function knownBusinessId(body: unknown): string | undefined {
   if (typeof body !== 'object' || body === null || !('business_id' in body))
@@ -51,10 +52,11 @@ export class ProductService {
     });
   }
 
-  async businesses() {
-    const stored = await this.database.businesses();
+  async businesses(auth: AuthContext) {
+    const stored = await this.database.businesses(auth.tenant.id);
     const latest = await this.database.latestAssessments(
       stored.map((business) => business.id),
+      auth.tenant.id,
     );
     const items = stored.map((business) => {
       const {
@@ -69,8 +71,8 @@ export class ProductService {
     });
     return BusinessListSchema.parse({ items, synthetic: true });
   }
-  async business(id: string) {
-    const stored = await this.database.business(id);
+  async business(id: string, auth: AuthContext) {
+    const stored = await this.database.business(id, auth.tenant.id);
     if (!stored)
       throw new ApiProblem(
         404,
@@ -79,10 +81,13 @@ export class ProductService {
       );
     return BusinessDetailSchema.parse({
       ...businessDetail(stored),
-      latest_assessment: await this.database.latestAssessment(id),
+      latest_assessment: await this.database.latestAssessment(
+        id,
+        auth.tenant.id,
+      ),
     });
   }
-  async importBusiness(body: unknown, requestId: string) {
+  async importBusiness(body: unknown, requestId: string, auth: AuthContext) {
     const input = validate(BusinessImportSchema, body);
     const transactions = [...input.transactions].sort((a, b) =>
       a.ts.localeCompare(b.ts),
@@ -110,16 +115,19 @@ export class ProductService {
       archetype: 'Imported synthetic data',
       transactions,
     };
-    await this.database.importBusiness(business, requestId);
+    await this.database.importBusiness(business, requestId, auth);
     return BusinessDetailSchema.parse(businessDetail(business));
   }
 
-  async createAssessment(body: unknown, requestId: string) {
+  async createAssessment(body: unknown, requestId: string, auth: AuthContext) {
     let input: CreateAssessment;
     let scoringInput: ScoreRequest;
     try {
       input = validate(CreateAssessmentSchema, body);
-      const business = await this.database.business(input.business_id);
+      const business = await this.database.business(
+        input.business_id,
+        auth.tenant.id,
+      );
       if (!business)
         throw new ApiProblem(
           404,
@@ -145,21 +153,25 @@ export class ProductService {
       if (
         error instanceof ApiProblem &&
         businessId &&
-        (await this.database.business(businessId))
+        (await this.database.business(businessId, auth.tenant.id))
       ) {
-        await this.database.audit({
-          business_id: businessId,
-          assessment_id: null,
-          event_type: 'assessment_rejected',
-          request_id: requestId,
-          actor: 'officer',
-          metadata: {
-            input_hash: inputHash(body),
-            reason: error.detail,
-            status: error.status,
-            ...(error.errors ? { errors: error.errors } : {}),
+        await this.database.audit(
+          {
+            business_id: businessId,
+            assessment_id: null,
+            event_type: 'assessment_rejected',
+            request_id: requestId,
+            actor: auth.user.display_name,
+            metadata: {
+              input_hash: inputHash(body),
+              reason: error.detail,
+              status: error.status,
+              actor_user_id: auth.user.id,
+              ...(error.errors ? { errors: error.errors } : {}),
+            },
           },
-        });
+          auth.tenant.id,
+        );
       }
       throw error;
     }
@@ -169,6 +181,7 @@ export class ProductService {
       scoringInput,
       requestId,
       inputHash(scoringInput),
+      auth,
     );
     let result;
     try {
@@ -178,21 +191,25 @@ export class ProductService {
         id,
         null,
         errorMessage(error),
+        auth.tenant.id,
         error instanceof ApiProblem ? error.status : 503,
       );
       throw error;
     }
-    await this.database.finishAssessment(id, result, null);
-    return AssessmentSchema.parse(await this.database.assessment(id));
+    await this.database.finishAssessment(id, result, null, auth.tenant.id);
+    return AssessmentSchema.parse(
+      await this.database.assessment(id, auth.tenant.id),
+    );
   }
 
-  async assessments(businessId?: string) {
+  async assessments(auth: AuthContext, businessId?: string) {
+    if (businessId) await this.business(businessId, auth);
     return AssessmentListSchema.parse({
-      items: await this.database.assessments(businessId),
+      items: await this.database.assessments(auth.tenant.id, businessId),
     });
   }
-  async assessment(id: string) {
-    const assessment = await this.database.assessment(id);
+  async assessment(id: string, auth: AuthContext) {
+    const assessment = await this.database.assessment(id, auth.tenant.id);
     if (!assessment)
       throw new ApiProblem(
         404,
@@ -201,8 +218,16 @@ export class ProductService {
       );
     return AssessmentSchema.parse(assessment);
   }
-  async decide(id: string, body: unknown, requestId: string) {
-    const businessId = await this.database.assessmentBusinessId(id);
+  async decide(
+    id: string,
+    body: unknown,
+    requestId: string,
+    auth: AuthContext,
+  ) {
+    const businessId = await this.database.assessmentBusinessId(
+      id,
+      auth.tenant.id,
+    );
     if (!businessId)
       throw new ApiProblem(
         404,
@@ -213,31 +238,43 @@ export class ProductService {
     try {
       input = validate(DecisionInputSchema, body);
       return AssessmentSchema.parse(
-        await this.database.recordDecision(id, input, requestId),
+        await this.database.recordDecision(id, input, requestId, auth),
       );
     } catch (error) {
       if (error instanceof ApiProblem) {
-        await this.database.audit({
-          business_id: businessId,
-          assessment_id: id,
-          event_type: 'decision_rejected',
-          request_id: requestId,
-          actor: input?.reviewer_name ?? 'officer',
-          metadata: {
-            input_hash: inputHash(body),
-            reason: error.detail,
-            status: error.status,
-            ...(input ? { submission: input } : {}),
-            ...(error.errors ? { errors: error.errors } : {}),
+        await this.database.audit(
+          {
+            business_id: businessId,
+            assessment_id: id,
+            event_type: 'decision_rejected',
+            request_id: requestId,
+            actor: auth.user.display_name,
+            metadata: {
+              input_hash: inputHash(body),
+              reason: error.detail,
+              status: error.status,
+              actor_user_id: auth.user.id,
+              ...(input
+                ? {
+                    submission: {
+                      ...input,
+                      reviewer_name: auth.user.display_name,
+                    },
+                  }
+                : {}),
+              ...(error.errors ? { errors: error.errors } : {}),
+            },
           },
-        });
+          auth.tenant.id,
+        );
       }
       throw error;
     }
   }
-  async audit(businessId?: string) {
+  async audit(auth: AuthContext, businessId?: string) {
+    if (businessId) await this.business(businessId, auth);
     return AuditListSchema.parse({
-      items: await this.database.auditEvents(businessId),
+      items: await this.database.auditEvents(auth.tenant.id, businessId),
     });
   }
 }

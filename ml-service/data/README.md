@@ -1,4 +1,4 @@
-# Public retail dataset
+# Licensed public revenue datasets
 
 The National Statistics Committee of the Republic of Uzbekistan publishes
 [SIAT indicator 1.07.02.0002](https://siat.stat.uz/data/2699/?lang=en),
@@ -42,3 +42,98 @@ cd ml-service
 Downloading is a development action. Training and inference read the committed
 snapshot locally. A refresh changes the source digest and requires retraining
 and regenerating the evaluation reports before starting the API.
+
+## International original retail revenue
+
+Two additional providers supply actual monthly sales, with no borrower costs,
+repayment outcomes or personal customer records:
+
+- [Australian Bureau of Statistics, Retail Trade June 2025, Table 11](https://www.abs.gov.au/statistics/industry/retail-and-wholesale-trade/retail-trade-australia/jun-2025):
+  original state × industry subgroup turnover, **million AUD**, under
+  [CC BY 4.0](https://www.abs.gov.au/website-privacy-copyright-and-disclaimer).
+  The snapshot preserves 120 leaf series and 28,800 calendar points for
+  July 2005–June 2025. June 2025 is the final release; this is historical data.
+- [Statistics Canada, Table 20-10-0056-01](https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2010005601):
+  unadjusted total retail sales by province/territory and leaf NAICS category,
+  **thousand CAD**, under the
+  [Statistics Canada Open Licence](https://www.statcan.gc.ca/en/terms-conditions/open-licence).
+  The snapshot preserves 260 series and 29,900 calendar points for
+  January 2017–July 2026. The importer caps histories at 240 months; this
+  table's published coverage is shorter.
+
+Calendar coverage includes explicit null observations for suppressed, missing
+or unreliable sales. It is not the count of actual numeric sales records.
+The international snapshots contain **49,213 numeric published observations**
+and **9,487 null entries**. Training uses 32,484 overlapping future-month targets,
+corresponding to 17,232 unique source target observations; the remaining values
+include input histories, validation and reserved final periods.
+Parent/national totals and overlapping categories are excluded. Original
+monthly flow values are used; seasonally adjusted series and e-commerce
+duplicates are excluded. No currency conversion or gap-zero imputation occurs.
+The snapshots record source URLs, units, license, attribution, raw SHA-256,
+retrieval date and frozen split protocol. Adaptations imply no provider endorsement.
+
+Each provider's geographic groups are sorted by a fixed SHA-256 seed and split
+into training, validation and final audit groups. All industries in a state or
+province stay together. Training targets end in June 2023 (Australia) or July
+2024 (Canada). Validation uses the next 12 months; the reserved final audit uses
+July 2024–June 2025 or August 2025–July 2026. Final cases are constructed only
+by the evaluator after model selection is fixed. Time boundaries are local to
+each provider; later training labels from another country can overlap a test
+date, so this is not a globally chronological backtest. Current revision
+vintages and common economic shocks also limit independence.
+
+Refresh explicitly with `uv run python scripts/import_international_data.py`.
+The importer bounds downloads and archive expansion, checks source units and
+original monthly metadata, preserves quality gaps and writes snapshots
+atomically. Training and serving read committed snapshots offline. Format JSON
+with Prettier before retraining because exact snapshot bytes enter the artifact
+digest. A data refresh consumes the original final audit; review the protocol
+and report that status rather than repeatedly calling tuned tests fresh.
+
+## New European turnover and reserved UK audit
+
+[Eurostat sts_trtu_m](https://ec.europa.eu/eurostat/databrowser/product/view/sts_trtu_m)
+provides unadjusted nominal net turnover (`NETTUR`, `NSA`, `I21`; 2021=100),
+permitted by [its attributed reuse policy](https://ec.europa.eu/eurostat/help/copyright-notice).
+The fixed taxonomy has 30 EU/EFTA countries and 22 nonoverlapping NACE leaves
+across motor trade, wholesale and retail. The bounded September 2006–August 2026
+snapshot contains 660 series, 158,400 calendar positions, 67,581 published values
+and 90,819 null gaps. Suppressed, unreliable, imputed and forecast observations
+are not converted to invented zero sales. Provider flags are retained and
+windows crossing a reported definition break are excluded.
+
+[UK ONS Retail Sales Index DRSI](https://www.ons.gov.uk/businessindustryandtrade/retailindustry/datasets/retailsales/current)
+supplies 19 nominal, unadjusted all-business leaf VALUE indices, **2024=100**,
+with 4,560 monthly observations. The source is licensed under
+[Open Government Licence v3.0](https://www.ons.gov.uk/help/terms-conditions).
+Source: Office for National Statistics, licensed under OGL v3.0; adapted
+for forecast auditing without implying endorsement. **All ONS observations are
+audit-only: none enter training or model selection.** UK is absent from the
+Eurostat fixed country taxonomy. The September 18, 2026 ONS release/base-year
+metadata is checked explicitly; refresh cannot silently accept a new vintage.
+
+The [frozen protocol](external-protocol.json) assigns Eurostat country-hash
+partitions 18 training / 6 validation / 6 audit, with all sectors together.
+Training targets end August 2024; development validation is September 2024–
+August 2025; reserved final targets are September 2025–August 2026. UK uses the
+same final period as a wholly unseen provider. Usable training has 3,801 origins,
+45,612 actual targets and 23,676 unique targets from 145 series in 17 countries;
+validation has 44 valid cases in five countries. Missing data can exclude
+intended groups, and all affected identities/reasons are reported.
+
+Native Eurostat/ONS index points are turnover relative to different publisher
+base years, not money, borrower amount indices, costs or repayment outcomes.
+Only dimensionless history-normalized losses can be combined across them.
+Census access required a key and FRED terms disallowed ML use, so ONS replaced
+the proposed external provider before any audit model errors were examined.
+No Census/FRED data is retained or used.
+
+Refresh explicitly: `uv run python scripts/import_external_data.py`; to replay
+locally saved source downloads use `--raw-directory runtime`. Downloads use at
+most four concurrent requests, strict response/snapshot bounds, original hashes,
+unit/indicator checks and atomic writes. Format `data/external-*.json` with
+Prettier **before** retraining; exact bytes enter the model hash. The frozen
+corpus digest is `10ad0fe821c42ec9bb31c5305faf6d959e754ca45f6cba8748d6e89d47751807`.
+Inference and ordinary training are completely offline. A revised dataset/model
+requires new audit evidence rather than repeatedly tuning the same final labels.

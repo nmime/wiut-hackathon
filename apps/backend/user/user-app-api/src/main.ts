@@ -7,12 +7,13 @@ import {
   type NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { createAppModule } from './app.js';
-import { loadConfig } from './config.js';
+import { loadConfig, trustProxyPolicy } from './config.js';
 import { setupDocumentation } from './openapi.js';
 
 async function bootstrap() {
   const config = loadConfig();
   const adapter = new FastifyAdapter({
+    trustProxy: trustProxyPolicy(config),
     bodyLimit: 3 * 1024 * 1024,
     genReqId: (request: IncomingMessage) => {
       const provided = request.headers['x-request-id'];
@@ -37,12 +38,18 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.enableCors({
     origin: config.corsOrigins,
-    methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['content-type', 'x-request-id'],
+    credentials: true,
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'content-type',
+      'x-request-id',
+      'x-csrf-token',
+      'x-tenant-id',
+    ],
     exposedHeaders: ['x-request-id'],
   });
   app.enableShutdownHooks();
-  setupDocumentation(app);
+  setupDocumentation(app, config);
   await app.listen(config.API_PORT, config.API_HOST);
   console.log(
     `WIUT synthetic-data API ready at http://${config.API_HOST}:${config.API_PORT}/api; ML ${config.ML_SERVICE_URL ? 'configured' : 'not configured'}.`,
