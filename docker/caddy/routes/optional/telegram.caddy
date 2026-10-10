@@ -1,4 +1,0 @@
-@telegram_api path /telegram /telegram/*
-handle @telegram_api {
-	reverse_proxy telegram-bot-api:80
-}

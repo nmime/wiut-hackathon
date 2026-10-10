@@ -1,3 +1,0 @@
-{$DISCORD_APP_API_DOMAIN} {
-	import api_service discord-app-api:80
-}

@@ -1,0 +1,31 @@
+{
+  "name": "@wiut/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm build && concurrently -k 'tsc -p tsconfig.json --watch --preserveWatchOutput' 'node --watch dist/main.js'",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/main.js",
+    "test": "pnpm build && node --test dist/*.test.js"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.5",
+    "@nestjs/common": "12.1.2",
+    "@nestjs/core": "12.1.2",
+    "@nestjs/platform-fastify": "12.1.2",
+    "@nestjs/swagger": "12.0.2",
+    "@wiut/contracts": "workspace:*",
+    "dotenv": "^17.2.3",
+    "fastify": "5.12.5",
+    "pg": "8.23.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "12.1.2",
+    "@types/pg": "8.23.1"
+  }
+}
