@@ -16,9 +16,19 @@ def test_live_inference_audited_and_invalid_attempts_persist(
         health = client.get("/health").json()
         assert health["local_inference"] is True
         assert health["synthetic_training_only"] is False
-        assert health["public_training_targets"] == 8880
+        assert (
+            health["public_training_targets"]
+            == model.public_revenue_model.metadata["training_examples"]
+        )
         assert health["public_transfer_weight"] == model.transfer_weight
         assert health["serving_mode"] == model.selection["serving_mode"]
+        assert health["real_revenue_estimator_used"] == bool(
+            model.transfer_weight
+            and model.public_revenue_model.metadata["selected_uses_trained_estimator"]
+        )
+        assert {
+            source.get("provider") for source in health["public_training_sources"]
+        } >= {"abs", "statcan"}
         raw = json.dumps(request_payload).encode()
         response = client.post(
             "/score",

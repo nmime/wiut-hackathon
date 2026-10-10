@@ -92,20 +92,66 @@ def fit_model() -> ForecastModel:
         "gradient_boosting": 1.0,
         "blend_50": 0.5,
     }[chosen]
-    # Candidate weights are fixed in source before reading any held-out targets.
-    # Real aggregates provide no expenses; that component is synthetic-only.
-    transfer_errors = {weight: [] for weight in TRANSFER_WEIGHTS}
-    for business in validation:
-        for weight, forecast in model.predict_transfer_candidates(
-            aggregate(business.request())
-        ).items():
-            transfer_errors[weight].extend(
-                np.abs(forecast - business.future_net).tolist()
+    # Both revenue training and the downstream transfer gate use validation
+    # only. The fixed grid includes conservative ten-percent transfer because
+    # aggregate revenue patterns differ from individual bank cash receipts.
+    transfer_results = {}
+    for expense_mode in ("synthetic_model", "observed_cost_regression"):
+        model.expense_mode = expense_mode
+        errors = {weight: [] for weight in TRANSFER_WEIGHTS}
+        macro_errors = {weight: [] for weight in TRANSFER_WEIGHTS}
+        cohorts = {weight: {} for weight in TRANSFER_WEIGHTS}
+        for business in validation:
+            history = aggregate(business.request())
+            for weight, forecast in model.predict_transfer_candidates(history).items():
+                error = float(np.mean(np.abs(forecast - business.future_net)))
+                errors[weight].append(error)
+                macro_errors[weight].append(error / normalizer(history))
+                cohorts[weight].setdefault(business.cohort, []).append(
+                    error / normalizer(history)
+                )
+        transfer_results[expense_mode] = {
+            "pooled_mae_index": {
+                weight: float(np.mean(values)) for weight, values in errors.items()
+            },
+            "macro_normalized_mae": {
+                weight: float(np.mean(values))
+                for weight, values in macro_errors.items()
+            },
+            "by_cohort_macro_normalized_mae": {
+                weight: {
+                    cohort: float(np.mean(values)) for cohort, values in parts.items()
+                }
+                for weight, parts in cohorts.items()
+            },
+        }
+    real_validation = model.public_revenue_model.metadata.get(
+        "combined_validation", model.public_revenue_model.metadata["validation"]
+    )
+    public_selected = model.public_revenue_model.selected
+    real_skill = (
+        1
+        - real_validation[public_selected]["normalized_mae"]
+        / real_validation["seasonal_naive"]["normalized_mae"]
+    )
+    options = []
+    for expense_mode, results in transfer_results.items():
+        baseline = results["pooled_mae_index"][0.0]
+        baseline_macro = results["macro_normalized_mae"][0.0]
+        for weight in TRANSFER_WEIGHTS:
+            raw = results["pooled_mae_index"][weight]
+            macro = results["macro_normalized_mae"][weight]
+            eligible = weight == 0 or (
+                model.public_revenue_model.metadata["selected_uses_trained_estimator"]
+                and real_skill >= 0.05
+                and raw < baseline
+                and macro <= baseline_macro * 1.02
             )
-    transfer_mae = {
-        weight: float(np.mean(values)) for weight, values in transfer_errors.items()
-    }
-    model.transfer_weight = min(transfer_mae, key=transfer_mae.get)
+            if eligible:
+                options.append((raw, macro, expense_mode, weight))
+    _, _, model.expense_mode, model.transfer_weight = min(options)
+    selected_results = transfer_results[model.expense_mode]
+    transfer_mae = selected_results["pooled_mae_index"]
     model.selection = {
         "seed": SEED,
         "selected_candidate": chosen,
@@ -121,13 +167,24 @@ def fit_model() -> ForecastModel:
         "validation_ids": sorted(validation_ids),
         "test_used_for_selection": False,
         "public_revenue_training": model.public_revenue_model.metadata,
-        "expense_training": "Actual generated outflows from synthetic training businesses only; no public expense/default labels",
+        "expense_training": "Actual generated outflows from synthetic training businesses only; the optional observation-based cost regression is fitted only to the scored borrower's past inflow/outflow transactions. No public expense/default labels",
+        "expense_mode": model.expense_mode,
+        "transfer_validation": transfer_results,
+        "transfer_validation_macro_normalized_mae": selected_results[
+            "macro_normalized_mae"
+        ],
+        "real_validation_skill_vs_seasonal": real_skill,
+        "transfer_acceptance_gate": "Selected real revenue candidate must actively use its real-data-fitted estimator; provider-balanced validation normalized MAE improves seasonal naive by at least 5%; downstream synthetic validation pooled MAE must improve and macro normalized MAE may worsen no more than 2%. No test labels enter acceptance.",
         "transfer_validation_mae_index": transfer_mae,
         "transfer_weight": model.transfer_weight,
-        "serving_mode": "public_revenue_and_synthetic_expenses_blend"
+        "serving_mode": (
+            "real_revenue_observed_costs_blend"
+            if model.expense_mode == "observed_cost_regression"
+            else "real_revenue_synthetic_expenses_blend"
+        )
         if model.transfer_weight
         else "synthetic_net_public_transfer_rejected",
-        "transfer_selection_metric": "Same 60 held-out synthetic validation businesses, future-12-month net MAE; public candidate chosen separately on geographic validation only",
+        "transfer_selection_metric": "Same 60 held-out-from-fitting synthetic validation businesses, future-12-month pooled and macro normalized net MAE; real revenue candidate chosen separately by provider-balanced real entity/time validation only. Legacy test sets are not fresh confirmation.",
         "source_sha256": pipeline_source_digest(),
         "public_calibration": {
             "source": "Uzbekistan SIAT retail aggregate turnover, CC BY 4.0",
@@ -144,7 +201,7 @@ def fit_model() -> ForecastModel:
         },
     }
     # Source digest includes data generation, feature/scoring policy and settings.
-    model.version = f"local-v2-{model.selection['source_sha256'][:12]}-{chosen}-public{round(100 * model.transfer_weight)}"
+    model.version = f"local-v3-{model.selection['source_sha256'][:12]}-{chosen}-public{round(100 * model.transfer_weight)}"
     return model
 
 

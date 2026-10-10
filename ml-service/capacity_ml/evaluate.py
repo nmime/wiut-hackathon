@@ -1,4 +1,4 @@
-"""Measure future actual events once model selection is already fixed."""
+"""Run the legacy synthetic regression benchmark after validation selection."""
 
 import argparse
 import hashlib
@@ -215,6 +215,8 @@ def evaluate(model_path: str | Path) -> dict:
         "model_version": model.version,
         "selection": selection,
         "test_protocol": {
+            "status": "legacy_regression_benchmark_previously_reported",
+            "interpretation": "The fixed test cohort was reported before this model upgrade. It is excluded from fitting and selection, but is no longer a fresh confirmatory holdout. International final-period cases provide the new real-revenue evaluation.",
             "businesses": TEST_COUNT,
             "future_months_per_business": 12,
             "business_disjoint": True,
@@ -287,11 +289,13 @@ def markdown(report: dict) -> str:
     capacity = report["capacity_schedule"]
     latency = report["latency"]
     lines = [
-        "# Measured synthetic evaluation",
+        "# Measured synthetic regression evaluation",
         "",
         f"Measured {report['measured_at_utc']}. Model `{report['model_version']}`.",
         "",
         "All results below were produced by `uv run python -m capacity_ml.evaluate` on generated future transactions. They are synthetic engineering measurements, not evidence of bank performance or default prediction.",
+        "",
+        "This fixed synthetic test cohort was reported before the model upgrade and is now a **legacy regression benchmark**, not a fresh confirmatory holdout. Its labels remain excluded from fitting and validation selection. The new [international evaluation](international-metrics.md) measures real revenue against separately reserved final-period observations.",
         "",
         "Public Uzbekistan SIAT 2020–2022 retail aggregates calibrate half the calendar component for four retail-like synthetic cohorts; later aggregate years are excluded from generator calibration. Every borrower transaction, expense and future net-flow target remains synthetic. An additional real-revenue component is trained directly from licensed aggregates and transferred only if synthetic validation MAE improves; its separate report measures actual public revenue forecasts, never borrower capacity.",
         "",
@@ -307,7 +311,7 @@ def markdown(report: dict) -> str:
     lines.extend(
         [
             "",
-            f"The real-revenue model minus separately synthetic-trained expenses is compared with the chosen synthetic net model at fixed weights 0/0.25/0.5/1. Validation selects public weight **{report['selection']['transfer_weight']}** and serving mode `{report['selection']['serving_mode']}`. This decision precedes the held-out results below; a zero weight explicitly rejects unsuitable transfer.",
+            f"The real-revenue model minus the selected expense projection (`{report['selection']['expense_mode']}`) is compared with the chosen synthetic net model at fixed weights 0/0.1/0.25/0.5/1. Expenses use either synthetic training or the borrower's observed cost relationship; no public cost labels are supplied. Validation selects public weight **{report['selection']['transfer_weight']}** and serving mode `{report['selection']['serving_mode']}`, requiring real validation skill, better pooled net MAE and a macro normalized-error guard. This decision precedes the regression results below; zero rejects unsuitable transfer.",
             "",
             "| Public component weight | Synthetic validation MAE (index) | Held-out MAE (index) |",
             "| --- | ---: | ---: |",

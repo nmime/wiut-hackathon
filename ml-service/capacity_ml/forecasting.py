@@ -19,8 +19,8 @@ from .schemas import ScoreRequest
 if TYPE_CHECKING:
     from .public_revenue import PublicRevenueModel
 
-ARTIFACT_FORMAT = 2
-TRANSFER_WEIGHTS = (0.0, 0.25, 0.5, 1.0)
+ARTIFACT_FORMAT = 3
+TRANSFER_WEIGHTS = (0.0, 0.1, 0.25, 0.5, 1.0)
 FEATURE_NAMES = (
     "lag1",
     "lag2",
@@ -52,10 +52,15 @@ def pipeline_source_digest() -> str:
         "public_data.py",
         "public_revenue.py",
         "revenue_data.py",
+        "revenue_features.py",
+        "international_data.py",
     ):
         digest.update(Path(__file__).with_name(name).read_bytes())
     digest.update(calibration_digest().encode())
     digest.update(revenue_data_digest().encode())
+    from .international_data import international_data_digest
+
+    digest.update(international_data_digest().encode())
     return digest.hexdigest()
 
 
@@ -156,6 +161,46 @@ def feature_matrix(history: MonthlyHistory) -> np.ndarray:
     return np.asarray(features)
 
 
+def observed_expense_forecast(
+    history: MonthlyHistory, revenue: np.ndarray
+) -> np.ndarray:
+    """Robust local cost relationship from this borrower's observed transactions.
+
+    This is an observation-based forecast assumption, not public cost training.
+    Nonnegative intercept/slope constraints prevent negative expense projections.
+    """
+    scale = normalizer(history)
+    incoming = history.inflow[-24:] / scale
+    outgoing = history.outflow[-24:] / scale
+    design = np.column_stack([np.ones(len(incoming)), incoming])
+    weights = np.ones(len(incoming))
+    coefficients = np.zeros(2)
+    for _ in range(4):
+        weighted = design * weights[:, None]
+        unconstrained = np.linalg.lstsq(weighted, outgoing * weights, rcond=None)[0]
+        options = [
+            np.array([np.average(outgoing, weights=weights**2), 0.0]),
+            np.array(
+                [
+                    0.0,
+                    np.sum(weights**2 * incoming * outgoing)
+                    / max(float(np.sum(weights**2 * incoming**2)), np.finfo(float).eps),
+                ]
+            ),
+        ]
+        if np.all(unconstrained >= 0):
+            options.append(unconstrained)
+        coefficients = min(
+            options,
+            key=lambda value: float(
+                np.sum((weights * (outgoing - design @ value)) ** 2)
+            ),
+        )
+        residual = outgoing - design @ coefficients
+        weights = 1 / (1 + (residual / 0.1) ** 2)
+    return np.maximum(coefficients[0] * scale + coefficients[1] * revenue, 0)
+
+
 @dataclass
 class ForecastModel:
     estimator: HistGradientBoostingRegressor
@@ -165,6 +210,7 @@ class ForecastModel:
     public_revenue_model: "PublicRevenueModel | None" = None
     expense_estimator: HistGradientBoostingRegressor | None = None
     transfer_weight: float = 0.0
+    expense_mode: str = "synthetic_model"
     artifact_format: int = ARTIFACT_FORMAT
 
     def predict_candidates(self, history: MonthlyHistory) -> dict[str, np.ndarray]:
@@ -188,13 +234,17 @@ class ForecastModel:
     def predict_public_net(self, history: MonthlyHistory) -> np.ndarray:
         if self.public_revenue_model is None or self.expense_estimator is None:
             raise ValueError("Missing trained revenue/expense components")
-        with threadpool_limits(limits=1):
-            expenses = np.maximum(
-                self.expense_estimator.predict(feature_matrix(history))
-                * normalizer(history),
-                0,
-            )
-        return self.public_revenue_model.predict(history) - expenses
+        revenue = self.public_revenue_model.predict(history)
+        if self.expense_mode == "observed_cost_regression":
+            expenses = observed_expense_forecast(history, revenue)
+        else:
+            with threadpool_limits(limits=1):
+                expenses = np.maximum(
+                    self.expense_estimator.predict(feature_matrix(history))
+                    * normalizer(history),
+                    0,
+                )
+        return revenue - expenses
 
     def predict_transfer_candidates(
         self, history: MonthlyHistory
@@ -207,6 +257,8 @@ class ForecastModel:
         }
 
     def predict(self, history: MonthlyHistory) -> np.ndarray:
+        if not np.any(history.inflow[-12:] + history.outflow[-12:] > 0):
+            return np.zeros(12)
         synthetic = self.predict_synthetic(history)
         if self.transfer_weight == 0:
             return synthetic
@@ -237,16 +289,22 @@ class ForecastModel:
             raise ValueError("Invalid public transfer weight")
         if model.public_revenue_model is None or model.expense_estimator is None:
             raise ValueError("Missing trained public revenue/expense components")
-        if model.public_revenue_model.selected not in (
-            "seasonal_naive",
-            "trend_adjusted_seasonal",
-            "gradient_boosting",
-        ):
+        from .public_revenue import PUBLIC_CANDIDATES
+        from .revenue_features import REVENUE_FEATURE_NAMES
+
+        if model.public_revenue_model.selected not in PUBLIC_CANDIDATES:
             raise ValueError("Invalid public revenue model selection")
-        if model.expense_estimator.n_features_in_ != len(
-            FEATURE_NAMES
-        ) or model.public_revenue_model.estimator.n_features_in_ != len(FEATURE_NAMES):
-            raise ValueError("Revenue/expense feature schema mismatch")
+        if model.expense_mode not in ("synthetic_model", "observed_cost_regression"):
+            raise ValueError("Invalid expense model selection")
+        if model.expense_estimator.n_features_in_ != len(FEATURE_NAMES):
+            raise ValueError("Expense feature schema mismatch")
+        if model.public_revenue_model.estimator.n_features_in_ != len(
+            REVENUE_FEATURE_NAMES
+        ):
+            raise ValueError("Revenue feature schema mismatch")
+        residual = model.public_revenue_model.residual_estimator
+        if residual is None or residual.n_features_in_ != len(REVENUE_FEATURE_NAMES):
+            raise ValueError("Revenue residual feature schema mismatch")
         if model.selection.get("source_sha256") != pipeline_source_digest():
             raise ValueError("Stale model artifact: source changed; retrain explicitly")
         return model

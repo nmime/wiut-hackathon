@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '../auth-fixtures';
+import { expect, registerAccount, test } from '../auth-fixtures';
 import {
   AssessmentListSchema,
   AssessmentSchema,
@@ -18,13 +18,23 @@ import {
 
 test.use({ authApiUrl: REAL_API_URL });
 
-test('the trained synthetic ML service produces input-sensitive validated outputs through NestJS and preserves a human review', async ({
+test('the real-data model serves validated outputs through NestJS and preserves a human review', async ({
   request,
 }) => {
   const health = HealthSchema.parse(
     await (await request.get(`${REAL_API_URL}/health`)).json(),
   );
   expect(health.ml_configured).toBe(true);
+  const modelHealth = await (await request.get(`${REAL_ML_URL}/health`)).json();
+  expect(modelHealth.synthetic_training_only).toBe(false);
+  expect(modelHealth.public_transfer_weight).toBeGreaterThan(0);
+  expect(modelHealth.public_training_targets).toBeGreaterThan(8880);
+  expect(modelHealth.real_revenue_estimator_used).toBe(true);
+  expect(
+    modelHealth.public_training_sources.map(
+      (source: { provider?: string }) => source.provider,
+    ),
+  ).toEqual(expect.arrayContaining(['abs', 'statcan']));
   const positive = await importRealBusiness(request, 'positive');
   const negative = await importRealBusiness(request, 'negative');
   const stronger = await assessRealBusiness(request, positive.id);
@@ -44,6 +54,14 @@ test('the trained synthetic ML service produces input-sensitive validated output
   expect(weak.recommended_loan.suggested_principal_index).toBe(0);
   expect(weak.adaptive_schedule).toEqual([]);
   expect(strong.model_version).toBe(weak.model_version);
+  expect(strong.model_version).toBe(modelHealth.model_version);
+  expect(strong.flags).toContain('public_revenue_transfer_used');
+  expect(strong.flags).not.toContain('public_revenue_transfer_not_selected');
+  expect(strong.flags).toContain(
+    modelHealth.expense_mode === 'observed_cost_regression'
+      ? 'observed_cost_projection'
+      : 'synthetic_expense_model',
+  );
   expect(strong.request_id).not.toBe(weak.request_id);
 
   const direct = await request.post(`${REAL_ML_URL}/score`, {
@@ -59,6 +77,9 @@ test('the trained synthetic ML service produces input-sensitive validated output
   const directResult = ScoreResponseSchema.parse(await direct.json());
   expect(directResult.capacity_score).toBe(strong.capacity_score);
   expect(directResult.recommended_loan).toEqual(strong.recommended_loan);
+  expect(directResult.seasonality).toEqual(strong.seasonality);
+  expect(directResult.adaptive_schedule).toEqual(strong.adaptive_schedule);
+  expect(directResult.flags).toEqual(strong.flags);
 
   const response = await request.post(
     `${REAL_API_URL}/assessments/${stronger.id}/decisions`,
@@ -67,7 +88,7 @@ test('the trained synthetic ML service produces input-sensitive validated output
         decision: 'needs_information',
         reviewer_name: 'Integration Officer',
         notes:
-          'Synthetic model transport verified; request updated expense evidence before approval.',
+          'Real-trained model transport verified on synthetic input; request updated expense evidence before approval.',
       },
     },
   );
@@ -121,6 +142,41 @@ test('the trained synthetic ML service produces input-sensitive validated output
   expect(JSON.parse(JSON.stringify(mlCompletion?.result))).toEqual(
     JSON.parse(JSON.stringify(strong)),
   );
+});
+
+test('real-scored assessments and human decisions remain isolated between bank tenants', async ({
+  request,
+  playwright,
+}) => {
+  const business = await importRealBusiness(request, 'positive');
+  const assessment = await assessRealBusiness(request, business.id);
+  const other = await registerAccount(playwright, REAL_API_URL);
+  try {
+    for (const path of [
+      `/businesses/${business.id}`,
+      `/assessments/${assessment.id}`,
+      `/assessments?business_id=${business.id}`,
+      `/audit?business_id=${business.id}`,
+    ]) {
+      expect((await other.request.get(`${REAL_API_URL}${path}`)).status()).toBe(
+        404,
+      );
+    }
+    const decision = await other.request.post(
+      `${REAL_API_URL}/assessments/${assessment.id}/decisions`,
+      { data: { decision: 'approved', notes: 'Cross-tenant attempt' } },
+    );
+    expect(decision.status()).toBe(404);
+    const preserved = AssessmentSchema.parse(
+      await (
+        await request.get(`${REAL_API_URL}/assessments/${assessment.id}`)
+      ).json(),
+    );
+    expect(preserved.result).toEqual(assessment.result);
+    expect(preserved.decision).toBeNull();
+  } finally {
+    await other.request.dispose();
+  }
 });
 
 test('rescaling amount indices preserves capacity and scales the actual model forecast and repayment', async ({
@@ -179,6 +235,7 @@ test('the browser renders a real model response and adaptive schedule and record
   const assessment = AssessmentSchema.parse(await response.json());
   const result = ScoreResponseSchema.parse(assessment.result);
   expect(result.model_version).not.toBe('test-only-fixture-v1');
+  expect(result.flags).toContain('public_revenue_transfer_used');
   const capacityProgress = page.getByRole('progressbar', {
     name: /^Capacity score .+ out of 100$/,
   });

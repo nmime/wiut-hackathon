@@ -1,4 +1,4 @@
-"""Evaluate the artifact's real-trained revenue component on fixed public holdouts."""
+"""Run the previously reported Uzbekistan revenue regression benchmark."""
 
 import argparse
 import json
@@ -35,6 +35,7 @@ def evaluate(model_path: str | Path) -> dict:
     return {
         "measured_at_utc": datetime.now(UTC).isoformat(),
         "model_version": artifact.version,
+        "evaluation_status": "legacy_regression_benchmark_previously_reported",
         "public_training": model.metadata,
         "serving_transfer_weight": artifact.transfer_weight,
         "serving_mode": artifact.selection["serving_mode"],
@@ -61,23 +62,26 @@ def display(value: float | None) -> str:
 
 def markdown(report: dict) -> str:
     public = report["public_training"]
+    uzbekistan = public["training_by_provider"]["uzbekistan_siat"]
     lines = [
-        "# Direct public-revenue training and measured holdouts",
+        "# Uzbekistan public-revenue regression benchmark",
         "",
         f"Measured {report['measured_at_utc']}; artifact `{report['model_version']}`. Reproduce with `uv run python -m capacity_ml.train` and `uv run python -m capacity_ml.evaluate_revenue`.",
         "",
+        "These fixed Uzbekistan evaluation periods were reported before this model upgrade. They are now **legacy regression benchmarks**, not fresh confirmatory holdouts. Targets remain excluded from fitting and validation selection. See the [new international evaluation](international-metrics.md) for separately reserved final-period observations.",
+        "",
         f"The offline corpus contains **{public['published_observations']:,} published monthly observations** across retail, wholesale, district market services and accommodation/food service aggregates. Excluding national and parent totals, then respecting the service methodology boundary, leaves **{public['eligible_series']} eligible series / {public['eligible_observations_after_regime_filter']:,} observations**. These counts include retained source revisions; invalid forecasting windows are excluded rather than corrected or clipped.",
         "",
-        f"Direct real-data training uses **{public['training_cases']} rolling windows / {public['training_examples']:,} actual future-month targets** from **{public['training_series']} series**, representing **{public['training_unique_target_observations']:,} unique target observations**. Overlapping rolling windows are not independent records. All training targets end by December 2025. Regions are partitioned by a fixed hash into 8 training, 3 validation and 3 test groups; all sector/district records from a region stay together. Pre-2025 retail/wholesale histories are capped at 48 months. Post-break service histories before January 2025 contain only 3 months and are explicitly a cold-history limitation.",
+        f"The Uzbekistan portion supplies **{uzbekistan['cases']} rolling windows / {uzbekistan['examples']:,} actual target-month examples** from **{uzbekistan['series']} series**, representing **{uzbekistan['unique_target_observations']:,} unique target observations**. The combined Uzbekistan/Australia/Canada model uses **{public['training_examples']:,} actual target examples**; overlapping windows are not independent records. Uzbekistan targets end by December 2025. Regions are partitioned by a fixed hash into 8 training, 3 validation and 3 legacy test groups; all sectors/districts of a region stay together. Pre-2025 retail/wholesale histories are capped at 48 months. Post-break service histories before January 2025 contain only 3 months and are a cold-history limitation.",
         "",
-        f"Validation covers January–December 2025 in independent geographic groups. It selects **{public['selected_candidate']}** by historical-scale-normalized MAE. No test labels are read to fit or choose the candidate. Source-revision exclusions by split: `{public['exclusions']}`. The 2025 entity holdout is contemporaneous with training; the 2026 test is both geographic and future-time holdout. Only January–August 2026 is published: the last four forecast months are unobserved and excluded from metrics.",
+        f"Uzbekistan development validation covers January–December 2025 in independent geographic groups. The combined model selects **{public['selected_candidate']}** by provider-balanced macro normalized validation MAE, giving each provider equal weight. The table below shows only the Uzbekistan validation slice, which may prefer a different candidate. Test targets remain excluded from fitting and selection. Source-revision exclusions: `{public['exclusions']}`. The 2025 legacy evaluation is an entity holdout; the 2026 evaluation also follows Uzbekistan training in time. Only January–August 2026 is published: the last four forecast months are unobserved and excluded.",
         "",
         f"Valid-window composition: `{report['valid_cases_by_sector']}`. In particular, source revisions exclude wholesale from validation and the 2025 holdout; its one 2026 case cannot establish sector-wide performance. The geographic validation group is small and uneven after exclusions.",
         "",
         "| Candidate | Validation normalized MAE | Validation MAE (million UZS) | Validation MAPE (%) |",
         "| --- | ---: | ---: | ---: |",
     ]
-    for name, values in public["validation"].items():
+    for name, values in public["uzbekistan_validation"].items():
         lines.append(
             f"| {name} | {display(values['normalized_mae'])} | {display(values['mae_million_uzs'])} | {display(values['mape_positive_actual_pct'])} |"
         )
@@ -120,9 +124,9 @@ def markdown(report: dict) -> str:
             "",
             "## Service transfer and limits",
             "",
-            "The selected model improves pooled MAE on both holdouts, but its 2026 **MAPE is worse than both seasonal baselines**, and accommodation/food forecasts have especially large percentage errors. Raw MAE is dominated by large regions; normalized metrics and sector failures are shown to prevent a broad accuracy claim. Three-month post-break histories and source revisions limit the 2025 service evaluation. No test-driven retuning was performed.",
+            "Raw MAE is dominated by large regions; normalized errors, percentage metrics and all sector slices are shown above. Three-month post-break histories, near-zero actuals and provider revisions can produce large errors, especially for food services. These previously examined benchmark results are regression evidence; the separate international final audit supplies the new accuracy check.",
             "",
-            f"The trained real revenue model is stored in the same artifact as a separately synthetic-trained expense model. Their difference is a transferable net-flow candidate. Fixed blend weights 0/0.25/0.5/1 are compared only on the 60 synthetic validation businesses; selected real-component weight: **{report['serving_transfer_weight']}**. Validation MAEs (indices): `{report['synthetic_transfer_validation_mae_index']}`. Serving mode: `{report['serving_mode']}`. A zero weight explicitly rejects transfer and retains the synthetic forecast; it is not a fabricated output fallback. [Synthetic borrower/capacity evaluation](metrics.md) measures the actual selected serving model.",
+            f"The real revenue model and borrower expense projection form a net-flow candidate. Expenses use either a separately synthetic-trained model or a nonnegative cost regression fitted to the borrower's observed past transactions; public revenue supplies no expense labels. Fixed weights 0/0.1/0.25/0.5/1 are compared on the 60 synthetic validation businesses with normalized-error checks; selected real-component weight: **{report['serving_transfer_weight']}**. Validation MAEs (indices): `{report['synthetic_transfer_validation_mae_index']}`. Serving mode: `{report['serving_mode']}`. A zero weight rejects unsuitable transfer. [Synthetic borrower regression evaluation](metrics.md) measures the actual serving model.",
             "",
             report["metric_policy"],
             "",
@@ -135,6 +139,8 @@ def markdown(report: dict) -> str:
         ]
     )
     for source in public["sources"]:
+        if source.get("provider") in {"abs", "statcan"}:
+            continue  # International units and licenses are in their own report.
         lines.append(
             f"- [{source.get('title', source.get('indicator', 'Retail trade volume'))}]({source['landing_url']}) — [CC BY 4.0]({source['license_url']}); provider units: {source.get('units_as_published', 'million UZS')}."
         )

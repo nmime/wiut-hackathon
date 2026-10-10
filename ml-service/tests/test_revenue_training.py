@@ -141,13 +141,38 @@ def test_test_revenue_changes_cannot_change_fit_or_validation_choice():
 def test_real_artifact_and_transfer_choice_use_only_validation(model):
     public = model.public_revenue_model
     maes = public.metadata["validation"]
-    assert public.selected == min(maes, key=lambda name: maes[name]["normalized_mae"])
-    assert public.metadata["training_examples"] == 8880
+    qualified = public.metadata["candidate_qualification"]
+    assert public.selected == min(
+        (name for name in maes if qualified[name]),
+        key=lambda name: maes[name]["normalized_mae"],
+    )
+    assert public.metadata["uzbekistan_training_examples"] == 8880
+    assert public.metadata["training_examples"] == sum(
+        row["examples"] for row in public.metadata["training_by_provider"].values()
+    )
+    assert public.metadata["training_examples"] > 8880
     assert public.metadata["test_used_for_training_or_selection"] is False
     assert model.expense_estimator.n_features_in_ == model.estimator.n_features_in_
     transfer_mae = model.selection["transfer_validation_mae_index"]
     assert tuple(transfer_mae) == TRANSFER_WEIGHTS
-    assert model.transfer_weight == min(transfer_mae, key=transfer_mae.get)
+    results = model.selection["transfer_validation"]
+    qualified = []
+    for expense_mode, row in results.items():
+        baseline = row["pooled_mae_index"][0]
+        baseline_macro = row["macro_normalized_mae"][0]
+        for weight in TRANSFER_WEIGHTS:
+            raw = row["pooled_mae_index"][weight]
+            macro = row["macro_normalized_mae"][weight]
+            if weight == 0 or (
+                public.metadata["selected_uses_trained_estimator"]
+                and model.selection["real_validation_skill_vs_seasonal"] >= 0.05
+                and raw < baseline
+                and macro <= baseline_macro * 1.02
+            ):
+                qualified.append((raw, macro, expense_mode, weight))
+    _, _, expense_mode, weight = min(qualified)
+    assert model.transfer_weight == weight
+    assert model.expense_mode == expense_mode
 
 
 def test_real_revenue_predictions_scale_and_ignore_borrower_expense_series(model):
@@ -192,3 +217,96 @@ def test_zero_revenue_mape_and_wape_are_explicitly_undefined():
     assert values["mape_positive_actual_pct"] is None
     assert values["wape_pct"] is None
     assert values["mape_excluded_zero_months"] == 12
+
+
+def test_revenue_feature_schema_baselines_and_observed_costs_are_scale_invariant():
+    from capacity_ml.forecasting import observed_expense_forecast
+    from capacity_ml.revenue_features import (
+        REVENUE_FEATURE_NAMES,
+        revenue_baselines,
+        revenue_feature_matrix,
+    )
+
+    months = np.arange(2023 * 12, 2026 * 12)
+    incoming = (
+        100 * np.exp(np.arange(36) * 0.01) * (1 + 0.2 * np.sin(months * np.pi / 6))
+    )
+    history = MonthlyHistory(months, incoming, 0.65 * incoming + 8, 2026 * 12)
+    future_revenue = np.linspace(150, 180, 12)
+    original = revenue_feature_matrix(history)
+    assert original.shape == (12, len(REVENUE_FEATURE_NAMES))
+    assert np.all(np.isfinite(original))
+    costs = observed_expense_forecast(history, future_revenue)
+    np.testing.assert_allclose(costs, 0.65 * future_revenue + 8, rtol=1e-9)
+    scaled = MonthlyHistory(
+        months, history.inflow * 1e-7, history.outflow * 1e-7, history.forecast_start
+    )
+    np.testing.assert_allclose(
+        revenue_feature_matrix(scaled), original, rtol=1e-8, atol=1e-10
+    )
+    for name, prediction in revenue_baselines(history).items():
+        np.testing.assert_allclose(
+            revenue_baselines(scaled)[name], prediction * 1e-7, rtol=1e-8
+        )
+    np.testing.assert_allclose(
+        observed_expense_forecast(scaled, future_revenue * 1e-7),
+        costs * 1e-7,
+        rtol=1e-8,
+    )
+
+
+def test_serving_public_prediction_runs_only_selected_estimator(model, monkeypatch):
+    from capacity_ml.forecasting import aggregate
+    from capacity_ml.generator import generate_business
+
+    public = copy.deepcopy(model.public_revenue_model)
+    history = aggregate(generate_business("validation", 1).request())
+    comparison = public.predict_candidates(history)[public.selected]
+
+    def unused(*args, **kwargs):
+        raise AssertionError("Unselected estimator must not run during serving")
+
+    if public.selected == "gradient_boosting":
+        monkeypatch.setattr(public.residual_estimator, "predict", unused)
+    else:
+        monkeypatch.setattr(public.estimator, "predict", unused)
+        if public.selected in {
+            "seasonal_naive",
+            "damped_seasonal",
+            "robust_harmonic",
+            "trend_adjusted_seasonal",
+        }:
+            monkeypatch.setattr(public.residual_estimator, "predict", unused)
+    np.testing.assert_allclose(public.predict(history), comparison, rtol=1e-10)
+
+
+def test_zero_revenue_returns_zero_without_trained_inference(model, monkeypatch):
+    public = copy.deepcopy(model.public_revenue_model)
+    history = MonthlyHistory(np.arange(24), np.zeros(24), np.ones(24), 24)
+
+    def unused(*args, **kwargs):
+        raise AssertionError("No observed revenue must not invent model revenue")
+
+    monkeypatch.setattr(public.estimator, "predict", unused)
+    monkeypatch.setattr(public.residual_estimator, "predict", unused)
+    np.testing.assert_array_equal(public.predict(history), np.zeros(12))
+
+
+def test_dormant_history_does_not_invent_scale_dependent_forecast(model, monkeypatch):
+    dormant = MonthlyHistory(
+        np.arange(36),
+        np.r_[np.full(24, 100.0), np.zeros(12)],
+        np.r_[np.full(24, 60.0), np.zeros(12)],
+        36,
+    )
+
+    def unused(*args, **kwargs):
+        raise AssertionError(
+            "A year with no observed activity has no forecastable recent scale"
+        )
+
+    monkeypatch.setattr(model.estimator, "predict", unused)
+    np.testing.assert_array_equal(model.predict(dormant), np.zeros(12))
+    np.testing.assert_array_equal(
+        model.public_revenue_model.predict(dormant), np.zeros(12)
+    )

@@ -40,9 +40,10 @@ No fabricated score or recommendation is substituted.
 
 ## Run the included local ML service
 
-The repository also includes an optional FastAPI service trained on synthetic
-businesses whose seasonality is calibrated with licensed public Uzbekistan
-retail data. To run the complete demo:
+The repository includes a local FastAPI service that trains its revenue forecast
+on licensed Uzbekistan, Australian and Canadian sales data. Borrower expense
+projections and synthetic net-flow forecasts are validated separately. To run
+the complete demo:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build -d
@@ -63,6 +64,7 @@ uv run python -m capacity_ml.train
 uv run python -m capacity_ml.evaluate
 uv run python -m capacity_ml.evaluate_public
 uv run python -m capacity_ml.evaluate_revenue
+uv run python -m capacity_ml.evaluate_international
 uv run pytest
 uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
 ```
@@ -72,15 +74,21 @@ See [ML implementation and measured evaluation](ml-service/README.md) for the
 generator, split, forecast selection, capacity factors, and limitations.
 The [public dataset declaration](ml-service/data/README.md) documents official
 sources, CC BY 4.0 attribution, quality exclusions, and calibration windows.
-The expanded corpus contains 16,544 published monthly observations across retail,
-wholesale, market services, and accommodation/food services. A revenue model
-trains on 8,880 rolling target examples from 2,797 unique observed months, with
-geographic and future holdouts.
-The original regional retail benchmark also evaluates future 2024–2025 revenue.
-Public aggregates do not contain borrower expenses or repayment outcomes.
-Transfer to the borrower net-cash-flow forecast is selected on validation data;
-the current model retains the stronger synthetic forecast because public-data
-transfer increased its error. Model flags and rationale disclose that choice.
+The corpus includes 16,544 published Uzbekistan monthly points and 380 additional
+Australian/Canadian retail series with 49,213 published numeric sales values and
+9,487 missing/suppressed entries. Missing sales remain null;
+training rejects affected windows instead of inventing values. The revenue
+model uses 41,364 actual rolling target examples, with provider-balanced training
+and validation. Overlapping windows are not independent observations.
+The [international accuracy audit](ml-service/reports/international-metrics.md)
+evaluates reserved terminal periods in unseen states/provinces, after selection
+is frozen. Previously reported Uzbekistan and synthetic tests are explicitly
+legacy regression benchmarks. Time boundaries are provider-specific, and native
+currency errors are never pooled across countries.
+Public revenues contain no borrower expense, repayment or default labels.
+The scoring model includes real-trained revenue only when validation improves
+the net forecast and passes normalized-error checks. Its actual blend and
+expense policy are disclosed in model flags, rationale and `/health`.
 The included repayment model uses explicitly declared **0% interest**;
 recommendations remain indices and require human review.
 

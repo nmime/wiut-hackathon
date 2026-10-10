@@ -1,7 +1,7 @@
 [project]
 name = "wiut-capacity-ml"
 version = "0.1.0"
-description = "Local synthetic cash-flow forecasting and explainable payment capacity"
+description = "Local real-data revenue forecasting and explainable payment capacity"
 requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi==0.143.0",

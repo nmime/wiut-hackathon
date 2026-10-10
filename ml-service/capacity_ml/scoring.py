@@ -82,7 +82,6 @@ def capacity_plan(history: MonthlyHistory, forecast: np.ndarray) -> dict:
     buffer = 0.55 / (1 + min(statistics["cv"], 2)) * (0.5 + 0.5 * confidence)
     capacities = np.maximum(forecast, 0) * buffer
     flags = [
-        "synthetic_borrower_expenses",
         "uncalibrated_confidence",
         "zero_interest_mvp",
     ]
@@ -180,6 +179,14 @@ def score_request(
         if model.transfer_weight
         else "public_revenue_transfer_not_selected"
     )
+    if model.transfer_weight < 1:
+        plan["flags"].append("synthetic_net_model_used")
+    if model.transfer_weight:
+        plan["flags"].append(
+            "observed_cost_projection"
+            if model.expense_mode == "observed_cost_regression"
+            else "synthetic_expense_model"
+        )
     stats = plan["statistics"]
     q25, q75 = np.quantile(forecast, [0.25, 0.75])
     calendar_months = [(history.forecast_start + i) % 12 + 1 for i in range(12)]
@@ -248,13 +255,23 @@ def score_request(
         "All amounts are indices; no UZS conversion is declared."
     )
     if model.transfer_weight:
+        revenue_description = (
+            "real-public-trained revenue"
+            if model.public_revenue_model.metadata["selected_uses_trained_estimator"]
+            else "a validation-selected observed-revenue baseline"
+        )
+        expense_description = (
+            "expenses projected from this borrower's observed inflow/outflow relationship"
+            if model.expense_mode == "observed_cost_regression"
+            else "synthetic-trained expense forecasts"
+        )
         rationale += (
-            f" Forecast blends {100 * model.transfer_weight:.0f}% real-public-trained revenue minus synthetic-trained expenses with {100 * (1 - model.transfer_weight):.0f}% synthetic net forecast, selected on synthetic validation MAE. "
-            "Public Uzbekistan SIAT turnover/service aggregates provide normalized revenue patterns, not borrower expenses or repayment evidence."
+            f" Forecast blends {100 * model.transfer_weight:.0f}% {revenue_description} minus {expense_description} with {100 * (1 - model.transfer_weight):.0f}% synthetic net forecast, selected on borrower validation with normalized-error checks. "
+            "Licensed public turnover observations provide normalized revenue patterns, not borrower expense or repayment labels."
         )
     else:
         rationale += (
-            " The real-public-trained revenue plus synthetic expense candidate did not improve synthetic validation MAE; the selected synthetic net forecast is used. "
+            " The real-public-trained revenue and expense projection candidate did not qualify on borrower validation; the selected synthetic net forecast is used. "
             "Public revenue aggregates supply no borrower expense or repayment labels."
         )
     if plan["principal"] == 0:

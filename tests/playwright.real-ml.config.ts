@@ -6,7 +6,7 @@ const databaseUrl =
   process.env.WIUT_REAL_ML_DATABASE_URL ??
   'postgresql://wiut:wiut_dev@127.0.0.1:55432/wiut_real_ml';
 
-// Opt-in only: requires a trained local synthetic model, its Python environment,
+// Opt-in only: requires the trained local real-data model, its Python environment,
 // and a separate PostgreSQL database. The standard fixture suite is unchanged.
 export default defineConfig({
   testDir: './real-ml',

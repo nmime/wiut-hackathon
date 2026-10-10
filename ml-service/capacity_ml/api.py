@@ -205,7 +205,7 @@ def create_app(
         yield
 
     application = FastAPI(
-        title="Synthetic payment capacity ML",
+        title="FlowCredit payment capacity ML",
         version="0.1.0",
         lifespan=lifespan,
     )
@@ -214,6 +214,8 @@ def create_app(
 
     @application.get("/health")
     def health(request: Request) -> dict:
+        model = request.app.state.model
+        training = model.public_revenue_model.metadata
         return {
             "status": "ok",
             "model_version": request.app.state.model.version,
@@ -221,10 +223,14 @@ def create_app(
             "synthetic_training_only": False,
             "serving_mode": request.app.state.model.selection["serving_mode"],
             "public_transfer_weight": request.app.state.model.transfer_weight,
-            "public_training_targets": request.app.state.model.public_revenue_model.metadata[
-                "training_examples"
-            ],
-            "provenance": "Licensed Uzbekistan SIAT revenue aggregates; borrower net flow and expenses remain synthetic",
+            "public_training_targets": training["training_examples"],
+            "public_training_sources": training["sources"],
+            "real_revenue_candidate": model.public_revenue_model.selected,
+            "real_revenue_estimator_used": bool(
+                model.transfer_weight and training["selected_uses_trained_estimator"]
+            ),
+            "expense_mode": model.selection.get("expense_mode", "synthetic_trained"),
+            "provenance": "Licensed public revenue observations train the inflow component. Borrower demonstration transactions remain synthetic; public sources supply no borrower expenses or repayment/default labels.",
         }
 
     @application.post("/score", response_model=ScoreResponse)
