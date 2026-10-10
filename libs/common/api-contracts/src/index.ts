@@ -28,7 +28,7 @@ export const TransactionSchema = z
       ),
     direction: z.enum(['in', 'out']),
     channel: z.enum(['card', 'transfer', 'qr', 'cash_in', 'other']),
-    amount_index: z.number().finite().positive().max(1e12),
+    amount_index: z.number().finite().min(1e-12).max(1e12),
   })
   .strict();
 
@@ -96,6 +96,33 @@ export const ScoreResponseSchema = z
       advisory: z.array(z.string().max(10000)).max(100),
     }),
     confidence: z.number().finite().min(0).max(1),
+    forecast_provenance: z
+      .object({
+        real_revenue_weight: z.number().finite().min(0).max(1),
+        synthetic_net_weight: z.number().finite().min(0).max(1),
+        expense_mode: z.enum([
+          'observed_cost_regression',
+          'observed_cost_projection',
+          'synthetic_trained',
+          'not_used',
+        ]),
+        revenue_candidate: z.string().min(1).max(100),
+        real_training_targets: z.number().int().nonnegative(),
+      })
+      .strict()
+      .refine(
+        (value) =>
+          Math.abs(value.real_revenue_weight + value.synthetic_net_weight - 1) <
+          1e-9,
+        'Forecast blend weights must sum to one',
+      )
+      .refine(
+        (value) =>
+          (value.real_revenue_weight === 0) ===
+          (value.expense_mode === 'not_used'),
+        'An active revenue contribution requires its expense projection policy',
+      )
+      .nullish(),
     flags: z.array(z.string().max(500)).max(100),
     model_version: z.string().min(1).max(100),
     request_id: z.string().min(1).max(200),
@@ -126,14 +153,36 @@ export const ScoreResponseSchema = z
           'Schedule must contain contiguous one-based offsets matching the suggested term',
       });
     }
-    if (
-      value.recommended_loan.suggested_principal_index > 0 &&
-      schedule.length === 0
+    const principal = value.recommended_loan.suggested_principal_index;
+    const totalPayments = schedule.reduce(
+      (total, row) => total + row.installment_index,
+      0,
+    );
+    if (!Number.isFinite(totalPayments)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['adaptive_schedule'],
+        message: 'Total scheduled payments must be finite',
+      });
+    } else if (
+      (principal === 0 && totalPayments > 0) ||
+      (principal > 0 && totalPayments === 0)
     ) {
       ctx.addIssue({
         code: 'custom',
         path: ['adaptive_schedule'],
-        message: 'A positive loan recommendation requires a repayment schedule',
+        message:
+          'A positive principal requires positive scheduled payments; a zero principal cannot require positive payments',
+      });
+    } else if (
+      value.flags.includes('zero_interest_mvp') &&
+      Math.abs(totalPayments - principal) >
+        Math.max(1e-12, 1e-9 * Math.max(totalPayments, principal))
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['adaptive_schedule'],
+        message: 'A zero-interest repayment schedule must sum to the principal',
       });
     }
   });

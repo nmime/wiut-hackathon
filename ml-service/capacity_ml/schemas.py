@@ -1,5 +1,6 @@
 """Python mirror of libs/common/api-contracts. No currency/index conversion."""
 
+import math
 import re
 from datetime import date, datetime
 from typing import Annotated, Literal
@@ -23,7 +24,7 @@ class Transaction(StrictModel):
     ts: str
     direction: Literal["in", "out"]
     channel: Literal["card", "transfer", "qr", "cash_in", "other"]
-    amount_index: Annotated[Finite, Field(gt=0, le=1e12)]
+    amount_index: Annotated[Finite, Field(ge=1e-12, le=1e12)]
 
     @field_validator("ts")
     @classmethod
@@ -110,6 +111,29 @@ class Explanation(StrictModel):
     advisory: Annotated[list[str], Field(max_length=100)]
 
 
+class ForecastProvenance(StrictModel):
+    real_revenue_weight: Annotated[Finite, Field(ge=0, le=1)]
+    synthetic_net_weight: Annotated[Finite, Field(ge=0, le=1)]
+    expense_mode: Literal[
+        "observed_cost_regression",
+        "observed_cost_projection",
+        "synthetic_trained",
+        "not_used",
+    ]
+    revenue_candidate: Annotated[str, Field(min_length=1, max_length=100)]
+    real_training_targets: Annotated[int, Field(ge=0, strict=True)]
+
+    @model_validator(mode="after")
+    def blend_valid(self) -> "ForecastProvenance":
+        if abs(self.real_revenue_weight + self.synthetic_net_weight - 1) >= 1e-9:
+            raise ValueError("Forecast blend weights must sum to one")
+        if (self.real_revenue_weight == 0) != (self.expense_mode == "not_used"):
+            raise ValueError(
+                "An active revenue contribution requires its expense projection policy"
+            )
+        return self
+
+
 class ScoreResponse(StrictModel):
     business_id: Annotated[str, Field(min_length=1, max_length=100)]
     as_of_date: str
@@ -121,6 +145,7 @@ class ScoreResponse(StrictModel):
     adaptive_schedule: Annotated[list[ScheduleRow], Field(max_length=120)]
     explanation: Explanation
     confidence: Annotated[Finite, Field(ge=0, le=1)]
+    forecast_provenance: ForecastProvenance | None = None
     flags: Annotated[list[Annotated[str, Field(max_length=500)]], Field(max_length=100)]
     model_version: Annotated[str, Field(min_length=1, max_length=100)]
     request_id: Annotated[str, Field(min_length=1, max_length=200)]
@@ -140,6 +165,21 @@ class ScoreResponse(StrictModel):
             raise ValueError("Schedule offsets must be contiguous")
         if schedule and len(schedule) != self.recommended_loan.suggested_term_months:
             raise ValueError("Schedule must match term")
-        if self.recommended_loan.suggested_principal_index > 0 and not schedule:
-            raise ValueError("Positive principal requires schedule")
+        principal = self.recommended_loan.suggested_principal_index
+        total_payments = sum(row.installment_index for row in schedule)
+        if not math.isfinite(total_payments):
+            raise ValueError("Total scheduled payments must be finite")
+        if (principal == 0 and total_payments > 0) or (
+            principal > 0 and total_payments == 0
+        ):
+            raise ValueError(
+                "A positive principal requires positive scheduled payments; "
+                "a zero principal cannot require positive payments"
+            )
+        if "zero_interest_mvp" in self.flags and not math.isclose(
+            total_payments, principal, rel_tol=1e-9, abs_tol=1e-12
+        ):
+            raise ValueError(
+                "A zero-interest repayment schedule must sum to the principal"
+            )
         return self

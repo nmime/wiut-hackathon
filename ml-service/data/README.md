@@ -90,3 +90,50 @@ atomically. Training and serving read committed snapshots offline. Format JSON
 with Prettier before retraining because exact snapshot bytes enter the artifact
 digest. A data refresh consumes the original final audit; review the protocol
 and report that status rather than repeatedly calling tuned tests fresh.
+
+## New European turnover and reserved UK audit
+
+[Eurostat sts_trtu_m](https://ec.europa.eu/eurostat/databrowser/product/view/sts_trtu_m)
+provides unadjusted nominal net turnover (`NETTUR`, `NSA`, `I21`; 2021=100),
+permitted by [its attributed reuse policy](https://ec.europa.eu/eurostat/help/copyright-notice).
+The fixed taxonomy has 30 EU/EFTA countries and 22 nonoverlapping NACE leaves
+across motor trade, wholesale and retail. The bounded September 2006–August 2026
+snapshot contains 660 series, 158,400 calendar positions, 67,581 published values
+and 90,819 null gaps. Suppressed, unreliable, imputed and forecast observations
+are not converted to invented zero sales. Provider flags are retained and
+windows crossing a reported definition break are excluded.
+
+[UK ONS Retail Sales Index DRSI](https://www.ons.gov.uk/businessindustryandtrade/retailindustry/datasets/retailsales/current)
+supplies 19 nominal, unadjusted all-business leaf VALUE indices, **2024=100**,
+with 4,560 monthly observations. The source is licensed under
+[Open Government Licence v3.0](https://www.ons.gov.uk/help/terms-conditions).
+Source: Office for National Statistics, licensed under OGL v3.0; adapted
+for forecast auditing without implying endorsement. **All ONS observations are
+audit-only: none enter training or model selection.** UK is absent from the
+Eurostat fixed country taxonomy. The September 18, 2026 ONS release/base-year
+metadata is checked explicitly; refresh cannot silently accept a new vintage.
+
+The [frozen protocol](external-protocol.json) assigns Eurostat country-hash
+partitions 18 training / 6 validation / 6 audit, with all sectors together.
+Training targets end August 2024; development validation is September 2024–
+August 2025; reserved final targets are September 2025–August 2026. UK uses the
+same final period as a wholly unseen provider. Usable training has 3,801 origins,
+45,612 actual targets and 23,676 unique targets from 145 series in 17 countries;
+validation has 44 valid cases in five countries. Missing data can exclude
+intended groups, and all affected identities/reasons are reported.
+
+Native Eurostat/ONS index points are turnover relative to different publisher
+base years, not money, borrower amount indices, costs or repayment outcomes.
+Only dimensionless history-normalized losses can be combined across them.
+Census access required a key and FRED terms disallowed ML use, so ONS replaced
+the proposed external provider before any audit model errors were examined.
+No Census/FRED data is retained or used.
+
+Refresh explicitly: `uv run python scripts/import_external_data.py`; to replay
+locally saved source downloads use `--raw-directory runtime`. Downloads use at
+most four concurrent requests, strict response/snapshot bounds, original hashes,
+unit/indicator checks and atomic writes. Format `data/external-*.json` with
+Prettier **before** retraining; exact bytes enter the model hash. The frozen
+corpus digest is `10ad0fe821c42ec9bb31c5305faf6d959e754ca45f6cba8748d6e89d47751807`.
+Inference and ordinary training are completely offline. A revised dataset/model
+requires new audit evidence rather than repeatedly tuning the same final labels.

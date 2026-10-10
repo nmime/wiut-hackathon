@@ -1,0 +1,768 @@
+{
+  "measured_at_utc": "2026-10-10T20:36:57.256643+00:00",
+  "model_version": "local-v4-599a354d528f-gradient_boosting-public75",
+  "audit_protocol_version": "engineering-audit-v4:positions-3000000-3000899",
+  "evaluation_status": "reserved_new_synthetic_engineering_cohort_after_freeze",
+  "source_sha256": "599a354d528fbc15b5b836828763c50532213429c6b28228c67c2c087b22064c",
+  "evaluator_sha256": "ba0caeef1d5b7963f6fe5d5cca6824aa9c7191d73cc00678f871394abc5e2a06",
+  "formula_source_sha256": "e44f44274e1cfda9b702f3e78863685747b67f8b7aa076e4a9719c8de7496290",
+  "frozen_protocol_document_sha256": "1d914128d493390eda9bb33c7ddb06bf901e489983dcffc30b4f5598be52a6fe",
+  "serving_policy": {
+    "serving_mode": "real_revenue_observed_costs_blend",
+    "expense_mode": "observed_cost_projection",
+    "configured_real_weight": 0.75,
+    "real_candidate": "adaptive_revenue_10",
+    "real_training_targets": 86976,
+    "real_training_by_provider": {
+      "uzbekistan_siat": {
+        "cases": 740,
+        "examples": 8880,
+        "series": 187,
+        "unique_target_observations": 2797,
+        "latest_target_month_id": 24311,
+        "training_loss_weight": 0.25
+      },
+      "abs": {
+        "cases": 1707,
+        "examples": 20484,
+        "series": 56,
+        "unique_target_observations": 10578,
+        "latest_target_month_id": 24281,
+        "training_loss_weight": 0.25
+      },
+      "statcan": {
+        "cases": 1000,
+        "examples": 12000,
+        "series": 109,
+        "unique_target_observations": 6654,
+        "latest_target_month_id": 24293,
+        "training_loss_weight": 0.25
+      },
+      "eurostat": {
+        "cases": 3801,
+        "examples": 45612,
+        "series": 145,
+        "unique_target_observations": 23676,
+        "latest_target_month_id": 24295,
+        "training_loss_weight": 0.25
+      }
+    },
+    "external_snapshot_sha256": "10ad0fe821c42ec9bb31c5305faf6d959e754ca45f6cba8748d6e89d47751807"
+  },
+  "synthetic_comparator_fingerprint": {
+    "recipe_sha256": "2dc7f14a36cfb5ccc7a6a65764ce242f798c0847fa872739c6136c8ad3b4b8eb",
+    "fitted_estimator_sha1": "ae160b5f4366081fc3b0a778d812666a55a3ec6c",
+    "sha256": "609c6d0052b53406da2dca3989259c3317ccf94d871eb7a87c1c37f932f1b128",
+    "recipe": {
+      "algorithm": "sha256-canonical-synthetic-net-recipe-v1",
+      "estimator_parameters": {
+        "categorical_features": "from_dtype",
+        "early_stopping": false,
+        "interaction_cst": null,
+        "l2_regularization": 2.0,
+        "learning_rate": 0.08,
+        "loss": "absolute_error",
+        "max_bins": 255,
+        "max_depth": null,
+        "max_features": 1.0,
+        "max_iter": 160,
+        "max_leaf_nodes": 15,
+        "min_samples_leaf": 25,
+        "monotonic_cst": null,
+        "n_iter_no_change": 10,
+        "quantile": null,
+        "random_state": 20261010,
+        "scoring": "loss",
+        "tol": 1e-7,
+        "validation_fraction": 0.1,
+        "verbose": 0,
+        "warm_start": false
+      },
+      "blend_weight": 1.0,
+      "selected_candidate": "gradient_boosting",
+      "feature_names": [
+        "lag1",
+        "lag2",
+        "lag3",
+        "lag6",
+        "lag12",
+        "mean3",
+        "mean6",
+        "mean12",
+        "volatility12",
+        "trend12",
+        "horizon",
+        "calendar_sin",
+        "calendar_cos",
+        "seasonal_naive",
+        "history_length",
+        "inflow_mean12",
+        "outflow_mean12"
+      ],
+      "training_configuration": {
+        "seed": 20261010,
+        "train_ids": [
+          "synthetic-train-0000",
+          "synthetic-train-0001",
+          "synthetic-train-0002",
+          "synthetic-train-0003",
+          "synthetic-train-0004",
+          "synthetic-train-0005",
+          "synthetic-train-0006",
+          "synthetic-train-0007",
+          "synthetic-train-0008",
+          "synthetic-train-0009",
+          "synthetic-train-0010",
+          "synthetic-train-0011",
+          "synthetic-train-0012",
+          "synthetic-train-0013",
+          "synthetic-train-0014",
+          "synthetic-train-0015",
+          "synthetic-train-0016",
+          "synthetic-train-0017",
+          "synthetic-train-0018",
+          "synthetic-train-0019",
+          "synthetic-train-0020",
+          "synthetic-train-0021",
+          "synthetic-train-0022",
+          "synthetic-train-0023",
+          "synthetic-train-0024",
+          "synthetic-train-0025",
+          "synthetic-train-0026",
+          "synthetic-train-0027",
+          "synthetic-train-0028",
+          "synthetic-train-0029",
+          "synthetic-train-0030",
+          "synthetic-train-0031",
+          "synthetic-train-0032",
+          "synthetic-train-0033",
+          "synthetic-train-0034",
+          "synthetic-train-0035",
+          "synthetic-train-0036",
+          "synthetic-train-0037",
+          "synthetic-train-0038",
+          "synthetic-train-0039",
+          "synthetic-train-0040",
+          "synthetic-train-0041",
+          "synthetic-train-0042",
+          "synthetic-train-0043",
+          "synthetic-train-0044",
+          "synthetic-train-0045",
+          "synthetic-train-0046",
+          "synthetic-train-0047",
+          "synthetic-train-0048",
+          "synthetic-train-0049",
+          "synthetic-train-0050",
+          "synthetic-train-0051",
+          "synthetic-train-0052",
+          "synthetic-train-0053",
+          "synthetic-train-0054",
+          "synthetic-train-0055",
+          "synthetic-train-0056",
+          "synthetic-train-0057",
+          "synthetic-train-0058",
+          "synthetic-train-0059",
+          "synthetic-train-0060",
+          "synthetic-train-0061",
+          "synthetic-train-0062",
+          "synthetic-train-0063",
+          "synthetic-train-0064",
+          "synthetic-train-0065",
+          "synthetic-train-0066",
+          "synthetic-train-0067",
+          "synthetic-train-0068",
+          "synthetic-train-0069",
+          "synthetic-train-0070",
+          "synthetic-train-0071",
+          "synthetic-train-0072",
+          "synthetic-train-0073",
+          "synthetic-train-0074",
+          "synthetic-train-0075",
+          "synthetic-train-0076",
+          "synthetic-train-0077",
+          "synthetic-train-0078",
+          "synthetic-train-0079",
+          "synthetic-train-0080",
+          "synthetic-train-0081",
+          "synthetic-train-0082",
+          "synthetic-train-0083",
+          "synthetic-train-0084",
+          "synthetic-train-0085",
+          "synthetic-train-0086",
+          "synthetic-train-0087",
+          "synthetic-train-0088",
+          "synthetic-train-0089",
+          "synthetic-train-0090",
+          "synthetic-train-0091",
+          "synthetic-train-0092",
+          "synthetic-train-0093",
+          "synthetic-train-0094",
+          "synthetic-train-0095",
+          "synthetic-train-0096",
+          "synthetic-train-0097",
+          "synthetic-train-0098",
+          "synthetic-train-0099",
+          "synthetic-train-0100",
+          "synthetic-train-0101",
+          "synthetic-train-0102",
+          "synthetic-train-0103",
+          "synthetic-train-0104",
+          "synthetic-train-0105",
+          "synthetic-train-0106",
+          "synthetic-train-0107",
+          "synthetic-train-0108",
+          "synthetic-train-0109",
+          "synthetic-train-0110",
+          "synthetic-train-0111",
+          "synthetic-train-0112",
+          "synthetic-train-0113",
+          "synthetic-train-0114",
+          "synthetic-train-0115",
+          "synthetic-train-0116",
+          "synthetic-train-0117",
+          "synthetic-train-0118",
+          "synthetic-train-0119",
+          "synthetic-train-0120",
+          "synthetic-train-0121",
+          "synthetic-train-0122",
+          "synthetic-train-0123",
+          "synthetic-train-0124",
+          "synthetic-train-0125",
+          "synthetic-train-0126",
+          "synthetic-train-0127",
+          "synthetic-train-0128",
+          "synthetic-train-0129",
+          "synthetic-train-0130",
+          "synthetic-train-0131",
+          "synthetic-train-0132",
+          "synthetic-train-0133",
+          "synthetic-train-0134",
+          "synthetic-train-0135",
+          "synthetic-train-0136",
+          "synthetic-train-0137",
+          "synthetic-train-0138",
+          "synthetic-train-0139",
+          "synthetic-train-0140",
+          "synthetic-train-0141",
+          "synthetic-train-0142",
+          "synthetic-train-0143",
+          "synthetic-train-0144",
+          "synthetic-train-0145",
+          "synthetic-train-0146",
+          "synthetic-train-0147",
+          "synthetic-train-0148",
+          "synthetic-train-0149",
+          "synthetic-train-0150",
+          "synthetic-train-0151",
+          "synthetic-train-0152",
+          "synthetic-train-0153",
+          "synthetic-train-0154",
+          "synthetic-train-0155",
+          "synthetic-train-0156",
+          "synthetic-train-0157",
+          "synthetic-train-0158",
+          "synthetic-train-0159",
+          "synthetic-train-0160",
+          "synthetic-train-0161",
+          "synthetic-train-0162",
+          "synthetic-train-0163",
+          "synthetic-train-0164",
+          "synthetic-train-0165",
+          "synthetic-train-0166",
+          "synthetic-train-0167",
+          "synthetic-train-0168",
+          "synthetic-train-0169",
+          "synthetic-train-0170",
+          "synthetic-train-0171",
+          "synthetic-train-0172",
+          "synthetic-train-0173",
+          "synthetic-train-0174",
+          "synthetic-train-0175",
+          "synthetic-train-0176",
+          "synthetic-train-0177",
+          "synthetic-train-0178",
+          "synthetic-train-0179"
+        ],
+        "validation_ids": [
+          "synthetic-validation-0000",
+          "synthetic-validation-0001",
+          "synthetic-validation-0002",
+          "synthetic-validation-0003",
+          "synthetic-validation-0004",
+          "synthetic-validation-0005",
+          "synthetic-validation-0006",
+          "synthetic-validation-0007",
+          "synthetic-validation-0008",
+          "synthetic-validation-0009",
+          "synthetic-validation-0010",
+          "synthetic-validation-0011",
+          "synthetic-validation-0012",
+          "synthetic-validation-0013",
+          "synthetic-validation-0014",
+          "synthetic-validation-0015",
+          "synthetic-validation-0016",
+          "synthetic-validation-0017",
+          "synthetic-validation-0018",
+          "synthetic-validation-0019",
+          "synthetic-validation-0020",
+          "synthetic-validation-0021",
+          "synthetic-validation-0022",
+          "synthetic-validation-0023",
+          "synthetic-validation-0024",
+          "synthetic-validation-0025",
+          "synthetic-validation-0026",
+          "synthetic-validation-0027",
+          "synthetic-validation-0028",
+          "synthetic-validation-0029",
+          "synthetic-validation-0030",
+          "synthetic-validation-0031",
+          "synthetic-validation-0032",
+          "synthetic-validation-0033",
+          "synthetic-validation-0034",
+          "synthetic-validation-0035",
+          "synthetic-validation-0036",
+          "synthetic-validation-0037",
+          "synthetic-validation-0038",
+          "synthetic-validation-0039",
+          "synthetic-validation-0040",
+          "synthetic-validation-0041",
+          "synthetic-validation-0042",
+          "synthetic-validation-0043",
+          "synthetic-validation-0044",
+          "synthetic-validation-0045",
+          "synthetic-validation-0046",
+          "synthetic-validation-0047",
+          "synthetic-validation-0048",
+          "synthetic-validation-0049",
+          "synthetic-validation-0050",
+          "synthetic-validation-0051",
+          "synthetic-validation-0052",
+          "synthetic-validation-0053",
+          "synthetic-validation-0054",
+          "synthetic-validation-0055",
+          "synthetic-validation-0056",
+          "synthetic-validation-0057",
+          "synthetic-validation-0058",
+          "synthetic-validation-0059"
+        ],
+        "training_businesses": 180,
+        "validation_businesses": 60,
+        "training_origins": 1746,
+        "training_examples": 20952,
+        "training_origin_variants": ["complete_month", "partial_month_excluded"]
+      },
+      "functions_sha256": {
+        "MonthlyHistory": "fb5f7ef682d0fea7986c53ebed00c3c98a4d71f11a2734a89d99a3249f28ab2e",
+        "aggregate": "a0b69dd6cef23d7c84b0676b5b8b736207f6b5f5777c2fd45691abd127adc61d",
+        "normalizer": "7c028ddc7cde267cca045e5082ff07ee6647902dd44578fb15cd33bb5f340e03",
+        "seasonal_forecast": "a9b7e1205eb7f6765dc6a65b862ad46a77ae8f90a67101c72bff453fe5c6d0c6",
+        "feature_matrix": "46228e9adb39db3836e8038ef1565dd884a72f659457398b92b214a4c15ddc77",
+        "ForecastModel.predict_candidates": "780f5e905b01171533530b0a532e124ec0daaa62ff4d6b91e7930cb2479b5a00",
+        "ForecastModel.predict_synthetic": "37f8d1107929156597e6fd3279d88cc2101c8cd190461dfaa2998406a46ca0b0"
+      },
+      "net_fitting_and_selection_source_sha256": "7d9c2f67eddcab731e768796107c9f53393ef2b26315161b05097c175bb4bda5",
+      "generator_and_calibration_source_sha256": {
+        "generator.py": "c2ac3a3ed0aa4bc144a33db98391e3620fc3218595bbd0d9f7e98bd4476dcefb",
+        "public_data.py": "23482e2b95503dc81536d3cd1b1761c787e02138338fc1e5b54846ffc1003624"
+      },
+      "calibration_data_sha256": "bf2827c6d1756fdf6abfc7e2477305935ec4a702aa300412a489eaffba6f3eb1",
+      "dependencies_sha256": "e0f0153e266144ddf2e58da9c18ab2e8ffa963b2e7432b95342e75cc306a7787"
+    },
+    "scope": "Original synthetic net estimator and validation-selected blend, excluding expense/transfer projection. Recipe equality is portable; learned fingerprint equality is checked separately locally. Recorded from trusted v2 checkpoint without generating any audit case."
+  },
+  "synthetic_comparator_continuity": {
+    "recipe_match": true,
+    "local_fitted_fingerprint_exact_match": true
+  },
+  "selected": {
+    "businesses": 900,
+    "observed_future_months": 10800,
+    "mae_index": 92.99671389377721,
+    "macro_business_normalized_mae": 0.12494882023782689,
+    "absolute_net_wape_pct": 31.956590517800098,
+    "wape_excluded_zero_or_nearzero_months": 0
+  },
+  "fixed_synthetic_reference": {
+    "businesses": 900,
+    "observed_future_months": 10800,
+    "mae_index": 97.89802932559927,
+    "macro_business_normalized_mae": 0.13136673798349008,
+    "absolute_net_wape_pct": 33.64083637655396,
+    "wape_excluded_zero_or_nearzero_months": 0
+  },
+  "improvement": {
+    "macro_normalized_mae_improvement_pct": 4.885496773521114,
+    "business_bootstrap_95pct_interval": [
+      3.5091462381595817, 6.270568881271114
+    ],
+    "independent_generated_business_seeds": 900,
+    "replicates": 2000,
+    "usable_replicates": 2000,
+    "seed": 20261012,
+    "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+  },
+  "protocol": {
+    "positions_inclusive": [3000000, 3000899],
+    "businesses": 900,
+    "generator_unchanged": true,
+    "ids_sha256": "21f81f0cb8c853832458cc18b8eed6357a52a9d59699cd75a644720fb56dcfc3",
+    "future_net_sha256": "9fa3b75adc3c830c6d7bc5acc97ee5059bdf10c9b615703d6f940bb967054513",
+    "target_truth": "New generated future inflow minus generated future outflow; never public expense/repayment/default labels"
+  },
+  "cohorts": {
+    "cold_start": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 81.5073709039775,
+        "macro_business_normalized_mae": 0.12703531125358083,
+        "absolute_net_wape_pct": 30.28822463140319,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 82.13718944385357,
+        "macro_business_normalized_mae": 0.1276308479473485,
+        "absolute_net_wape_pct": 30.522265862290908,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 0.46660874180931566,
+        "business_bootstrap_95pct_interval": [
+          -0.7003855501397255, 1.7094563056368857
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "declining": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 28.95874980473006,
+        "macro_business_normalized_mae": 0.06879267446220017,
+        "absolute_net_wape_pct": 21.656903506619607,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 34.685303156945686,
+        "macro_business_normalized_mae": 0.08103675300503811,
+        "absolute_net_wape_pct": 25.93952669341843,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 15.109290647512408,
+        "business_bootstrap_95pct_interval": [
+          11.380999014400684, 18.65206577067395
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "growing": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 86.88401167894719,
+        "macro_business_normalized_mae": 0.08680089460029944,
+        "absolute_net_wape_pct": 17.2312939281362,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 111.49439882973742,
+        "macro_business_normalized_mae": 0.11042630954190036,
+        "absolute_net_wape_pct": 22.11215527979095,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 21.394733772784903,
+        "business_bootstrap_95pct_interval": [
+          18.15099770936617, 24.88852648961341
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "negative_surplus": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 53.71999697224048,
+        "macro_business_normalized_mae": 0.07803674496766382,
+        "absolute_net_wape_pct": 44.23444394027107,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 56.10559872378494,
+        "macro_business_normalized_mae": 0.08138270440863811,
+        "absolute_net_wape_pct": 46.198810524227426,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 4.111388857482046,
+        "business_bootstrap_95pct_interval": [
+          1.2904276511551624, 6.945888372359487
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "pattern_break": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 122.9610540724708,
+        "macro_business_normalized_mae": 0.22031709836986654,
+        "absolute_net_wape_pct": 72.1836654402608,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 106.2229236811293,
+        "macro_business_normalized_mae": 0.19046375179658384,
+        "absolute_net_wape_pct": 62.357630575986164,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": -15.674030513252912,
+        "business_bootstrap_95pct_interval": [
+          -18.791553632058367, -12.797859060862471
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "seasonal": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 45.26633378760563,
+        "macro_business_normalized_mae": 0.07121907459480174,
+        "absolute_net_wape_pct": 17.789377864630744,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 52.086330188864416,
+        "macro_business_normalized_mae": 0.0830278149575706,
+        "absolute_net_wape_pct": 20.46959255987593,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 14.222631739500113,
+        "business_bootstrap_95pct_interval": [
+          10.753501345507905, 17.54730723859287
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "stable": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 40.84708619059345,
+        "macro_business_normalized_mae": 0.06437646275262512,
+        "absolute_net_wape_pct": 15.196254458021475,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 43.933880290269954,
+        "macro_business_normalized_mae": 0.06906629238128828,
+        "absolute_net_wape_pct": 16.344627891057335,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 6.790330661985378,
+        "business_bootstrap_95pct_interval": [
+          3.642013892980634, 9.982612078656425
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "unseen_seasonality": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 71.14899199395298,
+        "macro_business_normalized_mae": 0.11374208258106153,
+        "absolute_net_wape_pct": 26.932965300683755,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 93.9290411191315,
+        "macro_business_normalized_mae": 0.14910271672000802,
+        "absolute_net_wape_pct": 35.55619741461798,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 23.71562028970161,
+        "business_bootstrap_95pct_interval": [
+          20.741464793118055, 26.72448115169756
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "volatile_growth": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 305.67682963947686,
+        "macro_business_normalized_mae": 0.2942190385583429,
+        "absolute_net_wape_pct": 48.30329553043805,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 300.48759849667664,
+        "macro_business_normalized_mae": 0.2901634510930346,
+        "absolute_net_wape_pct": 47.48328910155018,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": -1.3976906636693487,
+        "business_bootstrap_95pct_interval": [
+          -3.9902003632094356, 0.8498916058882231
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    }
+  },
+  "history_length": {
+    "long_ge12": {
+      "selected": {
+        "businesses": 800,
+        "observed_future_months": 9600,
+        "mae_index": 94.43288176750218,
+        "macro_business_normalized_mae": 0.12468800886085767,
+        "absolute_net_wape_pct": 32.14764193373586,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 800,
+        "observed_future_months": 9600,
+        "mae_index": 99.86813431081748,
+        "macro_business_normalized_mae": 0.13183372423800774,
+        "absolute_net_wape_pct": 33.99795666851354,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 5.420248436772979,
+        "business_bootstrap_95pct_interval": [
+          3.900363133910356, 6.990688459640557
+        ],
+        "independent_generated_business_seeds": 800,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "short_lt12": {
+      "selected": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 81.5073709039775,
+        "macro_business_normalized_mae": 0.12703531125358083,
+        "absolute_net_wape_pct": 30.28822463140319,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 100,
+        "observed_future_months": 1200,
+        "mae_index": 82.13718944385357,
+        "macro_business_normalized_mae": 0.1276308479473485,
+        "absolute_net_wape_pct": 30.522265862290908,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 0.46660874180931566,
+        "business_bootstrap_95pct_interval": [
+          -0.7003855501397255, 1.7094563056368857
+        ],
+        "independent_generated_business_seeds": 100,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    }
+  },
+  "effective_real_weight": {
+    "mean": 0.6055555555555555,
+    "minimum": 0.25,
+    "maximum": 0.75,
+    "businesses_at_least_half": 640
+  },
+  "selected_uses_real_trained_estimator": true,
+  "scoring_flow": {
+    "valid_responses": 900,
+    "positive_principal_businesses": 745,
+    "zero_principal_businesses": 155,
+    "schedule_principal_sums_checked": true,
+    "real_bank_capacity_validated": false
+  },
+  "predetermined_acceptance": {
+    "status": "fail",
+    "checks": {
+      "macro_business_normalized_mae": true,
+      "pooled_mae_index": true,
+      "cohort_regressions": false,
+      "majority_actual_real_component": true,
+      "selected_uses_real_trained_estimator": true
+    },
+    "rules_frozen_before_labels": true,
+    "macro_error_maximum_ratio": 1.02,
+    "raw_error_maximum_ratio": 1.05,
+    "cohort_macro_error_maximum_ratio": 1.15,
+    "mean_effective_real_weight_minimum": 0.5,
+    "scope": "Finite-sample no-material-regression engineering tolerances, not a claimed accuracy gain or validated lending policy. Actual error improvement and uncertainty are reported separately."
+  },
+  "freshness_limit": "These reserved seeds are not used in fitting, validation or tuning. Reruns reproduce the same frozen model; after inspecting results this cohort is consumed for subsequent model revisions. Do not retune on this audit.",
+  "truth_scope": "Every business, expense and future net-flow target in this report is synthetic. More real-trained forecast usage does not make expenses, capacity scores or repayment outcomes real-labeled. This is an engineering regression guard, not evidence of bank performance.",
+  "audit_lineage": "Exploratory sequential development: v2 positions 1,000,000\u20131,000,179 rejected the 60%/25% policy because mean real weight 0.4969444444444444 missed the unchanged 0.50 gate. V3 positions 2,000,000\u20132,000,899 rejected fixed50 because pattern-break normalized error worsened 20.727901853928323%, beyond the unchanged 15% cohort guard, despite overall normalized skill 4.382197570698798% and 0.50 mean weight. Both failures remain preserved in engineering-audit-v2-rejected.json/.md and engineering-audit-v3-rejected.json/.md. The next expense/serving policy is chosen only on original training/development cases, with real estimators/candidate, generator, synthetic comparator and audit thresholds unchanged. V4 positions 3,000,000\u20133,000,899 were reserved before their target construction. Multiple audit-driven revisions make the development path exploratory; a later pass is not guaranteed superiority or an unconditional single-shot confidence claim."
+}

@@ -1,0 +1,442 @@
+{
+  "measured_at_utc": "2026-10-10T20:17:01.772844+00:00",
+  "model_version": "local-v4-a93ef54f76f4-gradient_boosting-public60",
+  "audit_protocol_version": "provider-audit-v2:engineering-positions-1000000-1000179",
+  "evaluation_status": "reserved_new_synthetic_engineering_cohort_after_freeze",
+  "source_sha256": "a93ef54f76f4117995aa9bce851ab4251e69c2f7ef337bdae03522b1191544db",
+  "evaluator_sha256": "bde58c1d9459b7786e717f21aa492d4f8e50cf05b3be1d84a4b1e69aa869f955",
+  "formula_source_sha256": "8f5cd8f19590dcc7a588aea684d4f11542d649cca6bb4ce1a638ce2d23ae32bf",
+  "frozen_protocol_document_sha256": "20e64b3a4245433f4c96f6d9bcbb992ffa3000a748f6ee6d9b03aa467391d217",
+  "serving_policy": {
+    "serving_mode": "real_revenue_observed_costs_blend",
+    "expense_mode": "observed_cost_regression",
+    "configured_real_weight": 0.6,
+    "real_candidate": "adaptive_revenue_10",
+    "real_training_targets": 86976,
+    "real_training_by_provider": {
+      "uzbekistan_siat": {
+        "cases": 740,
+        "examples": 8880,
+        "series": 187,
+        "unique_target_observations": 2797,
+        "latest_target_month_id": 24311,
+        "training_loss_weight": 0.25
+      },
+      "abs": {
+        "cases": 1707,
+        "examples": 20484,
+        "series": 56,
+        "unique_target_observations": 10578,
+        "latest_target_month_id": 24281,
+        "training_loss_weight": 0.25
+      },
+      "statcan": {
+        "cases": 1000,
+        "examples": 12000,
+        "series": 109,
+        "unique_target_observations": 6654,
+        "latest_target_month_id": 24293,
+        "training_loss_weight": 0.25
+      },
+      "eurostat": {
+        "cases": 3801,
+        "examples": 45612,
+        "series": 145,
+        "unique_target_observations": 23676,
+        "latest_target_month_id": 24295,
+        "training_loss_weight": 0.25
+      }
+    },
+    "external_snapshot_sha256": "10ad0fe821c42ec9bb31c5305faf6d959e754ca45f6cba8748d6e89d47751807"
+  },
+  "selected": {
+    "businesses": 180,
+    "observed_future_months": 2160,
+    "mae_index": 87.6636573736248,
+    "macro_business_normalized_mae": 0.12442077541018091,
+    "absolute_net_wape_pct": 34.03176697615642,
+    "wape_excluded_zero_or_nearzero_months": 0
+  },
+  "fixed_synthetic_reference": {
+    "businesses": 180,
+    "observed_future_months": 2160,
+    "mae_index": 89.97992985753395,
+    "macro_business_normalized_mae": 0.12916781447500228,
+    "absolute_net_wape_pct": 34.930963379629716,
+    "wape_excluded_zero_or_nearzero_months": 0
+  },
+  "improvement": {
+    "macro_normalized_mae_improvement_pct": 3.6750943600892705,
+    "business_bootstrap_95pct_interval": [
+      1.1423833013571523, 6.209734024008111
+    ],
+    "independent_generated_business_seeds": 180,
+    "replicates": 2000,
+    "usable_replicates": 2000,
+    "seed": 20261012,
+    "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+  },
+  "protocol": {
+    "positions_inclusive": [1000000, 1000179],
+    "businesses": 180,
+    "generator_unchanged": true,
+    "ids_sha256": "faa971bc386bf82b639bc7501291337e97c2760e6e93cf46136d3ebe519be2b2",
+    "future_net_sha256": "360da034d133f348c77006e40f25819d7e7f19e8ce3f067d1e78866790c39598",
+    "target_truth": "New generated future inflow minus generated future outflow; never public expense/repayment/default labels"
+  },
+  "cohorts": {
+    "cold_start": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 69.79081270099199,
+        "macro_business_normalized_mae": 0.12983189564130126,
+        "absolute_net_wape_pct": 33.42200220843339,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 68.4659365238502,
+        "macro_business_normalized_mae": 0.1274547149636111,
+        "absolute_net_wape_pct": 32.787534535617425,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": -1.865117880000633,
+        "business_bootstrap_95pct_interval": [
+          -5.353325069378935, 1.0492493020518758
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "declining": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 24.962881559326767,
+        "macro_business_normalized_mae": 0.06774351651155129,
+        "absolute_net_wape_pct": 23.325195454592542,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 29.733087699154126,
+        "macro_business_normalized_mae": 0.08262969617929047,
+        "absolute_net_wape_pct": 27.78245293529388,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 18.015532376446153,
+        "business_bootstrap_95pct_interval": [
+          11.670521741646276, 24.628028159892217
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "growing": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 79.82586739245974,
+        "macro_business_normalized_mae": 0.09073546515044544,
+        "absolute_net_wape_pct": 17.438761055622773,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 93.2961672298819,
+        "macro_business_normalized_mae": 0.10670039324651212,
+        "absolute_net_wape_pct": 20.381483106577754,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 14.96238918181173,
+        "business_bootstrap_95pct_interval": [
+          10.760166557372223, 19.667214935203564
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "negative_surplus": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 59.259479522571226,
+        "macro_business_normalized_mae": 0.07622917766531404,
+        "absolute_net_wape_pct": 44.954614285476666,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 63.836701589195776,
+        "macro_business_normalized_mae": 0.08175485041667674,
+        "absolute_net_wape_pct": 48.426923765105236,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 6.75883170625381,
+        "business_bootstrap_95pct_interval": [
+          3.0737550851361495, 10.347868268202193
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "pattern_break": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 115.47591690176507,
+        "macro_business_normalized_mae": 0.22903026762652517,
+        "absolute_net_wape_pct": 70.34411440179842,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 97.26757263541091,
+        "macro_business_normalized_mae": 0.20016591405332065,
+        "absolute_net_wape_pct": 59.25219249716992,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": -14.4202142056592,
+        "business_bootstrap_95pct_interval": [
+          -22.71607398127364, -8.169067266161434
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "seasonal": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 39.1710354200985,
+        "macro_business_normalized_mae": 0.0723276013801057,
+        "absolute_net_wape_pct": 20.445074341971207,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 44.91918703933205,
+        "macro_business_normalized_mae": 0.08225504608380797,
+        "absolute_net_wape_pct": 23.44528574623376,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 12.069101138898386,
+        "business_bootstrap_95pct_interval": [
+          4.761986398326739, 18.233161935588676
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "stable": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 31.184447720494873,
+        "macro_business_normalized_mae": 0.05931423570316959,
+        "absolute_net_wape_pct": 14.224002811686884,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 33.91362482845318,
+        "macro_business_normalized_mae": 0.0634300959108563,
+        "absolute_net_wape_pct": 15.468848422073547,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 6.4888128396827005,
+        "business_bootstrap_95pct_interval": [
+          0.11458840334385074, 12.525515708475195
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "unseen_seasonality": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 73.84445324566785,
+        "macro_business_normalized_mae": 0.12482681988503656,
+        "absolute_net_wape_pct": 32.20773263119404,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 89.88678992174404,
+        "macro_business_normalized_mae": 0.15252352517910986,
+        "absolute_net_wape_pct": 39.2047008222067,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 18.15897269719461,
+        "business_bootstrap_95pct_interval": [
+          14.362742841163561, 22.953847775327667
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "volatile_growth": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 295.4580218992471,
+        "macro_business_normalized_mae": 0.26974799912817926,
+        "absolute_net_wape_pct": 48.54156248261996,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 288.5003012507833,
+        "macro_business_normalized_mae": 0.2655960942418352,
+        "absolute_net_wape_pct": 47.39846056437456,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": -1.5632401892791137,
+        "business_bootstrap_95pct_interval": [
+          -6.118548184385304, 2.0493016929348373
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    }
+  },
+  "history_length": {
+    "long_ge12": {
+      "selected": {
+        "businesses": 160,
+        "observed_future_months": 1920,
+        "mae_index": 89.8977629577039,
+        "macro_business_normalized_mae": 0.12374438538129087,
+        "absolute_net_wape_pct": 34.092126156607044,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 160,
+        "observed_future_months": 1920,
+        "mae_index": 92.6691790242444,
+        "macro_business_normalized_mae": 0.12938195191392618,
+        "absolute_net_wape_pct": 35.1431363604694,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": 4.357305210842521,
+        "business_bootstrap_95pct_interval": [
+          1.420408648242521, 7.224456044652078
+        ],
+        "independent_generated_business_seeds": 160,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    },
+    "short_lt12": {
+      "selected": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 69.79081270099199,
+        "macro_business_normalized_mae": 0.12983189564130126,
+        "absolute_net_wape_pct": 33.42200220843339,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "fixed_synthetic_reference": {
+        "businesses": 20,
+        "observed_future_months": 240,
+        "mae_index": 68.4659365238502,
+        "macro_business_normalized_mae": 0.1274547149636111,
+        "absolute_net_wape_pct": 32.787534535617425,
+        "wape_excluded_zero_or_nearzero_months": 0
+      },
+      "improvement": {
+        "macro_normalized_mae_improvement_pct": -1.865117880000633,
+        "business_bootstrap_95pct_interval": [
+          -5.353325069378935, 1.0492493020518758
+        ],
+        "independent_generated_business_seeds": 20,
+        "replicates": 2000,
+        "usable_replicates": 2000,
+        "seed": 20261012,
+        "scope": "Resample whole generated businesses, preserving twelve dependent future months. Synthetic stochastic seeds are independent; this interval does not describe real borrowers or default outcomes."
+      }
+    }
+  },
+  "effective_real_weight": {
+    "mean": 0.49694444444444436,
+    "minimum": 0.25,
+    "maximum": 0.6,
+    "businesses_at_least_half": 127
+  },
+  "selected_uses_real_trained_estimator": true,
+  "scoring_flow": {
+    "valid_responses": 180,
+    "positive_principal_businesses": 152,
+    "zero_principal_businesses": 28,
+    "schedule_principal_sums_checked": true,
+    "real_bank_capacity_validated": false
+  },
+  "predetermined_acceptance": {
+    "status": "fail",
+    "checks": {
+      "macro_business_normalized_mae": true,
+      "pooled_mae_index": true,
+      "cohort_regressions": true,
+      "majority_actual_real_component": false,
+      "selected_uses_real_trained_estimator": true
+    },
+    "rules_frozen_before_labels": true,
+    "macro_error_maximum_ratio": 1.02,
+    "raw_error_maximum_ratio": 1.05,
+    "cohort_macro_error_maximum_ratio": 1.15,
+    "mean_effective_real_weight_minimum": 0.5,
+    "scope": "Finite-sample no-material-regression engineering tolerances, not a claimed accuracy gain or validated lending policy. Actual error improvement and uncertainty are reported separately."
+  },
+  "freshness_limit": "These reserved seeds are not used in fitting, validation or tuning. Reruns reproduce the same frozen model; after inspecting results this cohort is consumed for subsequent model revisions. Do not retune on this audit.",
+  "truth_scope": "Every business, expense and future net-flow target in this report is synthetic. More real-trained forecast usage does not make expenses, capacity scores or repayment outcomes real-labeled. This is an engineering regression guard, not evidence of bank performance."
+}

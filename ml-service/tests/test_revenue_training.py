@@ -142,10 +142,11 @@ def test_real_artifact_and_transfer_choice_use_only_validation(model):
     public = model.public_revenue_model
     maes = public.metadata["validation"]
     qualified = public.metadata["candidate_qualification"]
-    assert public.selected == min(
+    assert public.metadata["real_validation_best_candidate"] == min(
         (name for name in maes if qualified[name]),
         key=lambda name: maes[name]["normalized_mae"],
     )
+    assert qualified[public.selected]
     assert public.metadata["uzbekistan_training_examples"] == 8880
     assert public.metadata["training_examples"] == sum(
         row["examples"] for row in public.metadata["training_by_provider"].values()
@@ -155,24 +156,80 @@ def test_real_artifact_and_transfer_choice_use_only_validation(model):
     assert model.expense_estimator.n_features_in_ == model.estimator.n_features_in_
     transfer_mae = model.selection["transfer_validation_mae_index"]
     assert tuple(transfer_mae) == TRANSFER_WEIGHTS
-    results = model.selection["transfer_validation"]
-    qualified = []
-    for expense_mode, row in results.items():
-        baseline = row["pooled_mae_index"][0]
-        baseline_macro = row["macro_normalized_mae"][0]
-        for weight in TRANSFER_WEIGHTS:
-            raw = row["pooled_mae_index"][weight]
-            macro = row["macro_normalized_mae"][weight]
-            if weight == 0 or (
-                public.metadata["selected_uses_trained_estimator"]
-                and model.selection["real_validation_skill_vs_seasonal"] >= 0.05
-                and raw < baseline
-                and macro <= baseline_macro * 1.02
-            ):
-                qualified.append((raw, macro, expense_mode, weight))
-    _, _, expense_mode, weight = min(qualified)
-    assert model.transfer_weight == weight
-    assert model.expense_mode == expense_mode
+    qualified_options = []
+    for revenue_name, results in model.selection["joint_policy_validation"].items():
+        for expense_mode, rows in results.items():
+            baseline = rows["fixed_0"]["pooled_mae_index"]
+            baseline_macro = rows["fixed_0"]["macro_normalized_mae"]
+            for policy_name, row in rows.items():
+                raw = row["pooled_mae_index"]
+                macro = row["macro_normalized_mae"]
+                cohort_gate = all(
+                    value
+                    <= rows["fixed_0"]["by_cohort_macro_normalized_mae"][cohort] * 1.15
+                    for cohort, value in row["by_cohort_macro_normalized_mae"].items()
+                )
+                development_eligible = policy_name == "fixed_0" or (
+                    revenue_name in model.selection["qualified_real_revenue_candidates"]
+                    and raw < baseline
+                    and macro <= baseline_macro * 1.02
+                    and cohort_gate
+                )
+                from capacity_ml.train import FROZEN_REAL_REVENUE_CANDIDATE
+
+                eligible = (
+                    development_eligible
+                    and revenue_name == FROZEN_REAL_REVENUE_CANDIDATE
+                    and row["effective_real_weights"]["mean"] >= 0.55
+                    and row["maximum_cohort_error_ratio_vs_synthetic"] <= 1.10
+                )
+                assert row["maximum_cohort_error_ratio_vs_synthetic"] == max(
+                    value / rows["fixed_0"]["by_cohort_macro_normalized_mae"][cohort]
+                    for cohort, value in row["by_cohort_macro_normalized_mae"].items()
+                )
+                assert row["development_robustness_eligible"] == (
+                    row["maximum_cohort_error_ratio_vs_synthetic"] <= 1.10
+                )
+                assert row["development_eligible"] == development_eligible
+                assert row["eligible"] == eligible
+                if eligible:
+                    qualified_options.append(
+                        (raw, macro, revenue_name, expense_mode, policy_name)
+                    )
+    _, _, revenue_name, expense_mode, policy_name = min(qualified_options)
+    assert model.selection["selected_transfer_policy"] == policy_name
+    assert (
+        model.transfer_policy
+        == model.selection["selected_transfer_validation"]["policy"]
+    )
+    assert model.transfer_weight == model.transfer_policy["base_weight"]
+    assert model.selection["selected_expense_policy"] == expense_mode
+    assert (
+        model.expense_policy == model.selection["expense_projection_grid"][expense_mode]
+    )
+    assert public.selected == revenue_name
+    assert public.selected == FROZEN_REAL_REVENUE_CANDIDATE
+    assert model.selection["minimum_development_mean_real_weight"] == 0.55
+    assert model.selection["maximum_development_cohort_error_ratio"] == 1.10
+    assert (
+        model.selection["policy_reselection"][
+            "final_audit_targets_used_for_reselection"
+        ]
+        is False
+    )
+
+
+def test_development_share_aggregation_preserves_exact_threshold_without_rounding():
+    from capacity_ml.train import effective_weight_summary
+
+    weights = [0.65] * 45 + [0.25] * 15
+    summary = effective_weight_summary(weights)
+    assert summary["mean"] == 0.55
+    assert summary["by_weight"] == {"0.25": 15, "0.65": 45}
+    assert summary["requests"] == 60
+    below = weights.copy()
+    below[0] -= 1e-9
+    assert effective_weight_summary(below)["mean"] < 0.55
 
 
 def test_real_revenue_predictions_scale_and_ignore_borrower_expense_series(model):
@@ -196,6 +253,7 @@ def test_zero_transfer_fast_path_avoids_unused_inference(
     history = aggregate(score_request_input)
     synthetic = model.predict_synthetic(history)
     monkeypatch.setattr(model, "transfer_weight", 0)
+    monkeypatch.setattr(model, "transfer_policy", None)
 
     def unused(*args):
         raise AssertionError("Rejected transfer component must not run during /score")
@@ -255,6 +313,96 @@ def test_revenue_feature_schema_baselines_and_observed_costs_are_scale_invariant
     )
 
 
+def test_transfer_regime_guard_uses_observed_history_and_is_scale_invariant():
+    from capacity_ml.forecasting import transfer_policies, transfer_policy_weight
+
+    policy = transfer_policies()["guard_0.6_0.25_0.25"]
+    normal = MonthlyHistory(np.arange(24), np.full(24, 100.0), np.full(24, 70.0), 24)
+    assert transfer_policy_weight(normal, policy) == 0.6
+    short = MonthlyHistory(np.arange(3), np.full(3, 100.0), np.full(3, 70.0), 3)
+    assert transfer_policy_weight(short, policy) == 0.25
+    changed = copy.deepcopy(normal)
+    changed.inflow[-3:] *= 2
+    assert transfer_policy_weight(changed, policy) == 0.25
+    changed.inflow *= 1e-8
+    changed.outflow *= 1e-8
+    changed.months += 5
+    changed.forecast_start += 5
+    assert transfer_policy_weight(changed, policy) == 0.25
+    dormant = copy.deepcopy(normal)
+    dormant.inflow[-12:] = 0
+    dormant.outflow[-12:] = 0
+    assert transfer_policy_weight(dormant, policy) == 0
+
+
+def test_structural_active_share_floor_and_frozen_real_recipe():
+    from capacity_ml.forecasting import (
+        minimum_active_history_real_weight,
+        transfer_policies,
+    )
+    from capacity_ml.train import (
+        FROZEN_REAL_RECIPE_SHA256,
+        real_component_recipe_digest,
+    )
+
+    policies = transfer_policies()
+    assert minimum_active_history_real_weight(policies["fixed_0.5"]) == 0.5
+    assert minimum_active_history_real_weight(policies["guard_0.6_0.25_0.25"]) == 0.25
+    assert minimum_active_history_real_weight(policies["guard_0.6_0.5_0.5"]) == 0.5
+    assert real_component_recipe_digest() == FROZEN_REAL_RECIPE_SHA256
+
+
+def test_observed_expense_projection_grid_matches_selected_path_and_scale():
+    from capacity_ml.forecasting import (
+        expense_projection_policies,
+        observed_expense_candidates,
+        project_observed_expenses,
+    )
+
+    months = np.arange(36)
+    incoming = 100 * (1 + 0.2 * np.sin(months * np.pi / 6))
+    history = MonthlyHistory(months, incoming, incoming * 0.6 + 8, 36)
+    revenues = np.linspace(90, 140, 12)
+    candidates = observed_expense_candidates(history, revenues)
+    assert len(candidates) == 24
+    policies = expense_projection_policies()
+    scaled = MonthlyHistory(months, history.inflow * 1e-8, history.outflow * 1e-8, 36)
+    for name, prediction in candidates.items():
+        assert np.all(np.isfinite(prediction)) and np.all(prediction >= 0)
+        np.testing.assert_allclose(
+            project_observed_expenses(history, revenues, policies[name]),
+            prediction,
+            rtol=1e-10,
+        )
+        np.testing.assert_allclose(
+            project_observed_expenses(scaled, revenues * 1e-8, policies[name]),
+            prediction * 1e-8,
+            rtol=1e-8,
+            atol=1e-14,
+        )
+
+
+def test_median_cost_share_uses_past_positive_inflow_and_zero_revenue_fallback():
+    from capacity_ml.forecasting import project_observed_expenses
+
+    months = np.arange(12)
+    incoming = np.full(12, 100.0)
+    outgoing = np.full(12, 60.0)
+    outgoing[0] = 900  # A past outlier must not define the median projection.
+    incoming[1] = 0
+    history = MonthlyHistory(months, incoming, outgoing, 12)
+    policy = {"kind": "observed_median_share", "history_months": 12}
+    revenue = np.linspace(80, 120, 12)
+    np.testing.assert_allclose(
+        project_observed_expenses(history, revenue, policy), 0.6 * revenue
+    )
+    history.inflow[:] = 0
+    np.testing.assert_allclose(
+        project_observed_expenses(history, np.zeros(12), policy),
+        np.full(12, np.mean(outgoing)),
+    )
+
+
 def test_serving_public_prediction_runs_only_selected_estimator(model, monkeypatch):
     from capacity_ml.forecasting import aggregate
     from capacity_ml.generator import generate_business
@@ -310,3 +458,67 @@ def test_dormant_history_does_not_invent_scale_dependent_forecast(model, monkeyp
     np.testing.assert_array_equal(
         model.public_revenue_model.predict(dormant), np.zeros(12)
     )
+
+
+def test_real_features_preserve_observed_seasonal_phase_under_calendar_shift():
+    from capacity_ml.revenue_features import revenue_baselines, revenue_feature_matrix
+
+    months = np.arange(2020 * 12, 2023 * 12)
+    incoming = (
+        100 * np.exp(np.arange(36) * 0.006) * (1 + 0.3 * np.sin(months * np.pi / 6))
+    )
+    original = MonthlyHistory(months, incoming, 0.65 * incoming, int(months[-1]) + 1)
+    shifted = MonthlyHistory(
+        months + 5, incoming, 0.65 * incoming, original.forecast_start + 5
+    )
+    np.testing.assert_allclose(
+        revenue_feature_matrix(original),
+        revenue_feature_matrix(shifted),
+        rtol=1e-9,
+        atol=1e-10,
+    )
+    for name, predicted in revenue_baselines(original).items():
+        np.testing.assert_allclose(
+            revenue_baselines(shifted)[name], predicted, rtol=1e-9, atol=1e-10
+        )
+
+
+def test_real_expert_selection_uses_only_known_historical_targets(model, monkeypatch):
+    from capacity_ml.public_revenue import EXPERT_CANDIDATES
+
+    public = copy.deepcopy(model.public_revenue_model)
+    months = np.arange(2020 * 12, 2024 * 12)
+    observed = np.linspace(100, 180, 48)
+    history = MonthlyHistory(months, observed, np.zeros(48), int(months[-1]) + 1)
+    cutoffs = []
+
+    def inspect(earlier):
+        cutoffs.append(len(earlier.months))
+        assert len(earlier.months) >= 12
+        assert len(earlier.months) + 12 <= len(history.months)
+        assert earlier.forecast_start == earlier.months[-1] + 1
+        assert earlier.months[-1] < history.forecast_start
+        np.testing.assert_array_equal(earlier.inflow, observed[: len(earlier.months)])
+        return {
+            name: np.full(12, np.mean(earlier.inflow)) for name in EXPERT_CANDIDATES
+        }
+
+    monkeypatch.setattr(public, "_trained_forecasts", inspect)
+    errors = public._past_expert_errors(history)
+    assert cutoffs == [24, 30, 36]
+    assert set(errors) == set(EXPERT_CANDIDATES)
+
+
+def test_forecast_provenance_matches_prediction_and_dormant_zero(model):
+    from capacity_ml.forecasting import aggregate
+    from capacity_ml.generator import generate_business
+
+    history = aggregate(generate_business("validation", 1).request())
+    predicted, weight = model.predict_with_provenance(history)
+    assert weight == model.effective_real_weight(history)
+    assert weight == model.effective_transfer_weight(history)
+    np.testing.assert_array_equal(predicted, model.predict(history))
+    dormant = MonthlyHistory(np.arange(24), np.zeros(24), np.zeros(24), 24)
+    predicted, weight = model.predict_with_provenance(dormant)
+    assert weight == 0
+    np.testing.assert_array_equal(predicted, np.zeros(12))

@@ -1,4 +1,4 @@
-"""Audit a frozen real-revenue forecast on previously unused final holdouts.
+"""Run the previously reported international real-revenue regression benchmark.
 
 The reporting helpers never fit or select a model. Raw units are comparable only
 within one provider; cross-provider comparisons use each history's own scale.
@@ -298,6 +298,7 @@ def evaluate(model_path: str | Path) -> dict:
         "selected_real_revenue_candidate": public.selected,
         "audit_protocol": {
             "version": AUDIT_PROTOCOL_VERSION,
+            "status": "legacy_regression_previously_reported",
             "geographic_time_protocol_frozen_pre_selection": all(
                 protocol["frozen_before_training"]
                 for protocol in metadata["protocols"].values()
@@ -313,17 +314,17 @@ def evaluate(model_path: str | Path) -> dict:
         "international_data": metadata,
         "excluded_final_windows": exclusions,
         "excluded_final_window_counts": exclusion_counts,
-        "fresh_final_holdout": audit,
+        "legacy_holdout": audit,
         "predetermined_acceptance": audit_acceptance(audit),
         "metric_policy": "Primary comparisons use historical-scale-normalized absolute error. Raw MAE and WAPE are computed within each provider's declared units only, never pooled across AUD/CAD. sMAPE assigns exactly zero error to actual=forecast=0; all other observations are included. Seasonal MASE divides by mean absolute 12-month differences in the input history only, with undefined short or constant histories reported. WAPE includes zero and near-zero months; an all-zero actual denominator is undefined.",
-        "test_policy": "Final labels are used only by this evaluator after model candidate and transfer selection are frozen. Fixed seasonal naive is the comparison, not another selected candidate. No fitting, tuning or selection occurs here. Previously inspected Uzbekistan and synthetic tests are separate legacy regression benchmarks.",
+        "test_policy": "These ABS/Canada terminal labels were reported during the previous model upgrade, so this is now a legacy regression benchmark, not fresh confirmation. Labels remain excluded from fitting and validation selection. Fixed seasonal naive is the comparison. The separately reserved external-provider audit supplies new evidence.",
         "scope": "Licensed real aggregate revenue only. No real borrower expense, payment-capacity, repayment or default outcomes are available. This forecast evaluation does not validate lending decisions.",
         "limitations": "All sectors of a geography share an entity group. Related sectors and regions remain correlated through national economic shocks; clustered intervals from the small number of final geographies are descriptive. Time boundaries are provider-specific: other countries can have training observations later than an international test date, so this is not a globally chronological future holdout. Provider snapshots use one current revision vintage, not unrevised observations available at each historical date. International aggregate turnover can differ materially from an individual borrower's bank receipts.",
     }
 
 
 def markdown(report: dict) -> str:
-    audit = report["fresh_final_holdout"]
+    audit = report["legacy_holdout"]
     overall = audit["overall"]
     improvement = overall["improvement"]
 
@@ -331,9 +332,11 @@ def markdown(report: dict) -> str:
         return "undefined" if number is None else f"{number:,.4f}"
 
     lines = [
-        "# Fresh international real-revenue forecast audit",
+        "# Legacy international real-revenue forecast regression",
         "",
         f"Measured {report['measured_at_utc']} with artifact `{report['model_version']}`; frozen real-revenue candidate: **{report['selected_real_revenue_candidate']}**. Reproduce with `uv run python -m capacity_ml.evaluate_international` after training the frozen artifact.",
+        "",
+        "These previously reported holdouts are now **legacy regression benchmarks**, not fresh confirmatory data. Model fitting and validation still exclude their labels. The [external-provider audit](external-metrics.md) supplies the new final check.",
         "",
         f"The final audit contains **{overall['selected']['series']} real series**, **{overall['selected']['entity_groups']} disjoint geographic split groups** and **{overall['selected']['months']:,} observed forecast months** ({overall['selected']['unique_target_observations']:,} unique targets). Excluded final-window counts by provider and reason: `{report['excluded_final_window_counts']}`; [all excluded identities and reasons](international-metrics.json) remain available. Groups are separated from model fitting and candidate validation; each provider's terminal test interval follows that provider's training and validation intervals. Other countries may have later training observations.",
         "",
@@ -422,9 +425,7 @@ def main() -> None:
         json.dumps(report, indent=2, allow_nan=False) + "\n"
     )
     (destination / "international-metrics.md").write_text(markdown(report))
-    print(
-        json.dumps(report["fresh_final_holdout"]["overall"], indent=2, allow_nan=False)
-    )
+    print(json.dumps(report["legacy_holdout"]["overall"], indent=2, allow_nan=False))
     if report["predetermined_acceptance"]["status"] != "pass":
         raise SystemExit(
             "Frozen real-revenue forecast failed the published MVP audit guardrails; reports preserved"

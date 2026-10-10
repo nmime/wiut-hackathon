@@ -106,6 +106,7 @@ class ScoreAuditMiddleware:
             "input_hash": digest.hexdigest() if body or not too_large else None,
             "input_hash_scope": "prefix" if too_large else "complete",
             "model_version": self.state.model.version,
+            "model_artifact_sha256": self.state.model_artifact_sha256,
         }
         try:
             self.state.audit.append({**common, "event": "assessment_requested"})
@@ -193,7 +194,13 @@ def create_app(
     async def lifespan(application: FastAPI):
         chosen = model_path or os.environ.get("ML_MODEL_PATH", "runtime/model.joblib")
         try:
-            application.state.model = ForecastModel.load(chosen)
+            # Hash and deserialize the same opened artifact, even if its path is
+            # replaced during startup. The identity stays fixed until restart.
+            with open(chosen, "rb") as artifact:
+                artifact_sha256 = hashlib.file_digest(artifact, "sha256").hexdigest()
+                artifact.seek(0)
+                application.state.model = ForecastModel.load(artifact)
+            application.state.model_artifact_sha256 = artifact_sha256
         except Exception as error:
             raise RuntimeError(
                 "Local model missing/corrupt. Run `uv run python -m capacity_ml.train`; "
@@ -219,10 +226,17 @@ def create_app(
         return {
             "status": "ok",
             "model_version": request.app.state.model.version,
+            "model_artifact_sha256": request.app.state.model_artifact_sha256,
             "local_inference": True,
             "synthetic_training_only": False,
             "serving_mode": request.app.state.model.selection["serving_mode"],
             "public_transfer_weight": request.app.state.model.transfer_weight,
+            "public_transfer_policy": model.selection.get(
+                "serving_policy", "fixed_validated_blend"
+            ),
+            "public_transfer_validation_weights": model.selection.get(
+                "validation_effective_real_weights"
+            ),
             "public_training_targets": training["training_examples"],
             "public_training_sources": training["sources"],
             "real_revenue_candidate": model.public_revenue_model.selected,
@@ -230,6 +244,7 @@ def create_app(
                 model.transfer_weight and training["selected_uses_trained_estimator"]
             ),
             "expense_mode": model.selection.get("expense_mode", "synthetic_trained"),
+            "expense_policy": model.selection.get("expense_policy"),
             "provenance": "Licensed public revenue observations train the inflow component. Borrower demonstration transactions remain synthetic; public sources supply no borrower expenses or repayment/default labels.",
         }
 

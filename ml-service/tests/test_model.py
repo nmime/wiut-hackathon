@@ -70,6 +70,21 @@ def test_predictions_deterministic_but_respond_to_changed_cashflow(
     assert changed.adaptive_schedule == []
 
 
+def test_expense_only_history_discloses_untrained_zero_revenue_guard(
+    model, request_payload
+):
+    request_payload["transactions"] = [
+        row for row in request_payload["transactions"] if row["direction"] == "out"
+    ]
+    result = score_request(ScoreRequest.model_validate(request_payload), model)
+    assert "zero_revenue_history_guard" in result.flags
+    assert "no real revenue estimator invoked" in result.recommended_loan.rationale
+    assert result.recommended_loan.suggested_principal_index == 0
+    assert result.capacity_score == 0
+    assert result.forecast_provenance is not None
+    assert np.all(np.isfinite(result.seasonality.monthly_forecast_index))
+
+
 @pytest.mark.parametrize("scale", [1e-6, 0.001, 1e6])
 def test_amount_index_scale_invariance(model, request_payload, scale):
     original = score_request(ScoreRequest.model_validate(request_payload), model)

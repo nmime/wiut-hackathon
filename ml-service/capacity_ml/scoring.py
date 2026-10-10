@@ -170,22 +170,30 @@ def score_request(
     request: ScoreRequest, model: ForecastModel, request_id: str | None = None
 ) -> ScoreResponse:
     history = aggregate(request)
-    forecast = model.predict(history)
+    forecast, real_weight = model.predict_with_provenance(history)
+    inactive = not np.any(history.inflow[-12:] + history.outflow[-12:] > 0)
+    zero_revenue = not np.any(history.inflow[-12:] > 0)
+    observed_cost = model.expense_mode in {
+        "observed_cost_regression",
+        "observed_cost_projection",
+    }
     if forecast.shape != (12,) or not np.all(np.isfinite(forecast)):
         raise ValueError("Local forecast is malformed/nonfinite")
     plan = capacity_plan(history, forecast)
     plan["flags"].append(
-        "public_revenue_transfer_used"
-        if model.transfer_weight
+        "inactive_history_zero_forecast"
+        if inactive
+        else "public_revenue_transfer_used"
+        if real_weight
         else "public_revenue_transfer_not_selected"
     )
-    if model.transfer_weight < 1:
+    if real_weight < 1 and not inactive:
         plan["flags"].append("synthetic_net_model_used")
-    if model.transfer_weight:
+    if real_weight:
+        if zero_revenue:
+            plan["flags"].append("zero_revenue_history_guard")
         plan["flags"].append(
-            "observed_cost_projection"
-            if model.expense_mode == "observed_cost_regression"
-            else "synthetic_expense_model"
+            "observed_cost_projection" if observed_cost else "synthetic_expense_model"
         )
     stats = plan["statistics"]
     q25, q75 = np.quantile(forecast, [0.25, 0.75])
@@ -254,24 +262,31 @@ def score_request(
         "The displayed maximum installment is the 20th percentile of buffered month capacities for an equal-payment reference; adaptive months have separate caps. "
         "All amounts are indices; no UZS conversion is declared."
     )
-    if model.transfer_weight:
+    if real_weight:
         revenue_description = (
-            "real-public-trained revenue"
+            "observed-zero revenue guard (no real revenue estimator invoked)"
+            if zero_revenue
+            else "real-trained revenue ensemble"
             if model.public_revenue_model.metadata["selected_uses_trained_estimator"]
             else "a validation-selected observed-revenue baseline"
         )
         expense_description = (
-            "expenses projected from this borrower's observed inflow/outflow relationship"
-            if model.expense_mode == "observed_cost_regression"
+            "expenses projected from this borrower's observed transactions"
+            if observed_cost
             else "synthetic-trained expense forecasts"
         )
         rationale += (
-            f" Forecast blends {100 * model.transfer_weight:.0f}% {revenue_description} minus {expense_description} with {100 * (1 - model.transfer_weight):.0f}% synthetic net forecast, selected on borrower validation with normalized-error checks. "
+            f" Forecast blends {100 * real_weight:.0f}% {revenue_description} minus {expense_description} with {100 * (1 - real_weight):.0f}% synthetic net forecast, selected on borrower validation with normalized-error checks. "
             "Licensed public turnover observations provide normalized revenue patterns, not borrower expense or repayment labels."
+        )
+    elif inactive:
+        rationale += (
+            " No inflow or outflow was observed during the last 12 complete months; "
+            "the inactive-history guard returns a zero forecast without using a trained estimator."
         )
     else:
         rationale += (
-            " The real-public-trained revenue and expense projection candidate did not qualify on borrower validation; the selected synthetic net forecast is used. "
+            " Given the observed history, the validated serving policy uses the synthetic net forecast for this assessment; the public revenue component is not used. "
             "Public revenue aggregates supply no borrower expense or repayment labels."
         )
     if plan["principal"] == 0:
@@ -307,6 +322,21 @@ def score_request(
         adaptive_schedule=schedule,
         explanation={"top_factors": plan["factors"], "advisory": advisory},
         confidence=plan["confidence"],
+        forecast_provenance={
+            "real_revenue_weight": real_weight,
+            "synthetic_net_weight": 1 - real_weight,
+            "expense_mode": model.expense_mode
+            if real_weight and observed_cost
+            else "synthetic_trained"
+            if real_weight
+            else "not_used",
+            "revenue_candidate": model.public_revenue_model.selected,
+            "real_training_targets": model.public_revenue_model.metadata[
+                "training_examples"
+            ],
+        }
+        if not inactive
+        else None,
         flags=plan["flags"],
         model_version=model.version,
         request_id=request_id or str(uuid4()),

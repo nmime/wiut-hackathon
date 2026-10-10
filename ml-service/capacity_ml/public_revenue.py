@@ -19,20 +19,38 @@ from .revenue_features import (
     revenue_feature_matrix,
 )
 
-PUBLIC_CANDIDATES = (
+BASELINE_CANDIDATES = (
     "seasonal_naive",
     "trend_adjusted_seasonal",
     "damped_seasonal",
     "robust_harmonic",
+    "linear_harmonic",
+    "flat_harmonic",
+)
+TRAINED_CANDIDATES = (
     "gradient_boosting",
     "learned_residual",
     "residual_blend_25",
     "residual_blend_50",
     "harmonic_residual_25",
     "harmonic_residual_50",
+    "harmonic_residual_100",
     "history_shrinkage_25",
     "history_shrinkage_50",
+    "adaptive_revenue_0",
+    "adaptive_revenue_5",
+    "adaptive_revenue_10",
+    "adaptive_revenue_15",
 )
+PUBLIC_CANDIDATES = BASELINE_CANDIDATES + TRAINED_CANDIDATES
+EXPERT_CANDIDATES = (
+    "learned_residual",
+    "residual_blend_50",
+    "harmonic_residual_25",
+    "harmonic_residual_50",
+    "harmonic_residual_100",
+)
+
 TRAIN_END = parse_month("2025-12")
 
 
@@ -125,58 +143,150 @@ class PublicRevenueModel:
     selected: str
     metadata: dict
     residual_estimator: HistGradientBoostingRegressor | None = None
+    harmonic_estimator: HistGradientBoostingRegressor | None = None
+
+    def _trained_forecasts(self, history: MonthlyHistory) -> dict[str, np.ndarray]:
+        baselines = revenue_baselines(history)
+        features = revenue_feature_matrix(history, baselines=baselines)
+        scale = normalizer(history)
+        if self.residual_estimator is None or self.harmonic_estimator is None:
+            raise ValueError("Missing real-only residual estimators")
+        with threadpool_limits(limits=1):
+            seasonal_residual = np.clip(
+                self.residual_estimator.predict(features), -2, 2
+            )
+            harmonic_residual = np.clip(
+                self.harmonic_estimator.predict(features), -2, 2
+            )
+        seasonal = baselines["damped_seasonal"]
+        harmonic = baselines["linear_harmonic"]
+        learned = (
+            np.maximum((seasonal / scale + 0.05) * np.exp(seasonal_residual) - 0.05, 0)
+            * scale
+        )
+        learned_harmonic = (
+            np.maximum((harmonic / scale + 0.05) * np.exp(harmonic_residual) - 0.05, 0)
+            * scale
+        )
+        return {
+            **baselines,
+            "learned_residual": learned,
+            "residual_blend_25": 0.75 * seasonal + 0.25 * learned,
+            "residual_blend_50": 0.5 * seasonal + 0.5 * learned,
+            "harmonic_residual_25": 0.75 * harmonic + 0.25 * learned_harmonic,
+            "harmonic_residual_50": 0.5 * harmonic + 0.5 * learned_harmonic,
+            "harmonic_residual_100": learned_harmonic,
+            "history_shrinkage_25": 0.75 * seasonal + 0.25 * learned
+            if len(history.months) >= 12
+            else learned,
+            "history_shrinkage_50": 0.5 * seasonal + 0.5 * learned
+            if len(history.months) >= 12
+            else learned,
+        }
+
+    def _past_expert_errors(self, history: MonthlyHistory) -> dict[str, float] | None:
+        errors = {name: [] for name in EXPERT_CANDIDATES}
+        # Every target here is already observed in the scored history. No
+        # request future, business cohort or provider identity is accessible.
+        for cutoff in sorted(
+            {
+                len(history.months) - 12,
+                len(history.months) - 18,
+                len(history.months) - 24,
+            }
+        ):
+            if cutoff < 12:
+                continue
+            earlier = MonthlyHistory(
+                history.months[:cutoff],
+                history.inflow[:cutoff],
+                np.zeros(cutoff),
+                int(history.months[cutoff - 1]) + 1,
+            )
+            if not np.any(earlier.inflow[-12:] > 0):
+                continue
+            actual = history.inflow[cutoff : cutoff + 12]
+            for name, predicted in self._trained_forecasts(earlier).items():
+                if name in errors:
+                    errors[name].append(
+                        float(np.mean(np.abs(predicted - actual)) / normalizer(earlier))
+                    )
+        return (
+            {name: float(np.mean(values)) for name, values in errors.items()}
+            if errors["learned_residual"]
+            else None
+        )
+
+    @staticmethod
+    def _expert_choice(errors: dict[str, float] | None, margin: float) -> str:
+        default = "learned_residual"
+        if errors is None:
+            return default
+        chosen = min(EXPERT_CANDIDATES, key=lambda name: errors[name])
+        return chosen if errors[chosen] <= errors[default] * (1 - margin) else default
+
+    def _predict_expert(self, history: MonthlyHistory, selected: str) -> np.ndarray:
+        baselines = revenue_baselines(history)
+        harmonic = selected.startswith("harmonic_residual_")
+        estimator = self.harmonic_estimator if harmonic else self.residual_estimator
+        if estimator is None:
+            raise ValueError("Missing selected real residual estimator")
+        baseline = baselines["linear_harmonic" if harmonic else "damped_seasonal"]
+        scale = normalizer(history)
+        with threadpool_limits(limits=1):
+            residual = np.clip(
+                estimator.predict(revenue_feature_matrix(history, baselines=baselines)),
+                -2,
+                2,
+            )
+        learned = (
+            np.maximum((baseline / scale + 0.05) * np.exp(residual) - 0.05, 0) * scale
+        )
+        if selected in {"learned_residual", "harmonic_residual_100"}:
+            weight = 1.0
+        elif selected.endswith("_25"):
+            weight = 0.25
+        elif selected.endswith("_50"):
+            weight = 0.5
+        else:
+            raise ValueError("Invalid real residual expert")
+        if selected.startswith("history_shrinkage_") and len(history.months) < 12:
+            weight = 1.0
+        return (1 - weight) * baseline + weight * learned
 
     def predict_candidates(self, history: MonthlyHistory) -> dict[str, np.ndarray]:
         history = revenue_history(history)
         if not np.any(history.inflow[-12:] > 0):
             return {name: np.zeros(12) for name in PUBLIC_CANDIDATES}
-        baselines = revenue_baselines(history)
-        seasonal = baselines["seasonal_naive"]
+        forecasts = self._trained_forecasts(history)
         prior = float(np.sum(history.inflow[-24:-12]))
         growth = (
             float(np.sum(history.inflow[-12:])) / prior
             if len(history.inflow) >= 24 and prior > 0
             else 1.0
         )
-        features = revenue_feature_matrix(history)
-        scale = normalizer(history)
+        forecasts["trend_adjusted_seasonal"] = forecasts["seasonal_naive"] * growth
         with threadpool_limits(limits=1):
-            boosting = np.maximum(self.estimator.predict(features) * scale, 0)
-            if self.residual_estimator is None:
-                raise ValueError("Missing real-only residual estimator")
-            residual = np.clip(self.residual_estimator.predict(features), -2, 2)
-        baseline = baselines["damped_seasonal"]
-        learned = (
-            np.maximum((baseline / scale + 0.05) * np.exp(residual) - 0.05, 0) * scale
-        )
-        return {
-            **baselines,
-            "trend_adjusted_seasonal": seasonal * growth,
-            "gradient_boosting": boosting,
-            "learned_residual": learned,
-            "residual_blend_25": 0.75 * baseline + 0.25 * learned,
-            "residual_blend_50": 0.5 * baseline + 0.5 * learned,
-            "harmonic_residual_25": 0.75 * baselines["robust_harmonic"]
-            + 0.25 * learned,
-            "harmonic_residual_50": 0.5 * baselines["robust_harmonic"] + 0.5 * learned,
-            "history_shrinkage_25": 0.75 * baseline + 0.25 * learned
-            if len(history.months) >= 12
-            else learned,
-            "history_shrinkage_50": 0.5 * baseline + 0.5 * learned
-            if len(history.months) >= 12
-            else learned,
-        }
+            forecasts["gradient_boosting"] = np.maximum(
+                self.estimator.predict(revenue_feature_matrix(history))
+                * normalizer(history),
+                0,
+            )
+        errors = self._past_expert_errors(history)
+        for margin in (0, 5, 10, 15):
+            forecasts[f"adaptive_revenue_{margin}"] = forecasts[
+                self._expert_choice(errors, margin / 100)
+            ]
+        return forecasts
 
     def predict(self, history: MonthlyHistory) -> np.ndarray:
-        # Serving runs only the validation-selected component. Evaluators use
-        # predict_candidates to compare the fixed grid without refitting it.
         history = revenue_history(history)
         if not np.any(history.inflow[-12:] > 0):
             return np.zeros(12)
-        baselines = revenue_baselines(history)
-        if self.selected in baselines:
-            return baselines[self.selected]
-        if self.selected == "trend_adjusted_seasonal":
+        if self.selected in BASELINE_CANDIDATES:
+            baselines = revenue_baselines(history)
+            if self.selected != "trend_adjusted_seasonal":
+                return baselines[self.selected]
             prior = float(np.sum(history.inflow[-24:-12]))
             growth = (
                 float(np.sum(history.inflow[-12:])) / prior
@@ -184,43 +294,21 @@ class PublicRevenueModel:
                 else 1.0
             )
             return baselines["seasonal_naive"] * growth
-        features = revenue_feature_matrix(history)
-        scale = normalizer(history)
         if self.selected == "gradient_boosting":
             with threadpool_limits(limits=1):
-                return np.maximum(self.estimator.predict(features) * scale, 0)
-        if self.residual_estimator is None:
-            raise ValueError("Missing real-only residual estimator")
-        with threadpool_limits(limits=1):
-            residual = np.clip(self.residual_estimator.predict(features), -2, 2)
-        baseline = baselines["damped_seasonal"]
-        learned = (
-            np.maximum((baseline / scale + 0.05) * np.exp(residual) - 0.05, 0) * scale
-        )
-        if self.selected.startswith("history_shrinkage_"):
-            weight = {"history_shrinkage_25": 0.25, "history_shrinkage_50": 0.5}.get(
-                self.selected
-            )
-            if weight is None:
-                raise ValueError("Invalid real revenue candidate")
-            if len(history.months) < 12:
-                return learned
-            return (1 - weight) * baseline + weight * learned
-        if self.selected.startswith("harmonic_residual_"):
-            weight = {"harmonic_residual_25": 0.25, "harmonic_residual_50": 0.5}.get(
-                self.selected
-            )
-            if weight is None:
-                raise ValueError("Invalid real revenue candidate")
-            return (1 - weight) * baselines["robust_harmonic"] + weight * learned
-        weight = {
-            "learned_residual": 1.0,
-            "residual_blend_25": 0.25,
-            "residual_blend_50": 0.5,
-        }.get(self.selected)
-        if weight is None:
+                return np.maximum(
+                    self.estimator.predict(revenue_feature_matrix(history))
+                    * normalizer(history),
+                    0,
+                )
+        if self.selected.startswith("adaptive_revenue_"):
+            margin = int(self.selected.removeprefix("adaptive_revenue_")) / 100
+            selected = self._expert_choice(self._past_expert_errors(history), margin)
+        else:
+            selected = self.selected
+        if selected not in TRAINED_CANDIDATES:
             raise ValueError("Invalid real revenue candidate")
-        return (1 - weight) * baseline + weight * learned
+        return self._predict_expert(history, selected)
 
 
 def metrics(cases: list[PublicCase], predictions: list[np.ndarray]) -> dict:
@@ -271,6 +359,8 @@ def fit_public_revenue_model(
     provider_validation = {"uzbekistan_siat": legacy_cases["validation"]}
     international_metadata = None
     international_exclusions = {}
+    external_metadata = None
+    external_exclusions = {}
     if dataset is None:
         international = load_international_series()
         international_metadata = international[1]
@@ -284,6 +374,25 @@ def fit_public_revenue_model(
                 destination[provider] = [
                     case for case in rows if case.identity.startswith(provider + ":")
                 ]
+    if dataset is None:
+        from .external_data import build_external_cases, load_external_series
+
+        external = load_external_series()
+        external_metadata = external[1]
+        for split, destination in (
+            ("train", provider_train),
+            ("validation", provider_validation),
+        ):
+            rows, omitted = build_external_cases(split, dataset=external)
+            external_exclusions[split] = omitted
+            for source in external_metadata["training_sources"]:
+                provider = source["provider"]
+                selected = [
+                    case for case in rows if case.identity.startswith(provider + ":")
+                ]
+                if not selected:
+                    raise ValueError("Licensed training provider has no valid cases")
+                destination[provider] = selected
     train_cases = sum(provider_train.values(), [])
     x = np.vstack([revenue_feature_matrix(case.history) for case in train_cases])
     y = np.concatenate([case.actual / normalizer(case.history) for case in train_cases])
@@ -322,26 +431,8 @@ def fit_public_revenue_model(
     with threadpool_limits(limits=1):
         estimator.fit(x, y, sample_weight=sample_weights)
     # This finite complexity grid and per-provider two-percent regression guard
-    # are frozen before any fresh international test outcomes are examined.
+    # are frozen before any fresh Eurostat/ONS or new engineering audit outcomes are examined.
     parameter_grid = (
-        {
-            "max_leaf_nodes": 15,
-            "min_samples_leaf": 25,
-            "l2_regularization": 2,
-            "max_iter": 160,
-        },
-        {
-            "max_leaf_nodes": 7,
-            "min_samples_leaf": 80,
-            "l2_regularization": 10,
-            "max_iter": 160,
-        },
-        {
-            "max_leaf_nodes": 15,
-            "min_samples_leaf": 80,
-            "l2_regularization": 10,
-            "max_iter": 240,
-        },
         {
             "max_leaf_nodes": 15,
             "min_samples_leaf": 80,
@@ -355,6 +446,17 @@ def fit_public_revenue_model(
             "max_iter": 160,
         },
     )
+    harmonic_targets = np.concatenate(
+        [
+            np.log(case.actual / normalizer(case.history) + 0.05)
+            - np.log(
+                revenue_baselines(case.history)["linear_harmonic"]
+                / normalizer(case.history)
+                + 0.05
+            )
+            for case in train_cases
+        ]
+    )
     trials = []
     winner = None
     for parameters in parameter_grid:
@@ -362,8 +464,14 @@ def fit_public_revenue_model(
         residual_estimator = HistGradientBoostingRegressor(**settings)
         with threadpool_limits(limits=1):
             residual_estimator.fit(x, residual_targets, sample_weight=sample_weights)
+            harmonic_estimator = HistGradientBoostingRegressor(**settings)
+            harmonic_estimator.fit(x, harmonic_targets, sample_weight=sample_weights)
         candidate = PublicRevenueModel(
-            estimator, "seasonal_naive", metadata, residual_estimator
+            estimator,
+            "seasonal_naive",
+            metadata,
+            residual_estimator,
+            harmonic_estimator,
         )
         by_provider = {}
         for provider, rows in provider_validation.items():
@@ -454,23 +562,17 @@ def fit_public_revenue_model(
     model.metadata = {
         **metadata,
         "sources": metadata["sources"]
-        + (international_metadata["sources"] if international_metadata else []),
+        + (international_metadata["sources"] if international_metadata else [])
+        + (external_metadata["training_sources"] if external_metadata else []),
         "selected_candidate": model.selected,
         "candidate_qualification": qualification,
         "provider_regression_guard": "Each provider validation normalized MAE may worsen no more than 2% versus seasonal naive; select smallest qualified provider-balanced normalized MAE",
         "residual_hyperparameters": residual_parameters,
         "parameter_validation": trials,
-        "selected_uses_trained_estimator": model.selected
-        in {
-            "gradient_boosting",
-            "learned_residual",
-            "residual_blend_25",
-            "residual_blend_50",
-            "harmonic_residual_25",
-            "harmonic_residual_50",
-            "history_shrinkage_25",
-            "history_shrinkage_50",
-        },
+        "selected_uses_trained_estimator": model.selected in TRAINED_CANDIDATES,
+        "trained_candidates": list(TRAINED_CANDIDATES),
+        "real_validation_best_candidate": model.selected,
+        "expert_routing_policy": "Real-only phase-relative seasonal and raw harmonic residual experts; compare full already-observed 12-month revenue targets at up to three historical origins with at least 12 prior months; validation selects gain margin, no business cohort/provider labels used",
         "features": list(REVENUE_FEATURE_NAMES),
         "validation": combined_validation if international_metadata else validation,
         "uzbekistan_validation": validation,
@@ -488,10 +590,37 @@ def fit_public_revenue_model(
         ],
         "training_target_end": "2025-12 (Uzbekistan); earlier provider-specific boundaries in international_protocols",
         "validation_target": "Provider-specific geographic and terminal-time validation; Uzbekistan January-December 2025 is legacy development validation",
-        "test_protocol": "Fresh independent international geographic plus terminal-year holdout is constructed explicitly only after model freeze; previous Uzbekistan and synthetic test outcomes are legacy regression benchmarks.",
+        "test_protocol": "Fresh Eurostat six-country and whole-provider ONS audits, plus new engineering seed cohort, are constructed explicitly only after model freeze. Previous ABS/Canada, Uzbekistan and original synthetic test outcomes are consumed legacy regression benchmarks.",
         "selection_metric": "Provider-balanced macro per-history-normalized validation MAE; training loss weight equal by provider; no final test outcomes used",
         "exclusions": exclusions,
         "international_exclusions": international_exclusions,
+        "external_data_sha256": external_metadata["data_sha256"]
+        if external_metadata
+        else None,
+        "external_protocol": external_metadata["protocol"] if external_metadata else {},
+        "external_training_sources": external_metadata["training_sources"]
+        if external_metadata
+        else [],
+        "external_audit_only_sources": external_metadata["audit_only_sources"]
+        if external_metadata
+        else [],
+        "external_audit_only_providers": {
+            source["provider"]: {"training_targets": 0, "validation_targets": 0}
+            for source in external_metadata["audit_only_sources"]
+        }
+        if external_metadata
+        else {},
+        "external_exclusions": external_exclusions,
+        "external_nonnull_published_observations": external_metadata[
+            "nonnull_published_observations"
+        ]
+        if external_metadata
+        else 0,
+        "external_missing_suppressed_or_unreliable_observations": external_metadata[
+            "missing_suppressed_or_unreliable_observations"
+        ]
+        if external_metadata
+        else 0,
         "international_data_sha256": international_metadata["data_sha256"]
         if international_metadata
         else None,

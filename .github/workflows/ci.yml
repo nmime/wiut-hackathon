@@ -52,6 +52,10 @@ jobs:
         working-directory: ml-service
       - run: uv run python -m capacity_ml.evaluate_international
         working-directory: ml-service
+      - run: uv run python -m capacity_ml.evaluate_external
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.evaluate_engineering
+        working-directory: ml-service
       - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_real_ml'
         env:
           PGPASSWORD: wiut_dev

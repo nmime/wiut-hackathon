@@ -41,7 +41,7 @@ No fabricated score or recommendation is substituted.
 ## Run the included local ML service
 
 The repository includes a local FastAPI service that trains its revenue forecast
-on licensed Uzbekistan, Australian and Canadian sales data. Borrower expense
+on licensed Uzbekistan, Australian, Canadian and European turnover data. Borrower expense
 projections and synthetic net-flow forecasts are validated separately. To run
 the complete demo:
 
@@ -65,6 +65,8 @@ uv run python -m capacity_ml.evaluate
 uv run python -m capacity_ml.evaluate_public
 uv run python -m capacity_ml.evaluate_revenue
 uv run python -m capacity_ml.evaluate_international
+uv run python -m capacity_ml.evaluate_external
+uv run python -m capacity_ml.evaluate_engineering
 uv run pytest
 uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
 ```
@@ -74,23 +76,56 @@ See [ML implementation and measured evaluation](ml-service/README.md) for the
 generator, split, forecast selection, capacity factors, and limitations.
 The [public dataset declaration](ml-service/data/README.md) documents official
 sources, CC BY 4.0 attribution, quality exclusions, and calibration windows.
-The corpus includes 16,544 published Uzbekistan monthly points and 380 additional
-Australian/Canadian retail series with 49,213 published numeric sales values and
-9,487 missing/suppressed entries. Missing sales remain null;
-training rejects affected windows instead of inventing values. The revenue
-model uses 41,364 actual rolling target examples, with provider-balanced training
-and validation. Overlapping windows are not independent observations.
-The [international accuracy audit](ml-service/reports/international-metrics.md)
-evaluates reserved terminal periods in unseen states/provinces, after selection
-is frozen. Previously reported Uzbekistan and synthetic tests are explicitly
-legacy regression benchmarks. Time boundaries are provider-specific, and native
-currency errors are never pooled across countries.
+The corpus includes Uzbekistan revenue, Australian/Canadian retail sales and
+30 European countries' nominal turnover indices. New European/UK snapshots add
+72,141 published observations; 90,819 missing entries remain null. Training
+rejects affected windows instead of inventing sales. Real training now uses
+86,976 rolling target examples (43,705 unique target observations), with equal
+provider loss weights. Overlapping windows are not independent businesses.
+A richer seasonal/harmonic residual ensemble adapts using only already observed
+borrower history. Joint validation selects its downstream blend and cost policy.
+The [external audit](ml-service/reports/external-metrics.md) covers reserved
+Eurostat countries plus the entire UK ONS provider; ONS is never fitted or used
+for selection. It measured 19.3% lower normalized revenue error than seasonal
+naive on 816 future observations in six usable country clusters. The real
+revenue component stays frozen after this audit; subsequent runs reproduce its
+measured result. A [synthetic engineering audit](ml-service/reports/engineering-metrics.md)
+checks the scoring path on 900 separately reserved businesses. The first
+180-business audit rejected a guarded blend because its average real contribution
+was 49.7%, below the frozen 50% requirement; its failed report is retained.
+A subsequent fixed 50/50 candidate improved overall error but worsened the
+pattern-break cohort by 20.7%, beyond the unchanged 15% limit. The third audit
+rejected a 75%/25% guarded candidate: overall error improved by 4.9%, but the
+pattern-break cohort worsened by 15.7%. All three failures are retained. Cost and
+blend revisions use the original development data,
+with the real-revenue component fixed. The final 65%/25% policy passed all
+unchanged guards on 900 newly reserved businesses: mean real contribution was
+53.2%, and macro normalized net-flow error improved by 5.5% (descriptive 95%
+interval 4.4–6.6%). Pattern-break error still worsened by 11.0%; the preset guard
+allows at most 15%. Short or recently unstable histories receive 25% real
+contribution; established histories receive 65%, reducing their synthetic share
+from 90% to 35%. These components include statistical forecasts and observed-cost
+assumptions, so their weights are not percentages of correct predictions.
+Each first audit uses separately reserved seeds; this fourth sequential cycle
+remains exploratory, and reruns reproduce consumed targets. Previously reported
+Uzbekistan, ABS/Canada and synthetic periods are explicit legacy regressions.
+Country clusters, short-history failures and uncertainty are reported honestly.
+Native currencies and publisher index points are never pooled across sources.
 Public revenues contain no borrower expense, repayment or default labels.
 The scoring model includes real-trained revenue only when validation improves
 the net forecast and passes normalized-error checks. Its actual blend and
-expense policy are disclosed in model flags, rationale and `/health`.
+expense policy are disclosed in structured forecast provenance, model flags,
+rationale and `/health`, and visible in the review workspace.
+Fully inactive histories return zero without estimator provenance; expense-only
+histories disclose their zero-revenue guard instead of claiming learned revenue.
 The included repayment model uses explicitly declared **0% interest**;
 recommendations remain indices and require human review.
+Python and NestJS validate payment totals against the recommended principal;
+contradictory schedules fail the assessment rather than being saved as results.
+The ML health endpoint and durable audit identify the exact loaded artifact by
+SHA-256. Builds on different platforms can fit slightly different predictors;
+their consumed-cohort checks retain separate metrics and the same acceptance
+limits, rather than claiming identical model bytes or additional fresh evidence.
 
 ## Connect the teammate's ML service
 

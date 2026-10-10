@@ -1339,6 +1339,40 @@ export function BusinessWorkspace({
                   </div>
                 </div>
                 <Separator />
+                {result.forecast_provenance && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium">Forecast evidence</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">
+                        Public revenue forecast{' '}
+                        {indexNumber(
+                          result.forecast_provenance.real_revenue_weight * 100,
+                        )}
+                        %
+                      </Badge>
+                      <Badge variant="outline">
+                        Synthetic net forecast{' '}
+                        {indexNumber(
+                          result.forecast_provenance.synthetic_net_weight * 100,
+                        )}
+                        %
+                      </Badge>
+                    </div>
+                    <p className="text-xs leading-relaxed text-muted-foreground">
+                      {result.flags.includes('zero_revenue_history_guard')
+                        ? 'No inflow was observed in the latest 12 months. The public branch uses a zero-revenue guard without running a trained revenue estimator; costs are projected from the observed expenses.'
+                        : [
+                              'observed_cost_regression',
+                              'observed_cost_projection',
+                            ].includes(result.forecast_provenance.expense_mode)
+                          ? 'Costs are projected from this business’s observed transactions. Public data supports revenue patterns and supplies no expense or repayment outcomes.'
+                          : result.forecast_provenance.expense_mode ===
+                              'synthetic_trained'
+                            ? 'Costs use a synthetic training model. Public data supports revenue patterns and supplies no expense or repayment outcomes.'
+                            : 'This forecast uses the synthetic net model selected during validation.'}
+                    </p>
+                  </div>
+                )}
                 <div className="space-y-2">
                   <p className="text-xs font-medium">Model rationale</p>
                   <p className="text-sm leading-relaxed text-muted-foreground">

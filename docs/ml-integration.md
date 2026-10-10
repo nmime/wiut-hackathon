@@ -35,8 +35,8 @@ No currency conversion is assumed. The ML team must clarify how a currency
 request constrains an indexed recommendation before using that comparison.
 The default analysis omits the requested amount by sending `null`.
 
-Allowed channels: `card`, `transfer`, `qr`, `cash_in`, `other`. Amounts must be
-finite and positive. Histories contain 1–20,000 transactions. Timestamps support
+Allowed channels: `card`, `transfer`, `qr`, `cash_in`, `other`. Transaction amounts
+must be finite and within **1e-12–1e12**, inclusive. Histories contain 1–20,000 transactions. Timestamps support
 ISO timestamps with `Z`, timezone offset, or no offset (interpreted as UTC).
 NestJS selects transactions on or before the assessment date. An empty selected
 history is rejected. The business and date in the result must match the request.
@@ -51,6 +51,11 @@ fit within the supported calendar. These implementation limits do not tighten
 the general NestJS/shared transport contract. Unsupported inputs return HTTP
 422 from the optional service; NestJS records the failed assessment and returns
 an upstream error.
+
+The shared transport contract and optional Python implementation both support
+transaction indices **1e-12–1e12**. Smaller positive values are rejected,
+avoiding overflow from dividing ordinary costs by a subnormal revenue scale.
+Uniform rescaling within the supported range preserves the score.
 
 The optional service counts missing complete months as zero activity. It omits
 an incomplete assessment month from forecast features. If the only available
@@ -71,20 +76,21 @@ the indexed principal while the conversion is undeclared.
 The source of truth is `ScoreResponseSchema` in
 `libs/common/api-contracts/src/index.ts`.
 
-| Field                                      | Meaning                                                                 |
-| ------------------------------------------ | ----------------------------------------------------------------------- |
-| `capacity_score`                           | Number 0–100, payment capacity, not default probability                 |
-| `score_band`                               | `low`, `medium`, or `high`                                              |
-| `cashflow_summary`                         | Mean inflow index, volatility, net surplus index, trend                 |
-| `recommended_loan`                         | Nonnegative indexed principal/installment, term 1–120 months, rationale |
-| `seasonality.monthly_forecast_index`       | Exactly 12 future monthly net-flow indices, may be negative             |
-| `seasonality.weak_months`, `strong_months` | Calendar month numbers 1–12; unique and disjoint                        |
-| `adaptive_schedule`                        | One-based contiguous month offsets, indexed installments, notes         |
-| `explanation.top_factors`                  | Factor names, positive/negative impact, finite weights                  |
-| `explanation.advisory`                     | Advice strings                                                          |
-| `confidence`                               | Fraction 0–1, displayed as a percentage                                 |
-| `flags`                                    | Known failure and uncertainty warning strings                           |
-| `model_version`, `request_id`              | Nonempty audit identifiers                                              |
+| Field                                      | Meaning                                                                                          |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `capacity_score`                           | Number 0–100, payment capacity, not default probability                                          |
+| `score_band`                               | `low`, `medium`, or `high`                                                                       |
+| `cashflow_summary`                         | Mean inflow index, volatility, net surplus index, trend                                          |
+| `recommended_loan`                         | Nonnegative indexed principal/installment, term 1–120 months, rationale                          |
+| `seasonality.monthly_forecast_index`       | Exactly 12 future monthly net-flow indices, may be negative                                      |
+| `seasonality.weak_months`, `strong_months` | Calendar month numbers 1–12; unique and disjoint                                                 |
+| `adaptive_schedule`                        | One-based contiguous month offsets, indexed installments, notes                                  |
+| `explanation.top_factors`                  | Factor names, positive/negative impact, finite weights                                           |
+| `explanation.advisory`                     | Advice strings                                                                                   |
+| `confidence`                               | Fraction 0–1, displayed as a percentage                                                          |
+| `forecast_provenance`                      | Optional actual public/synthetic forecast weights, expense policy and real-training target count |
+| `flags`                                    | Known failure and uncertainty warning strings                                                    |
+| `model_version`, `request_id`              | Nonempty audit identifiers                                                                       |
 
 The 12 forecast values correspond to the next 12 calendar months after the
 assessment month. A positive principal requires a schedule matching the
@@ -92,9 +98,107 @@ suggested term. Zero-capacity recommendations may have an empty schedule.
 Weak months should receive reduced payments; stronger months may receive increased
 payments, within the model's affordable capacity constraints.
 
+The optional local service returns `forecast_provenance` with
+`real_revenue_weight` and `synthetic_net_weight` in 0–1 summing to one,
+`expense_mode` (`observed_cost_regression`, `observed_cost_projection`,
+`synthetic_trained`, or `not_used`),
+`revenue_candidate`, and `real_training_targets`. These are the weights actually
+used for this request, rather than a claim about forecast accuracy. The target
+count includes overlapping rolling windows, not independent businesses or
+repayment outcomes. Public-trained revenue ensembles also use the business's
+observed history and statistical baselines. The field may be omitted or null by
+the teammate's service and older stored assessments; both remain supported.
+
+For the optional local service, `model_version` identifies the recipe and selected
+policy. The `model_artifact_sha256` exposed by its `/health` endpoint and every
+ML audit event identifies the exact serialized bytes loaded at startup. It stays
+fixed until restart, including if the file on disk is replaced. This exact-byte
+identity is separate from the shared response contract and need not be returned
+by a replacement teammate service. Same-recipe builds can have different artifact
+hashes and learned fingerprints across platforms.
+
+The current local artifact uses a **65% real-revenue/observed-cost component**
+and **35% synthetic net component** for sufficiently long histories. Its real
+share falls to **25%** with fewer than 12 observed calendar months, or when the
+positive prior-three-month inflow mean gives a recent-three/prior-three mean
+ratio outside **[0.65, 1.55]**. The real revenue ensemble selects experts using
+observed history only, with no future or cohort labels. A latest complete year without inflow or outflow yields
+zero forecasts without trained inference and omits estimator provenance. The
+selected expense projection scales predicted revenue by the median observed
+outflow/inflow ratio over the latest 12 calendar months with positive inflow;
+an all-zero-inflow window uses mean observed outflow. Fixed costs are included
+implicitly, so projected costs may be overstated as revenue rises. This is
+an observed-cost assumption; public revenue data provides no expense labels.
+
+The original development grid measured **38 fixed and observed-history policies**,
+every qualified real-revenue candidate, and two expense options. Its first
+60%/25% guarded choice failed the reserved engineering audit's majority-real
+requirement; the failed report remains preserved. Final policy selection uses
+the original validation measurements, keeps the externally audited real candidate
+and recipe unchanged, and compares 24 bounded observed-cost projections plus
+the synthetic expense benchmark against those 38 transfer policies. The subsequent
+fixed50 policy and subsequent median-share12 guard75/25/25 policy failed separately
+reserved cohort guards; all three failed reports are preserved. This fourth
+exploratory cycle selects only on original development data. It requires mean real
+contribution of at least 55% and a tighter **10% development cohort buffer**, while
+retaining every original error guard. Accurate `math.fsum` aggregation preserves a
+mathematical 55% contribution without rounding subthreshold shares upward.
+Development mean is **55%** (45 histories at 65%, 15 at 25%);
+actual request shares remain reported individually. No consumed final-audit target
+labels or cohort errors select the projection or policy. The separately reserved
+V5 engineering cohort at positions **4,000,000–4,000,899** passed every unchanged
+threshold, including the original **15% final cohort guard**.
+Observed net-history routing was also considered: two 7,296-combination grids
+requiring historical skill at up to three origins found no majority-qualified
+policy. A 29,184-combination latest-origin variant did qualify some policies, but
+adds inference and lacks supported local evidence for 31 of 60 development
+histories; it was rejected for complexity and slightly worse pooled error than
+the simpler selected policy. These are development experiments, not fresh audits.
+The first Mac V5 audit measured **5.478% lower macro normalized net MAE** than the unchanged
+synthetic reference (whole-business bootstrap 95% interval **4.408%–6.597%**),
+and raw MAE **89.147625 versus 95.181494** (about 6.34% lower). Mean actual real
+contribution was **53.1778%**, with 634 of 900 requests using majority-real
+forecasts. All responses validated: 757 positive-principal and 143 zero-principal
+recommendations. Pattern-break error still worsened **10.994%**; cold-start and
+volatile-growth errors worsened 0.0843% and 0.1477%, within the unchanged cohort
+tolerance. This fourth cycle follows three aggregate audit rejections. Its
+interval describes case-sampling uncertainty conditional on the chosen policy
+and fixed synthetic generator; it excludes sequential search and real-client
+transfer uncertainty. The [accepted V5 result](../ml-service/reports/engineering-audit-v5-frozen.md) is preserved and now consumed. The original external-provider result measured
+**19.304% lower macro normalized revenue MAE** than seasonal naive. Current
+consumed regression reports distinguish exact local reproduction from portable
+qualification; neither supplies a new independent holdout.
+
+Portable Linux qualification requires the same core source, policy and frozen
+training recipes, and reproduces every original V5 target point within absolute
+tolerance **1e-9**. The [target replay](../ml-service/reports/engineering-audit-v5-targets.json)
+was created after the first audit from its consumed cases, not new targets. A
+differently fitted portable artifact must independently pass all five unchanged
+acceptance gates (macro, raw and cohort errors, mean real share, real-trained
+estimator use) and the original scoring invariants. The
+[current engineering report](../ml-service/reports/engineering-metrics.md) and
+[JSON](../ml-service/reports/engineering-metrics.json) retain actual metric deltas
+from the frozen Mac result. Different learned fingerprints do not pass exact-fitted reproduction, even when
+portable qualification passes. Strict metric equality and actual deltas are
+reported separately. Portable qualification is consumed same-recipe regression,
+not exact reproduction or fresh validation.
+Exact-fitted local reruns remain subject to strict metric equality. The first Mac
+V5 result and all four sequential cycles remain disclosed.
+
+Actual-policy validation metrics are recorded separately from supporting
+fixed-weight comparisons. Contributions describe forecast composition,
+not accuracy or repayment probability. See [training and audit details](../ml-service/README.md)
+for the complete finite grid, validation guards and transfer limitations. A
+replacement teammate service may use its own validated policy while preserving
+the response contract.
+
 ## Error and audit behavior
 
 The adapter validates the full response before showing any recommendation.
+Positive recommended principal requires positive total payments; zero principal
+requires zero total payments. For `zero_interest_mvp`, their totals agree within
+relative tolerance **1e-9** and absolute tolerance **1e-12**. Valid interest-bearing
+replacement policies remain supported.
 An absent service returns 503; a timeout returns 504; malformed, oversized, or
 mismatched output returns an upstream error. Each accepted analysis request is
 persisted with its input hash, API request ID, date, result/model metadata or

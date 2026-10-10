@@ -1,6 +1,6 @@
 # Public Uzbekistan retail revenue benchmark
 
-Measured 2026-10-10T19:30:44.763137+00:00. This benchmark trains a separate revenue forecaster on actual public monthly retail turnover. It does not measure borrower payment capacity or repayment performance.
+Measured 2026-10-10T20:52:12.151303+00:00. This benchmark trains a separate revenue forecaster on actual public monthly retail turnover. It does not measure borrower payment capacity or repayment performance.
 
 Source: [National Statistics Committee of the Republic of Uzbekistan](https://siat.stat.uz/data/2699/?lang=en), indicator 1.07.02.0002; [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Published year-to-date totals become monthly increments by within-year differences and a January reset. Units remain **million UZS**.
 
