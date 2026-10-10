@@ -1,3 +1,0 @@
-{$TELEGRAM_BOT_API_DOMAIN} {
-	import api_service telegram-bot-api:80
-}

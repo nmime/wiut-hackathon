@@ -1,164 +1,59 @@
-name: CI
-
+name: Verify
 on:
-  pull_request:
-    branches:
-      - main
   push:
-    branches:
-      - main
-  workflow_dispatch:
-
+  pull_request:
 permissions:
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-env:
-  CI: 'true'
-  NX_DAEMON: 'false'
-  NX_CACHE_DIRECTORY: .nx/cache
-  NODE_VERSION_FILE: .nvmrc
-  PNPM_VERSION: 12.8.1
-
-# GitHub renders only the fast gate, the secret scan and the release machinery.
-# The full gate inventory runs on GitLab (.gitlab-ci.yml); every gate this forge
-# does not render is recorded in scripts/ci/gates.json with `forges` + `reason`,
-# which `node scripts/ci/check-pipelines.mjs` (run below) enforces.
-
 jobs:
-  gitleaks:
-    name: Gitleaks Secret Scan
+  verify:
     runs-on: ubuntu-latest
-    env:
-      GITLEAKS_VERSION: '8.30.1'
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: wiut
+          POSTGRES_PASSWORD: wiut_dev
+          POSTGRES_DB: wiut_test
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U wiut -d wiut_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+          node-version: 24
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_no_ml'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Named rather than discovered, so this job and the GitLab one scan with the same config:
-          # the product file, which extends packages/tooling/config/gitleaks.base.toml.
-          GITLEAKS_CONFIG: .gitleaks.toml
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+          PGPASSWORD: wiut_dev
+      - run: pnpm test:e2e
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
-          node-version-file: .nvmrc
-      - name: Verify real secret-detection canaries
+          version: '0.11.28'
+          python-version: '3.12'
+      - run: uv sync --frozen
+        working-directory: ml-service
+      - run: uv run ruff check . && uv run ruff format --check .
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.train
+        working-directory: ml-service
+      - run: uv run pytest
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.evaluate
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.evaluate_public
+        working-directory: ml-service
+      - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_real_ml'
         env:
-          NRB_GITLEAKS_CANARY_BINARY: /tmp/gitleaks-${{ env.GITLEAKS_VERSION }}/gitleaks
-        run: node --test packages/tooling/src/commands/qa/gitleaks-metadata.test.ts
-
-  fast-check:
-    name: Fast PR gate (ci:pr)
-    runs-on: ubuntu-22.04
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+          PGPASSWORD: wiut_dev
+      - run: pnpm test:real-ml
+      - uses: actions/upload-artifact@v4
+        if: failure()
         with:
-          fetch-depth: 0
-
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: ${{ env.NODE_VERSION_FILE }}
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Validate branch and commit conventions
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if [[ -n "$GITHUB_HEAD_REF" ]]; then
-            pnpm run git:conventions -- --branch "$GITHUB_HEAD_REF" --range "origin/$GITHUB_BASE_REF..$PR_HEAD_SHA"
-          else
-            pnpm run git:conventions -- --branch "$GITHUB_REF_NAME" --range "$BEFORE_SHA..HEAD"
-          fi
-
-      - name: Validate GitHub workflow hardening
-        run: node scripts/validate-github-workflows.mjs
-
-      - name: Check CI gate parity across forges
-        run: node scripts/ci/check-pipelines.mjs
-
-      - name: Restore Nx computation cache
-        uses: ./.github/actions/nx-cache
-        with:
-          scope: fast
-
-      - name: Run fast aggregate
-        run: pnpm run ci:pr
-
-      - name: Write fast gate summary
-        if: always()
-        run: |
-          {
-            echo "## Fast PR gate"
-            echo
-            echo "Command: \`pnpm run ci:pr\`"
-            echo
-            echo "Workflow: ${{ github.workflow }}"
-            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          } | tee fast-check-summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload fast gate summary
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: fast-check-summary
-          path: fast-check-summary.md
-          if-no-files-found: ignore
-
-  ci-status-summary:
-    name: CI status summary
-    runs-on: ubuntu-22.04
-    needs:
-      - gitleaks
-      - fast-check
-    if: always()
-    timeout-minutes: 5
-    steps:
-      - name: Write CI status summary
-        run: |
-          {
-            echo "## CI status summary"
-            echo
-            echo "Workflow: ${{ github.workflow }}"
-            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo
-            echo "| Job | Result |"
-            echo "| --- | --- |"
-            echo "| Gitleaks secret scan | ${{ needs.gitleaks.result }} |"
-            echo "| Fast PR gate (ci:pr) | ${{ needs.fast-check.result }} |"
-          } | tee ci-status-summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload CI status summary
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        if: always()
-        with:
-          name: ci-status-summary
-          path: ci-status-summary.md
-          if-no-files-found: error
-
-      - name: Enforce every required CI result
-        env:
-          REQUIRED_RESULTS: >-
-            ${{ needs.gitleaks.result }}
-            ${{ needs.fast-check.result }}
-        run: |
-          for result in $REQUIRED_RESULTS; do
-            if [ "$result" != "success" ]; then
-              echo "::error::A required CI job finished with result: $result"
-              exit 1
-            fi
-          done
+          name: browser-test-results
+          path: test-results

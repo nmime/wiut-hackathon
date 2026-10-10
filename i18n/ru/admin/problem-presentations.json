@@ -1,9 +1,0 @@
-{
-  "admin.apiResponseStudio.eyebrow": "Операции API",
-  "admin.apiResponseStudio.title": "Студия ответов API",
-  "admin.apiResponseStudio.description": "Проверяйте покрытие ответов API, синхронизируйте источники OpenAPI и управляйте отображением каждого ответа в поддерживаемых клиентах.",
-  "admin.apiResponseStudio.readOnly": "Доступ только для чтения",
-  "admin.apiResponseStudio.history.details": "Данные ревизии",
-  "admin.apiResponseStudio.history.empty": "Изменения студии еще не записаны.",
-  "admin.apiResponseStudio.history.pagination": "Страницы истории"
-}

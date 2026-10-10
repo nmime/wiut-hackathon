@@ -1,0 +1,32 @@
+services:
+  ml:
+    build:
+      context: ./ml-service
+    environment:
+      ML_MODEL_PATH: /app/runtime/model.joblib
+      ML_AUDIT_PATH: /data/audit/requests.jsonl
+    ports:
+      - '127.0.0.1:8000:8000'
+    volumes:
+      - ml-audit:/data/audit
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 10
+    restart: unless-stopped
+  api:
+    environment:
+      ML_SERVICE_URL: http://ml:8000
+    depends_on:
+      ml:
+        condition: service_healthy
+volumes:
+  ml-audit:

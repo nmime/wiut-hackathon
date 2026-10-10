@@ -1,109 +1,15 @@
-# Dependencies
-# No trailing slash: `pnpm nrb closure install` replaces the root and per-app
-# node_modules with symlinks into .nrb/closure, and a `node_modules/` pattern
-# matches only directories — so `git add -A` staged those symlinks.
-node_modules
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-# Build outputs
+node_modules/
 dist/
-build/
-out/
-.next/
-.nuxt/
-.vuepress/dist/
-*.tsbuildinfo
-
-# Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.staging
-.env.*.local
-
-# Cache directories
-.cache/
-.parcel-cache/
-apps/frontend/landing/.astro/
-apps/frontend/mobile/.expo/
-.npm/
-.yarn/cache/
-.pnpm-store/
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Logs
-logs
+.env.*
+!.env.example
 *.log
-
-# OS generated files
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE files
-.idea/
-*.swp
-*.swo
-*~
-
-# VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Temporary files
-
-
-
-# test
-.playwright-mcp
-e2e-report/
-cucumber-report/
+*.tsbuildinfo
+.DS_Store
+coverage/
 playwright-report/
 test-results/
-playwright/.cache/
-.stryker-tmp/
-
-*storybook.log
-storybook-static
-
-# Track project-level Claude Code instructions (override global ~/.gitignore)
-!CLAUDE.md
-!**/CLAUDE.md
-
-# AI working artifacts (plans, specs) — local only
-
-.nx/
-.nrb/reference/
-.nrb/seed-state.json
-
-# Local database backups
-backups/
-
-.env.production
-docker/secrets/
-# Generated runtime secrets emitted for non-container runtimes (PM2).
-.env.pm2-secrets
-*-secrets.env
+artifacts/
+__pycache__/
+.venv/
+.pytest_cache/

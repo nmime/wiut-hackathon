@@ -1,302 +1,178 @@
-<a id="readme-top"></a>
+# FlowCredit · WIUT Hackathon
 
-<div align="center">
-  <img src="docs/assets/readme-hero.svg" width="100%" alt="Nest React Boilerplate — production-grade Nx, React, Expo, and NestJS monorepo" />
+A credit-officer workspace for reviewing synthetic business cash flow,
+explainable payment-capacity recommendations, and seasonal repayment schedules.
+An officer records the final decision. The capacity score is not a default
+probability.
 
-  <h1>Nest React Boilerplate</h1>
+The application is a simplified fork of the Nest React Boilerplate: one
+React/Vite frontend, one NestJS/Fastify API, and shared Zod contracts.
+See [source and cleanup](docs/upstream.md). The frontend uses Tailwind CSS and
+official shadcn/ui registry components; product pages compose those primitives.
 
-  <p>
-    <strong>A production-shaped Nx foundation for web, mobile, APIs, consumers, schedulers, and integrations.</strong>
-    <br />
-    Select only the product surfaces you need, keep runtime ownership explicit, and ship through one typed platform.
-  </p>
+## Run locally
 
-  <p>
-    <a href="https://github.com/nmime/nest-react-boilerplate/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/nmime/nest-react-boilerplate?style=for-the-badge&logo=semanticrelease&logoColor=white&color=8b5cf6" /></a>
-    <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24.x-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" />
-    <img alt="pnpm 12.8.1" src="https://img.shields.io/badge/pnpm-12.8.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white" />
-    <img alt="Nx 23" src="https://img.shields.io/badge/Nx-23-143055?style=for-the-badge&logo=nx&logoColor=white" />
-    <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-0EA5E9?style=for-the-badge" /></a>
-  </p>
-
-  <p>
-    <a href="#quick-start">Quick start</a> ·
-    <a href="#choose-your-product-surfaces">Applications</a> ·
-    <a href="#architecture">Architecture</a> ·
-    <a href="#quality-by-default">Quality</a> ·
-    <a href="#documentation">Documentation</a>
-  </p>
-</div>
-
-## Why this foundation
-
-This repository is more than a framework starter. It is an executable platform contract for teams that want frontend, backend, mobile, API, data, testing, and delivery decisions to agree from the first commit.
-
-|                                                                                                                                                    |                                                                                                                                        |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **🧩 Explicit product selection**<br />Choose applications with `pnpm nrb setup`; the repo never invents a default deployable.                     | **⚡ Multi-renderer frontend**<br />React + Vite SPAs, Astro islands, Vike SSR, Expo/React Native, Tamagui, and Storybook.             |
-| **🛡️ Production NestJS backend**<br />Fastify, selectable PostgreSQL or MongoDB, Redis, NATS, request CLS, health probes, and graceful operations. | **📜 Contract-first APIs**<br />OpenAPI producers, generated TypeScript clients, typed React Query helpers, and RFC 9457 errors.       |
-| **🧪 Quality as code**<br />ESLint, Prettier, Vitest, Playwright, component tests, coverage gates, contract checks, and security scans.            | **🚀 Multiple delivery paths**<br />Docker Compose, multi-stage images, Kubernetes/Helm, GitHub Actions, and single-server operations. |
-
-### Design principles
-
-- **Product-neutral reference UI** — useful application shells without fake business data or a demo brand.
-- **Ownership before convenience** — every deployable, feature, library, route, contract, and migration has an explicit home.
-- **Generated contracts stay reviewable** — controllers and DTOs own API truth; committed outputs make drift visible.
-- **Secure defaults** — conservative CORS, disabled production OpenAPI, explicit API origins, secret scanning, and no accidental bootstrap paths.
-- **Local proof first** — CI is additional evidence, not a substitute for focused local verification.
-
-## Choose your product surfaces
-
-There is no hidden default application. Selections are always explicit in
-`.nrb/workspace.json`, and you can rerun setup whenever the product grows. The
-upstream template commits a 10-app reference selection so maintainers can run
-every surface; product forks replace it with `pnpm nrb setup`.
-
-| Surface              | Included choices                                                                 |
-| -------------------- | -------------------------------------------------------------------------------- |
-| **Web applications** | Admin and user React + Vite SPAs, an Astro landing app, and a Vike SSR site      |
-| **Mobile**           | Expo + React Native with shared native UI and authentication dependencies        |
-| **Core APIs**        | Separate NestJS + Fastify services for admin, user, and authentication ownership |
-| **Integrations**     | Optional Discord interaction API and Telegram bot API                            |
-| **End to end**       | A Playwright full-stack project tied to the selected core applications           |
-
-Use the generated [Project Catalog](docs/project-catalog.md) for stable application IDs, Nx roots, selection dependencies, runtimes, and template hostnames.
+Requires Node 24, Corepack, and Docker for PostgreSQL.
 
 ```bash
-# Interactive product selection
-pnpm nrb setup
-
-# Add one application explicitly later
-pnpm nrb setup --app landing-app
-
-# Inspect the live Nx graph
-pnpm exec nx show projects
-```
-
-## Quick start
-
-### Prerequisites
-
-| Requirement | Supported version or role                                                     |
-| ----------- | ----------------------------------------------------------------------------- |
-| Node.js     | `>=24 <25` — pinned by `.nvmrc`                                               |
-| pnpm        | `12.8.1` through Corepack                                                     |
-| Docker      | Local PostgreSQL or one-node MongoDB replica set and broader Compose profiles |
-
-### Start the selected stack
-
-```bash
-nvm use
 corepack enable
-corepack prepare pnpm@12.8.1 --activate
 pnpm install --frozen-lockfile
-
-pnpm nrb setup
 cp .env.example .env
-cp .env.local.example .env.local
-
-pnpm run dev:db
-pnpm run db:migrate
-pnpm run dev
+pnpm db:up
+pnpm dev
 ```
 
-`pnpm run dev:db` reads the `.nrb` setup selection and starts only the selected
-provider: PostgreSQL, or MongoDB plus its replica-set initializer. It rejects
-missing or conflicting provider selections before the same provider-aware
-`pnpm run db:migrate` command.
+Open http://localhost:5173. The API listens on http://127.0.0.1:3000/api,
+with Swagger documentation at `/api/docs`. PostgreSQL uses localhost:55432.
+Tables and synthetic businesses are initialized automatically. Existing records
+and review decisions survive restarts.
 
-`pnpm run dev` starts only the applications recorded by setup. It refuses to silently fall back to every application. Use `pnpm run dev:all` only when you intentionally want every serve target.
+The ML service is optional during frontend/backend development. With
+`ML_SERVICE_URL` empty, business histories, imports, and audit views work;
+analysis returns a clear unavailable error and records the failed attempt.
+No fabricated score or recommendation is substituted.
 
-For noninteractive setup, capability selection, app additions, and troubleshooting, continue with the [Quick Start](docs/boilerplate/quick-start.md) and [Setup and Configuration](docs/setup/configuration.md).
+## Run the included local ML service
 
-Before the first deploy of a fork, read [Product Identity](docs/product-identity.md).
-This repository ships its own name, owner, domain, and database names in
-roughly 200 files; `BACKUP_PREFIX`, `S3_BUCKET`, and the GitOps `repoURL`
-are the ones that cause real damage if they are left at the boilerplate
-default.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Setup["NRB setup<br/>explicit selection"] --> Products
-
-  subgraph Products["Product surfaces"]
-    Web["React + Vite<br/>Astro · Vike"]
-    Mobile["Expo +<br/>React Native"]
-    Integrations["Discord ·<br/>Telegram"]
-  end
-
-  subgraph Platform["Shared platform"]
-    Frontend["Frontend UI · runtime<br/>API support · clients"]
-    Common["Common contracts<br/>problem details · i18n"]
-    Backend["Backend bootstrap · health<br/>features · persistence"]
-  end
-
-  subgraph Services["NestJS + Fastify"]
-    Admin["Admin API"]
-    User["User API"]
-    Auth["Auth API"]
-  end
-
-  Data[("PostgreSQL or MongoDB · Redis · NATS")]
-  Delivery["Tests · Docker · Helm · CI"]
-
-  Web --> Frontend
-  Mobile --> Frontend
-  Integrations --> Backend
-  Frontend --> Common
-  Frontend --> Admin
-  Frontend --> User
-  Frontend --> Auth
-  Common --> Backend
-  Admin --> Backend
-  User --> Backend
-  Auth --> Backend
-  Backend --> Data
-  Delivery -. "validates" .-> Products
-  Delivery -. "packages and operates" .-> Services
-
-  classDef setup fill:#082f49,stroke:#38bdf8,color:#e0f2fe,stroke-width:2px;
-  classDef product fill:#2e1065,stroke:#a78bfa,color:#f5f3ff,stroke-width:2px;
-  classDef platform fill:#052e2b,stroke:#34d399,color:#ecfdf5,stroke-width:2px;
-  classDef service fill:#172554,stroke:#60a5fa,color:#eff6ff,stroke-width:2px;
-  classDef data fill:#3b132a,stroke:#f472b6,color:#fdf2f8,stroke-width:2px;
-  classDef delivery fill:#422006,stroke:#fbbf24,color:#fffbeb,stroke-width:2px;
-
-  class Setup setup;
-  class Web,Mobile,Integrations product;
-  class Frontend,Common,Backend platform;
-  class Admin,User,Auth service;
-  class Data data;
-  class Delivery delivery;
-```
-
-### Platform stack
-
-| Layer            | Technology and responsibility                                                                        |
-| ---------------- | ---------------------------------------------------------------------------------------------------- |
-| 🟦 **Workspace** | Nx 23, TypeScript, pnpm 12.8.1, and Node.js 24                                                       |
-| 🟪 **Frontend**  | React, Vite, Astro, Vike, Expo, React Native, Tamagui, TanStack Query, MobX shell state              |
-| 🟩 **Backend**   | NestJS on Fastify, request context through `AsyncLocalStorage`, validation, Helmet, health/readiness |
-| 🩷 **Data**      | PostgreSQL + MikroORM or native MongoDB, explicit migrations, Redis, NATS, S3/SeaweedFS adapters     |
-| 🟨 **Contracts** | OpenAPI, generated clients, RFC 9457 Problem Details, typed public extensions                        |
-| 🟧 **Delivery**  | Docker Compose, Dockerfiles, Kubernetes/Helm, selected CI rendering, release and operations runbooks |
-
-Explore the full boundary model in [Architecture](docs/architecture.md) and the focused [Architecture Deep Dives](docs/architecture/README.md).
-
-## Integrations
-
-| Integration    | Status             | What is included                                                                          |
-| -------------- | ------------------ | ----------------------------------------------------------------------------------------- |
-| PostgreSQL     | 🟢 Wired           | Default preset provider with MikroORM entities and committed migrations                   |
-| MongoDB        | 🟢 Wired           | Mutually exclusive native-driver alternative with replica-set transactions and migrations |
-| Redis          | 🟢 Wired           | Session and rate-limit infrastructure with single, sentinel, and cluster modes            |
-| NATS           | 🟢 Wired           | Messaging backbone for workers and event-driven features                                  |
-| Telegram       | 🟢 Wired           | Better Auth OIDC, signed TMA sessions, webhook/polling bot runtime, and Open App menus    |
-| Discord        | 🟢 Wired           | Slash commands, interactions endpoint, and OAuth 2.0 social authentication                |
-| S3 / SeaweedFS | 🟢 Wired           | AWS SDK v3 adapter, injectable test adapter, and local SeaweedFS profile                  |
-| PostHog        | 🟢 Wired           | Disabled-by-default analytics provider with an explicit API-key contract                  |
-| OpenTelemetry  | 🟢 Wired on Node   | OTLP traces and metrics with a Prometheus-exporting collector path                        |
-| Email provider | 🟡 Extension point | Better Auth lifecycle ownership is ready; the product chooses its vendor                  |
-
-**Wired** means runtime code exists and is exercised by tests. **Extension point** means the repository provides ownership without pretending a vendor integration is bundled.
-
-## Quality by default
-
-The repository treats formatting, architecture boundaries, generated contracts, migrations, coverage, security, and deployment configuration as executable checks.
+The repository also includes an optional FastAPI service trained on synthetic
+businesses whose seasonality is calibrated with licensed public Uzbekistan
+retail data. To run the complete demo:
 
 ```bash
-# Fast local aggregate for normal changes
-pnpm run check:fast
-
-# Full non-runtime aggregate for cross-cutting changes
-pnpm run check
+docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build -d
 ```
 
-| Change area             | Focused proof                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------- |
-| Documentation           | `pnpm run docs:check` · `pnpm run format:changed` · `git diff --check`                      |
-| Repository tooling      | `pnpm run tooling:static-check`                                                             |
-| Frontend boundaries     | `pnpm run frontend:fsd:check` plus owning app tests/builds                                  |
-| API contracts           | `pnpm run api:contracts:check` · `pnpm run api:clients:check` · `pnpm run api:openapi:lint` |
-| Database changes        | `pnpm run db:migrations:check` plus rollback proof when Docker is available                 |
-| Runtime code            | `pnpm run lint` · `pnpm run typecheck` · focused Nx/Vitest tests                            |
-| Security-sensitive work | `pnpm run test:security:secrets` plus targeted SAST/security checks                         |
+Open http://localhost:8080. The ML container builds its model locally and NestJS
+connects to `http://ml:8000`. The ML API listens on localhost:8000 and retains
+request hashes, responses, and model identifiers in the `ml-audit` volume.
+Inference and explanations make no external API calls.
 
-Testing spans OpenSpec requirements with an explicit Cucumber disposition,
-Cucumber acceptance examples, Vitest unit and integration suites, Storybook
-interaction and visual checks, Playwright browser flows, Testcontainers-backed
-component tests, OpenAPI consumer/fuzz checks, property and mutation tests,
-exact-SHA evidence dossiers, and coverage thresholds. See
-[Specification Assurance](docs/specification-assurance.md),
-[Testing](docs/testing.md), [Modern QA](docs/testing/modern-qa.md), and
-[Local Verification](docs/local-verification.md).
+For Python development, install [uv](https://docs.astral.sh/uv/getting-started/installation/),
+then run:
 
-## Repository layout
+```bash
+cd ml-service
+uv sync --frozen
+uv run python -m capacity_ml.train
+uv run python -m capacity_ml.evaluate
+uv run python -m capacity_ml.evaluate_public
+uv run pytest
+uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
+```
+
+Set `ML_SERVICE_URL=http://127.0.0.1:8000` for the local NestJS process.
+See [ML implementation and measured evaluation](ml-service/README.md) for the
+generator, split, forecast selection, capacity factors, and limitations.
+The [public dataset declaration](ml-service/data/README.md) documents the official
+source, CC BY 4.0 attribution, quality issue, and 2020–2022 calibration window.
+A separate benchmark trains on actual regional revenues and evaluates future
+2024–2025 revenue. These public aggregates do not contain borrower expenses or
+repayment outcomes.
+The included repayment model uses explicitly declared **0% interest**;
+recommendations remain indices and require human review.
+
+## Connect the teammate's ML service
+
+Set `ML_SERVICE_URL=http://127.0.0.1:8000` in `.env`, then restart the API.
+The adapter posts to `${ML_SERVICE_URL}/score`. The contract is documented in
+[ML integration](docs/ml-integration.md) and enforced by the shared schemas in
+`libs/common/api-contracts/src/index.ts`. The default timeout is 8 seconds.
+
+Only synthetic input is accepted by the import flow. Real bank data is outside
+the scope of this prototype. Core scoring belongs to the bank-local Python
+service and does not require external AI calls.
+
+## Main workflow
+
+1. Select a synthetic business or import a synthetic transaction JSON file.
+2. Review the historical cash-flow chart and transaction records.
+3. Choose an assessment date and optionally enter the requested amount in UZS.
+4. Analyze using the connected ML service.
+5. Inspect capacity, confidence, warnings, explanations, forecast, and payments.
+6. Record approval, decline, or a request for more information with reviewer name
+   and reasoning. A recorded decision is immutable; reassess for a new review.
+7. View assessment history and its audit trail, or download the result as JSON.
+
+Transaction sizes, historical flows, and recommendation amounts are **indices**.
+They are never relabeled as UZS. `requested_amount` is forwarded in UZS according
+to the teammate's contract; the API does not invent an index conversion.
+
+## Verify
+
+```bash
+pnpm check
+# Create an isolated browser-test database once:
+docker compose exec -T db createdb -U wiut wiut_test
+docker compose exec -T db createdb -U wiut wiut_no_ml
+pnpm exec playwright install chromium
+pnpm test:e2e
+git diff --check
+```
+
+Tests cover transport validation, synthetic generation, ML failures, durable
+human review, and the browser workflow. The browser-test ML fixture is exclusively
+test infrastructure and is never started by the product's dev or Docker commands.
+`WIUT_TEST_DATABASE_URL` and `WIUT_NO_ML_DATABASE_URL` may override the browser-test
+connections. The second database verifies the actual disconnected-ML behavior.
+
+After preparing the Python environment and training the local model, test its
+real integration through NestJS and the browser:
+
+```bash
+docker compose exec -T db createdb -U wiut wiut_real_ml
+pnpm test:real-ml
+```
+
+This suite uses the `wiut_real_ml` database and separate service ports. Its
+`WIUT_REAL_ML_DATABASE_URL` connection can be overridden.
+
+## Container stack
+
+```bash
+docker compose up --build -d
+```
+
+Open http://localhost:8080. Nginx serves the built frontend and proxies `/api` to
+NestJS; PostgreSQL stores the audit and case records in a named volume. Local
+ports bind to loopback. Set a strong `POSTGRES_PASSWORD` before hosting.
+For an ML container, set `ML_SERVICE_URL` to an address reachable from the API
+container (a Compose service name or `host.docker.internal`, not its localhost).
+Public hosting is not provisioned by this repository.
+
+## Data declaration and limitations
+
+All seed businesses, names, locations, and transactions are synthetic. The
+deterministic generator models monthly inflows with archetype-specific seasonality,
+trend, volatility, and channel mixes, then samples transactions within each month.
+It uses no customer records or external datasets. Imported data must explicitly
+declare `data_source: "synthetic"`.
+
+The seed generator is `apps/backend/user/user-app-api/src/synthetic.ts`. It uses
+seeds `7261 + business_index × 919` and a fixed October 2025–September 2026
+history window; the cold-start florist has only June–September 2026. Seeding is
+idempotent. Generator and transport tests verify reproducibility.
+
+This is a synthetic-data hackathon prototype with self-declared reviewer names.
+It has no production authentication, authorization, banking connector, or credit
+origination integration. Do not expose the prototype to real banking data.
+Run one API process per database; startup recovers interrupted pending assessments
+as failed attempts. Use the separate `wiut_test` database for browser tests.
+List views show the newest 200 businesses, 100 assessment attempts, and 500 audit
+events. Overview counts describe the returned records, not unbounded portfolio totals.
+The optional ML service has its own synthetic generator and measured held-out
+evaluation. Its report describes performance on unseen synthetic businesses and
+future months; it does not establish real borrower performance or default risk.
+The teammate's service can replace it without changing the frontend.
+
+## Repository
 
 ```text
-apps/
-├── frontend/                 # Vite, Astro, Vike, and Expo deployables
-├── backend/<scope>/          # NestJS APIs, consumers, and schedulers
-└── e2e/                      # Cucumber acceptance and cross-application Playwright projects
-
-libs/
-├── frontend/                 # UI, runtime, API support, clients, and frontend features
-├── backend/                  # Bootstrap, health, features, and PostgreSQL/MongoDB infrastructure
-└── common/                   # Cross-runtime contracts, i18n, notifications, and problem details
-
-packages/tooling/             # NRB setup, generators, checks, and repository automation
-openspec/                     # Durable requirements, change records, and evidence mappings
-docs/                         # Architecture, workflows, testing, deployment, and runbooks
-deploy/                       # Single-server lifecycle automation
-docker/                       # Production Compose topology and supporting configuration
-.helm/                        # Kubernetes chart and deployment values
+apps/frontend/app/                  React, Tailwind, official shadcn/ui
+apps/backend/user/user-app-api/      NestJS, PostgreSQL, ML adapter, audit
+libs/common/api-contracts/           Runtime schemas and shared TypeScript types
+ml-service/                         Optional local FastAPI model and evaluation
+tests/                              Isolated API and browser integration tests
+docs/                               ML contract and fork provenance
 ```
 
-Public TypeScript aliases in `tsconfig.base.json` are stable API. Every project
-root carries its nearest `README.md` and `AGENTS.md`; use those before changing
-project-owned behavior.
-
-## Delivery paths
-
-| Target                      | Start here                                                                                              |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Local dependencies          | [Quick Start](docs/boilerplate/quick-start.md) and the root Docker Compose stack                        |
-| Production Compose          | [Docker Compose Production](docs/docker-compose-production.md)                                          |
-| Kubernetes / Helm           | [Production Deploy](docs/production-deploy.md) and [.helm/README.md](.helm/README.md)                   |
-| Single Ubuntu/Debian server | [Idempotent Single-Server Deployment](docs/single-server-deployment.md)                                 |
-| Release and hardening       | [Release Hardening](docs/release-hardening.md) and [Production Readiness](docs/production-readiness.md) |
-| Operations                  | [Operations Guide](docs/operations.md) and [Runbooks](docs/runbooks/README.md)                          |
-
-## Documentation
-
-| Goal                          | Canonical guide                                                                                                    |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Understand every application  | [Project Catalog](docs/project-catalog.md)                                                                         |
-| Configure or extend setup     | [Setup and Configuration](docs/setup/configuration.md) · [Scaffolding Contract](docs/scaffolding-and-extension.md) |
-| Find a supported command      | [Command Matrix](docs/command-matrix.md)                                                                           |
-| Understand system boundaries  | [Architecture](docs/architecture.md) · [Deep Dives](docs/architecture/README.md)                                   |
-| Work with APIs and clients    | [API Contracts](docs/api-contracts.md) · [API Lifecycle](docs/api-lifecycle-policy.md)                             |
-| Add or review migrations      | [Database Migrations](docs/database-migrations.md)                                                                 |
-| Configure environment values  | [Environment Variables](docs/environment-variables.md)                                                             |
-| Verify the repository locally | [Local Verification](docs/local-verification.md)                                                                   |
-| Browse everything             | [Documentation Index](docs/README.md)                                                                              |
-
-## Security and contribution
-
-Production examples avoid wildcard CORS, disable admin bootstrap and OpenAPI unless explicitly enabled, require deliberate frontend API origins, use only server-managed HttpOnly cookie sessions for first-party authentication, and keep OAuth providers disabled until the owning product configures them.
-
-- Report security issues and review the baseline in [SECURITY.md](SECURITY.md).
-- Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change.
-- AI contributors must follow [AGENTS.md](AGENTS.md) and the canonical [AI Agent Policy](docs/ai/agent-policy.md).
-- Never commit real environment values, credentials, secret material, local volumes, or generated output without its owning source change.
-
-## License
-
-Released under the [MIT License](LICENSE). Built and maintained by [nmime](https://github.com/nmime).
-
-<div align="right">
-  <a href="#readme-top">Back to top ↑</a>
-</div>
+The upstream MIT license is preserved in [LICENSE](LICENSE).
