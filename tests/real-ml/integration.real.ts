@@ -177,11 +177,14 @@ test('the browser renders a real model response and adaptive schedule and record
   const assessment = AssessmentSchema.parse(await response.json());
   const result = ScoreResponseSchema.parse(assessment.result);
   expect(result.model_version).not.toBe('test-only-fixture-v1');
-  await expect(
-    page.getByRole('progressbar', {
-      name: `Capacity score ${result.capacity_score} out of 100`,
-    }),
-  ).toBeVisible();
+  const capacityProgress = page.getByRole('progressbar', {
+    name: /^Capacity score .+ out of 100$/,
+  });
+  await expect(capacityProgress).toBeVisible();
+  await expect(capacityProgress).toHaveAttribute(
+    'aria-valuenow',
+    String(result.capacity_score),
+  );
   await expect(
     page.getByRole('heading', { name: 'Model cash-flow summary', exact: true }),
   ).toBeVisible();
