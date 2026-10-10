@@ -1,6 +1,6 @@
 {
-  "measured_at_utc": "2026-10-10T18:35:58.229193+00:00",
-  "model_version": "synthetic-v1-9a0379ca910d-gradient_boosting",
+  "measured_at_utc": "2026-10-10T19:06:15.038966+00:00",
+  "model_version": "local-v2-4965cd4bd648-gradient_boosting-public0",
   "selection": {
     "seed": 20261010,
     "selected_candidate": "gradient_boosting",
@@ -35,7 +35,1806 @@
       "outflow_mean12"
     ],
     "test_used_for_selection": false,
-    "source_sha256": "9a0379ca910d0cf482adb915136a0dc9f554dce52829af35897b4043b4764df8",
+    "public_revenue_training": {
+      "data_sha256": "86142f63435fc4dd623077c6e7db54fe35a5abf0fdaaf1f886264fbc7f74a0e7",
+      "sources": [
+        {
+          "publisher": "National Statistics Committee of the Republic of Uzbekistan",
+          "indicator": "1.07.02.0002",
+          "title": "Retail trade volume (by month)",
+          "landing_url": "https://siat.stat.uz/data/2699/?lang=en",
+          "download_url": "https://api.siat.stat.uz/media/uploads/sdmx/sdmx_data_2699.json",
+          "license": "CC BY 4.0",
+          "license_url": "https://creativecommons.org/licenses/by/4.0/",
+          "source_modified": "2026-09-24",
+          "raw_sha256": "656b43c71a2d74ebfcad261cc31b0e10c37a5eb2a4c94b020e4d32f8b2020c4f",
+          "retrieved_utc": "2026-10-10",
+          "units_as_published": "million sums (UZS)",
+          "interpretation": "Year-to-date turnover; monthly increments difference within each year and reset in January.",
+          "ytd_confirmation_url": "https://stat.uz/en/press-center/news-of-committee/70489-chakana-savdo-tovar-ajlanmasi-azhmi-370-trln-s-mdan-oshdi-4",
+          "transformations": [
+            "English region labels only",
+            "Within-year monthly differences",
+            "No clipping or imputation"
+          ]
+        },
+        {
+          "id": 964,
+          "sector": "wholesale",
+          "publisher": "National Statistics Committee of the Republic of Uzbekistan",
+          "indicator": "1.07.01.0002",
+          "title": "Wholesale trade volume (by month)",
+          "landing_url": "https://siat.stat.uz/data/964/?lang=en",
+          "download_url": "https://api.siat.stat.uz/media/uploads/sdmx/sdmx_data_964.json",
+          "license": "CC BY 4.0",
+          "license_evidence_url": "https://siat.stat.uz/data/964/?lang=en",
+          "license_url": "https://creativecommons.org/licenses/by/4.0/",
+          "raw_sha256": "30136fbca33109459e12121b4c59c164966b39be408b0104ced489b28980a7f4",
+          "source_modified": "2026-09-24",
+          "retrieved_utc": "2026-10-10",
+          "units_as_published": "million sums",
+          "published_to_million_uzs_multiplier": 1.0,
+          "standardized_units": "million UZS; 1 billion UZS = 1000 million UZS",
+          "interpretation": "Year-to-date turnover/service volume; within-year differences, January reset. These are aggregates, not borrower cash flow or expense records.",
+          "provider_note": "for 2021-2025",
+          "usable_from": "2020-01",
+          "methodology_policy": "Use published contiguous observations; retain negative revisions and exclude affected forecasting windows."
+        },
+        {
+          "id": 3409,
+          "sector": "market_services",
+          "publisher": "National statistics committee  of the Republic of Uzbekistan",
+          "indicator": "1.05.01.0120",
+          "title": "Volume of market services rendered (monthly, by districts and cities)",
+          "landing_url": "https://siat.stat.uz/data/3409/?lang=en",
+          "download_url": "https://api.siat.stat.uz/media/uploads/sdmx/sdmx_data_3409.json",
+          "license": "CC BY 4.0",
+          "license_evidence_url": "https://siat.stat.uz/data/3409/?lang=en",
+          "license_url": "https://creativecommons.org/licenses/by/4.0/",
+          "raw_sha256": "a8750ad1d25260b6cd06a3f79f3e64f00fbf4eeeff40a27f113384d02769a0ad",
+          "source_modified": "2026-09-29",
+          "retrieved_utc": "2026-10-10",
+          "units_as_published": "in bln. Soums",
+          "published_to_million_uzs_multiplier": 1000.0,
+          "standardized_units": "million UZS; 1 billion UZS = 1000 million UZS",
+          "interpretation": "Year-to-date turnover/service volume; within-year differences, January reset. These are aggregates, not borrower cash flow or expense records.",
+          "provider_note": "Starting from September 2024, the data have been compiled including the results of statistical surveys conducted to estimate the informal and hidden economy by regions; The data are preliminary and may be revised in subsequent publications.",
+          "usable_from": "2024-10",
+          "methodology_policy": "Service series exclude pre-September-2024 observations and the September transition increment; October differences use two totals under the new survey definition."
+        },
+        {
+          "id": 3227,
+          "sector": "accommodation_food",
+          "publisher": "National statistics committee  of the Republic of Uzbekistan",
+          "indicator": "1.05.01.0093",
+          "title": "Volume of accommodation and food services (monthly)",
+          "landing_url": "https://siat.stat.uz/data/3227/?lang=en",
+          "download_url": "https://api.siat.stat.uz/media/uploads/sdmx/sdmx_data_3227.json",
+          "license": "CC BY 4.0",
+          "license_evidence_url": "https://siat.stat.uz/data/3227/?lang=en",
+          "license_url": "https://creativecommons.org/licenses/by/4.0/",
+          "raw_sha256": "c4e02b48e0b214e444c0ad94fc1b996fd8244f135513228f9d8ea0dbd4be9b1a",
+          "source_modified": "2026-09-29",
+          "retrieved_utc": "2026-10-10",
+          "units_as_published": "in bln. Soums",
+          "published_to_million_uzs_multiplier": 1000.0,
+          "standardized_units": "million UZS; 1 billion UZS = 1000 million UZS",
+          "interpretation": "Year-to-date turnover/service volume; within-year differences, January reset. These are aggregates, not borrower cash flow or expense records.",
+          "provider_note": "Starting from September 2024, the data have been compiled including the results of statistical surveys conducted to estimate the informal and hidden economy by regions; The data are preliminary and may be revised in subsequent publications.",
+          "usable_from": "2024-10",
+          "methodology_policy": "Service series exclude pre-September-2024 observations and the September transition increment; October differences use two totals under the new survey definition."
+        }
+      ],
+      "published_observations": 16544,
+      "eligible_series": 440,
+      "eligible_observations_after_regime_filter": 11716,
+      "geographic_groups": {
+        "train": [
+          "1735",
+          "1730",
+          "1714",
+          "1710",
+          "1722",
+          "1712",
+          "1708",
+          "1726"
+        ],
+        "validation": ["1733", "1724", "1727"],
+        "test": ["1706", "1703", "1718"]
+      },
+      "quality_issues": [
+        {
+          "sector": "wholesale",
+          "code": "1700",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -17345680.9
+        },
+        {
+          "sector": "wholesale",
+          "code": "1700",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -15756295.0
+        },
+        {
+          "sector": "wholesale",
+          "code": "1735",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -700333.2
+        },
+        {
+          "sector": "wholesale",
+          "code": "1703",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2047584.8
+        },
+        {
+          "sector": "wholesale",
+          "code": "1703",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2365085.9
+        },
+        {
+          "sector": "wholesale",
+          "code": "1706",
+          "month": "2021-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3744.3
+        },
+        {
+          "sector": "wholesale",
+          "code": "1708",
+          "month": "2023-08",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -173233.2
+        },
+        {
+          "sector": "wholesale",
+          "code": "1708",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1033046.3
+        },
+        {
+          "sector": "wholesale",
+          "code": "1710",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -723140.1
+        },
+        {
+          "sector": "wholesale",
+          "code": "1710",
+          "month": "2026-04",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -139950.8
+        },
+        {
+          "sector": "wholesale",
+          "code": "1712",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -85194.8
+        },
+        {
+          "sector": "wholesale",
+          "code": "1712",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -101611.2
+        },
+        {
+          "sector": "wholesale",
+          "code": "1714",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1832450.5
+        },
+        {
+          "sector": "wholesale",
+          "code": "1718",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2013314.5
+        },
+        {
+          "sector": "wholesale",
+          "code": "1718",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -378251.3
+        },
+        {
+          "sector": "wholesale",
+          "code": "1722",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1422280.9
+        },
+        {
+          "sector": "wholesale",
+          "code": "1722",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -812911.1
+        },
+        {
+          "sector": "wholesale",
+          "code": "1724",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -813189.9
+        },
+        {
+          "sector": "wholesale",
+          "code": "1724",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1382455.0
+        },
+        {
+          "sector": "wholesale",
+          "code": "1727",
+          "month": "2022-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -913269.3
+        },
+        {
+          "sector": "wholesale",
+          "code": "1727",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5748849.8
+        },
+        {
+          "sector": "wholesale",
+          "code": "1730",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -290559.1
+        },
+        {
+          "sector": "wholesale",
+          "code": "1730",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5536763.1
+        },
+        {
+          "sector": "wholesale",
+          "code": "1733",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -479308.2
+        },
+        {
+          "sector": "wholesale",
+          "code": "1726",
+          "month": "2023-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5177813.0
+        },
+        {
+          "sector": "wholesale",
+          "code": "1726",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -10050501.6
+        },
+        {
+          "sector": "market_services",
+          "code": "1700",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -13380000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1735228",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14400.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1735243",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14900.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1703",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -201800.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1703401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1183900.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1703209",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -70800.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1703217",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -50400.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1706212",
+          "month": "2025-04",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -256700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1706242",
+          "month": "2025-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -250700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1708201",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -52300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1708204",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4800.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1708218",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -8500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1708228",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -15200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1708237",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1710224",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -10200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1710242",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -114500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1710250",
+          "month": "2025-10",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712412",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712211",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -20600.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712216",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -102100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712230",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -67300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712238",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -65900.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712244",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14800.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1712251",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -117500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1714",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -949500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1714401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -112200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1714204",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -88400.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1722203",
+          "month": "2024-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1722203",
+          "month": "2024-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5800.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1722204",
+          "month": "2024-10",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1722204",
+          "month": "2025-10",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1722214",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -206100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1724",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -403100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1724410",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1724216",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -71700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1724226",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -20600.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1724228",
+          "month": "2024-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -17200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1724231",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -18900.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1254200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727401",
+          "month": "2024-03",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727401",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -48300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -239200.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727404",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -91500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727407",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -72000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727413",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -44300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727419",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -85100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727415",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -26400.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727424",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -53600.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727206",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -27900.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727212",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727220",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -27100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727224",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -91500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727228",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -34700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727233",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -23400.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727233",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -23300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727237",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -136000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727239",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -53600.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727248",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -98000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727249",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -42700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727250",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -16500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727253",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -42000.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727256",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -37800.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727259",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -39100.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1727265",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -67500.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1730408",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -27700.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1730242",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -111300.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1733221",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -31900.0
+        },
+        {
+          "sector": "market_services",
+          "code": "1726",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -19798000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735204",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735209",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735209",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735215",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -13500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735222",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -9200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735225",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735228",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -14600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735233",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735236",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735240",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1735250",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -110000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703202",
+          "month": "2025-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703206",
+          "month": "2024-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703206",
+          "month": "2025-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703209",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703210",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703211",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703214",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -8700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703217",
+          "month": "2024-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703217",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1703217",
+          "month": "2025-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1706401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -41200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1706232",
+          "month": "2024-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1706258",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -20600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708201",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708201",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708209",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708209",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708212",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708218",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708220",
+          "month": "2024-08",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708225",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708225",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708228",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708228",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708237",
+          "month": "2025-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708237",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1708237",
+          "month": "2025-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1710401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -164000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1710220",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1710237",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -10500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1710245",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -11200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1712211",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1712244",
+          "month": "2024-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1712244",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -336700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -268700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -549300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -17900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714204",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -38300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714204",
+          "month": "2026-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714207",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714212",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -7600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714216",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714224",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714224",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714229",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714234",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -15200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714236",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714237",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1714242",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718406",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718203",
+          "month": "2024-12",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718206",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718209",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718212",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718215",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -6300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718218",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718218",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718224",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718224",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718227",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -33200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718238",
+          "month": "2024-04",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718238",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -15400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1718238",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -20700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722203",
+          "month": "2024-05",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722203",
+          "month": "2024-08",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722203",
+          "month": "2024-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722203",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722203",
+          "month": "2025-11",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -6900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722204",
+          "month": "2024-04",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722204",
+          "month": "2024-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722204",
+          "month": "2024-10",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722204",
+          "month": "2025-10",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -8500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1722217",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -13300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724410",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724410",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724413",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724226",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724226",
+          "month": "2024-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724226",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724226",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724226",
+          "month": "2026-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -8800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724228",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724235",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1724235",
+          "month": "2026-02",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727401",
+          "month": "2024-03",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727401",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -4600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727401",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -23100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727404",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727407",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -3200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727413",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727419",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -98200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727415",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727424",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727206",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727212",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727220",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727224",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -9200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727224",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -96900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727228",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727233",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727233",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727237",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -28700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727239",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -2800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727248",
+          "month": "2024-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -8100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727248",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -12700.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727248",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -124200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727249",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1300.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727250",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727253",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727256",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727259",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1000.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727265",
+          "month": "2025-07",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1727265",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -59200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1730405",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -10400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1730238",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733208",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -900.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733212",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -10800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733217",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -7800.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733221",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -500.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733221",
+          "month": "2026-04",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -9600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733223",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -41600.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733226",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -100.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733226",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -5200.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733233",
+          "month": "2025-09",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -16400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733236",
+          "month": "2024-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -1400.0
+        },
+        {
+          "sector": "accommodation_food",
+          "code": "1733236",
+          "month": "2025-06",
+          "reason": "negative_increment",
+          "monthly_million_uzs": -900.0
+        }
+      ],
+      "selected_candidate": "gradient_boosting",
+      "validation": {
+        "seasonal_naive": {
+          "cases": 32,
+          "months": 384,
+          "mae_million_uzs": 53893.36440972222,
+          "normalized_mae": 0.24680916385096072,
+          "mape_positive_actual_pct": 52.62193107762834,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 20.433704686918013
+        },
+        "trend_adjusted_seasonal": {
+          "cases": 32,
+          "months": 384,
+          "mae_million_uzs": 45408.21078427383,
+          "normalized_mae": 0.24142171691085781,
+          "mape_positive_actual_pct": 52.4277549081598,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 17.21655308941511
+        },
+        "gradient_boosting": {
+          "cases": 32,
+          "months": 384,
+          "mae_million_uzs": 36581.40310629109,
+          "normalized_mae": 0.1481090857115596,
+          "mape_positive_actual_pct": 40.67366468261124,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 13.86986313239356
+        }
+      },
+      "training_cases": 740,
+      "training_examples": 8880,
+      "training_series": 187,
+      "training_unique_target_observations": 2797,
+      "training_target_end": "2025-12",
+      "validation_target": "2025-01..2025-12 (held-out geographic groups)",
+      "test_protocol": "Separate geographic groups: complete 2025 entity holdout and January-August 2026 future holdout. Last four 2026 forecasts are unobserved and never counted.",
+      "selection_metric": "Validation-only historical-scale-normalized revenue MAE; no test outcomes used",
+      "exclusions": {
+        "train": 274,
+        "validation": 66,
+        "test_2025": 26,
+        "test_2026": 26
+      },
+      "training_earliest_target": 24252,
+      "training_latest_target": 24311,
+      "test_used_for_training_or_selection": false,
+      "limitations": "Aggregate service value/turnover is a proxy for revenue, not bank cash receipts. Preliminary single-vintage revisions, COVID-era trade observations, three-month post-break service histories and overlapping service categories limit transfer claims. Geographic partitions keep all categories and parent/child observations of a region together."
+    },
+    "expense_training": "Actual generated outflows from synthetic training businesses only; no public expense/default labels",
+    "transfer_validation_mae_index": {
+      "0.0": 106.08934572353618,
+      "0.25": 116.33652057233715,
+      "0.5": 145.27149147616544,
+      "1.0": 223.2874668724231
+    },
+    "transfer_weight": 0.0,
+    "serving_mode": "synthetic_net_public_transfer_rejected",
+    "transfer_selection_metric": "Same 60 held-out synthetic validation businesses, future-12-month net MAE; public candidate chosen separately on geographic validation only",
+    "source_sha256": "4965cd4bd6487751b491c1053051cd47cf646e20cf7b226767e0ab2936c11147",
     "public_calibration": {
       "source": "Uzbekistan SIAT retail aggregate turnover, CC BY 4.0",
       "training_years": [2020, 2021, 2022],
@@ -81,6 +1880,36 @@
       "mape_abs_actual_ge_1_pct": 53.6034116660749,
       "mape_excluded_months": 0,
       "wape_pct": 34.23665141607478,
+      "months": 1440
+    }
+  },
+  "transfer_candidates": {
+    "0.0": {
+      "mae_index": 88.22710229441822,
+      "mape_abs_actual_ge_1_pct": 52.659587798217345,
+      "mape_excluded_months": 0,
+      "wape_pct": 33.45691090991069,
+      "months": 1440
+    },
+    "0.25": {
+      "mae_index": 97.60059501271918,
+      "mape_abs_actual_ge_1_pct": 66.97262405924604,
+      "mape_excluded_months": 0,
+      "wape_pct": 37.01146617280901,
+      "months": 1440
+    },
+    "0.5": {
+      "mae_index": 125.81624776694245,
+      "mape_abs_actual_ge_1_pct": 94.63632767285642,
+      "mape_excluded_months": 0,
+      "wape_pct": 47.711223457286295,
+      "months": 1440
+    },
+    "1.0": {
+      "mae_index": 198.7964154955301,
+      "mape_abs_actual_ge_1_pct": 158.69018769914544,
+      "mape_excluded_months": 0,
+      "wape_pct": 75.38629048756972,
       "months": 1440
     }
   },
@@ -252,10 +2081,10 @@
       "logical_cpus": 12
     },
     "samples": 120,
-    "inference_median_ms": 1.7830420001700986,
-    "inference_p95_ms": 2.263097950208248,
-    "local_testclient_with_validation_and_fsync_median_ms": 5.54427099973509,
-    "local_testclient_with_validation_and_fsync_p95_ms": 7.51143894974575,
+    "inference_median_ms": 2.3576454996145912,
+    "inference_p95_ms": 3.1289518004996353,
+    "local_testclient_with_validation_and_fsync_median_ms": 6.285000000389118,
+    "local_testclient_with_validation_and_fsync_p95_ms": 9.588618749739902,
     "http_status_counts": {
       "200": 120
     },
@@ -263,8 +2092,8 @@
     "max_20000_transaction_request": {
       "samples": 5,
       "request_body_bytes": 2152323,
-      "median_ms": 48.5489590000725,
-      "p95_ms": 103.7160006000704,
+      "median_ms": 50.82924999987881,
+      "p95_ms": 121.97044139975333,
       "http_status_counts": {
         "200": 5
       },

@@ -141,11 +141,13 @@ export const ScoreResponseSchema = z
 export const DecisionInputSchema = z
   .object({
     decision: z.enum(['approved', 'declined', 'needs_information']),
-    reviewer_name: z.string().trim().min(2).max(100),
+    reviewer_name: z.string().trim().min(2).max(100).optional(),
     notes: z.string().trim().min(5).max(3000),
   })
   .strict();
 export const DecisionSchema = DecisionInputSchema.extend({
+  reviewer_name: z.string().min(2).max(100),
+  reviewer_user_id: z.string().nullable().default(null),
   id: z.string(),
   assessment_id: z.string(),
   created_at: z.iso.datetime(),
@@ -267,6 +269,7 @@ export const AuditEventSchema = z.object({
   request_id: z.string(),
   created_at: z.iso.datetime(),
   actor: z.string(),
+  actor_user_id: z.string().nullable().optional(),
   metadata: z.record(z.string(), z.unknown()),
 });
 export const AuditListSchema = z.object({ items: z.array(AuditEventSchema) });
@@ -299,3 +302,87 @@ export type DecisionInput = z.infer<typeof DecisionInputSchema>;
 export type Decision = z.infer<typeof DecisionSchema>;
 export type AuditEvent = z.infer<typeof AuditEventSchema>;
 export type MonthlyCashflow = z.infer<typeof MonthlyCashflowSchema>;
+
+export const EmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .pipe(z.email().max(254));
+export const PasswordSchema = z.string().min(12).max(128);
+export const TenantRoleSchema = z.enum(['admin', 'officer']);
+export const AuthRegisterSchema = z
+  .object({
+    email: EmailSchema,
+    password: PasswordSchema,
+    display_name: z.string().trim().min(2).max(100),
+    tenant_name: z.string().trim().min(2).max(100).optional(),
+    invitation_token: z
+      .string()
+      .regex(/^[A-Za-z0-9_-]{43}$/)
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (value) => Boolean(value.tenant_name) !== Boolean(value.invitation_token),
+    {
+      message: 'Provide a workspace name or invitation token, but not both',
+    },
+  );
+export const AuthLoginSchema = z
+  .object({ email: EmailSchema, password: PasswordSchema })
+  .strict();
+export const AuthUserSchema = z.object({
+  id: z.string(),
+  email: EmailSchema,
+  display_name: z.string(),
+});
+export const TenantSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: TenantRoleSchema,
+});
+export const AuthSessionSchema = z.object({
+  user: AuthUserSchema,
+  tenant: TenantSchema,
+  tenants: z.array(TenantSchema),
+  csrf_token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+});
+export const TenantCreateSchema = z
+  .object({ name: z.string().trim().min(2).max(100) })
+  .strict();
+export const TenantSwitchSchema = z.object({ tenant_id: z.uuid() }).strict();
+export const InvitationCreateSchema = z
+  .object({ email: EmailSchema, role: TenantRoleSchema })
+  .strict();
+export const InvitationAcceptSchema = z
+  .object({ token: z.string().regex(/^[A-Za-z0-9_-]{43}$/) })
+  .strict();
+export const InvitationSchema = z.object({
+  id: z.string(),
+  email: EmailSchema,
+  role: TenantRoleSchema,
+  created_at: z.iso.datetime(),
+  expires_at: z.iso.datetime(),
+  status: z.enum(['pending', 'accepted', 'revoked', 'expired']),
+});
+export const InvitationCreateResponseSchema = z.object({
+  invitation: InvitationSchema,
+  token: z.string(),
+  invitation_url: z.url(),
+});
+export const TeamMemberSchema = AuthUserSchema.extend({
+  role: TenantRoleSchema,
+  joined_at: z.iso.datetime(),
+});
+export const TeamSchema = z.object({
+  members: z.array(TeamMemberSchema),
+  invitations: z.array(InvitationSchema),
+});
+export const SuccessSchema = z.object({ ok: z.literal(true) });
+export type AuthRegister = z.infer<typeof AuthRegisterSchema>;
+export type AuthLogin = z.infer<typeof AuthLoginSchema>;
+export type AuthSession = z.infer<typeof AuthSessionSchema>;
+export type Tenant = z.infer<typeof TenantSchema>;
+export type TenantRole = z.infer<typeof TenantRoleSchema>;
+export type Invitation = z.infer<typeof InvitationSchema>;
+export type Team = z.infer<typeof TeamSchema>;

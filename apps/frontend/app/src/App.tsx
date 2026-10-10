@@ -1,6 +1,11 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BusinessImportSchema } from '@wiut/contracts';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import {
+  useIsMutating,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { BusinessImportSchema, type AuthSession } from '@wiut/contracts';
 import {
   Building2,
   ChevronRight,
@@ -11,6 +16,9 @@ import {
   Import,
   Landmark,
   LayoutDashboard,
+  LogOut,
+  Plus,
+  Users,
   Loader2,
   ShieldCheck,
   Upload,
@@ -57,7 +65,21 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
-import { api } from '@/lib/api';
+import {
+  api,
+  ApiError,
+  resetApiSession,
+  SESSION_EXPIRED_EVENT,
+  SESSION_WORKSPACE_CHANGED_EVENT,
+} from '@/lib/api';
+import { readInvitationToken } from '@/lib/route';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const OverviewPage = lazy(() =>
   import('@/pages/Overview').then((module) => ({
@@ -81,7 +103,18 @@ const AuditPage = lazy(() =>
   import('@/pages/Audit').then((module) => ({ default: module.AuditPage })),
 );
 
-type Page = 'overview' | 'businesses' | 'reviews' | 'audit';
+const AuthPage = lazy(() =>
+  import('@/pages/Auth').then((module) => ({ default: module.AuthPage })),
+);
+
+const TeamPage = lazy(() =>
+  import('@/pages/Team').then((module) => ({ default: module.TeamPage })),
+);
+const InvitationPage = lazy(() =>
+  import('@/pages/Team').then((module) => ({ default: module.InvitationPage })),
+);
+
+type Page = 'overview' | 'businesses' | 'reviews' | 'audit' | 'team' | 'invite';
 type WorkspaceRoute = {
   page: Page;
   businessId: string | null;
@@ -101,8 +134,10 @@ function readRoute(): WorkspaceRoute {
       return { page: 'businesses', businessId: null, assessmentId: null };
     }
   }
+  if (hash.startsWith('invite'))
+    return { page: 'invite', businessId: null, assessmentId: null };
   return {
-    page: ['overview', 'businesses', 'reviews', 'audit'].includes(hash)
+    page: ['overview', 'businesses', 'reviews', 'audit', 'team'].includes(hash)
       ? (hash as Page)
       : 'overview',
     businessId: null,
@@ -114,22 +149,199 @@ const navigation = [
   { id: 'businesses' as const, label: 'Businesses', icon: Building2 },
   { id: 'reviews' as const, label: 'Review history', icon: ClipboardCheck },
   { id: 'audit' as const, label: 'Audit trail', icon: FileClock },
+  { id: 'team' as const, label: 'Team & access', icon: Users },
 ];
 
+const SESSION_BROADCAST_KEY = 'flowcredit-session-change';
+
 export default function App() {
+  const queryClient = useQueryClient();
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notice, setNotice] = useState<string | undefined>();
+  const generation = useRef(0);
+
+  async function replaceSession(
+    next: AuthSession | null,
+    options: {
+      resetRoute?: boolean;
+      broadcast?: boolean;
+      notice?: string;
+    } = {},
+  ) {
+    const current = ++generation.current;
+    resetApiSession(null);
+    setLoading(true);
+    setSession(null);
+    await queryClient.cancelQueries();
+    if (current !== generation.current) return;
+    queryClient.clear();
+    resetApiSession(next?.csrf_token ?? null, next?.tenant.id ?? null);
+    if (options.resetRoute) window.location.hash = 'overview';
+    setSession(next);
+    setNotice(options.notice);
+    setLoading(false);
+    if (options.broadcast !== false) {
+      try {
+        localStorage.setItem(
+          SESSION_BROADCAST_KEY,
+          `${Date.now()}-${Math.random()}`,
+        );
+      } catch {
+        /* Browser storage is optional; cookie authentication remains available. */
+      }
+    }
+  }
+
+  useEffect(() => {
+    let disposed = false;
+    async function loadSession() {
+      const current = ++generation.current;
+      resetApiSession(null);
+      setLoading(true);
+      setSession(null);
+      await queryClient.cancelQueries();
+      if (disposed || current !== generation.current) return;
+      queryClient.clear();
+      try {
+        const next = await api.session();
+        if (disposed || current !== generation.current) return;
+        resetApiSession(next.csrf_token, next.tenant.id);
+        setSession(next);
+        setNotice(undefined);
+      } catch (error) {
+        if (disposed || current !== generation.current) return;
+        setNotice(
+          error instanceof ApiError && error.status === 401
+            ? undefined
+            : 'The backend could not be reached. You can retry signing in when the connection returns.',
+        );
+      }
+      setLoading(false);
+    }
+    const expired = () => {
+      void replaceSession(null, {
+        broadcast: false,
+        notice: 'Your session ended. Sign in again to continue.',
+      });
+    };
+    const workspaceChanged = () => {
+      window.location.hash = 'overview';
+      void loadSession();
+    };
+    const storageChanged = (event: StorageEvent) => {
+      if (event.key === SESSION_BROADCAST_KEY) workspaceChanged();
+    };
+    void loadSession();
+    window.addEventListener(SESSION_EXPIRED_EVENT, expired);
+    window.addEventListener(SESSION_WORKSPACE_CHANGED_EVENT, workspaceChanged);
+    window.addEventListener('storage', storageChanged);
+    return () => {
+      disposed = true;
+      window.removeEventListener(SESSION_EXPIRED_EVENT, expired);
+      window.removeEventListener(
+        SESSION_WORKSPACE_CHANGED_EVENT,
+        workspaceChanged,
+      );
+      window.removeEventListener('storage', storageChanged);
+    };
+  }, [queryClient]);
+
   return (
     <TooltipProvider>
-      <SidebarProvider>
-        <WorkspaceApp />
-      </SidebarProvider>
+      {loading ? (
+        <main className="flex min-h-dvh items-center justify-center bg-background p-6">
+          <div className="space-y-4 text-center">
+            <Landmark className="mx-auto size-9 text-primary" />
+            <p className="text-lg font-semibold">FlowCredit</p>
+            <p
+              role="status"
+              className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+            >
+              <Loader2 className="size-4 animate-spin" />
+              Opening your workspace…
+            </p>
+          </div>
+        </main>
+      ) : session ? (
+        <SidebarProvider>
+          <WorkspaceApp
+            key={`${session.user.id}-${session.tenant.id}`}
+            session={session}
+            onSessionChange={(next, resetRoute = true) =>
+              replaceSession(next, { resetRoute })
+            }
+            onSignedOut={() =>
+              replaceSession(null, {
+                resetRoute: true,
+                notice: 'You have signed out.',
+              })
+            }
+          />
+        </SidebarProvider>
+      ) : (
+        <Suspense
+          fallback={
+            <main
+              role="status"
+              className="flex min-h-dvh items-center justify-center gap-2 text-sm text-muted-foreground"
+            >
+              <Loader2 className="size-4 animate-spin" />
+              Opening sign-in…
+            </main>
+          }
+        >
+          <AuthPage
+            notice={notice}
+            onAuthenticated={(next, resetRoute) =>
+              replaceSession(next, { resetRoute })
+            }
+          />
+        </Suspense>
+      )}
       <Toaster richColors theme="light" closeButton />
     </TooltipProvider>
   );
 }
 
-function WorkspaceApp() {
+function WorkspaceApp({
+  session,
+  onSessionChange,
+  onSignedOut,
+}: {
+  session: AuthSession;
+  onSessionChange: (next: AuthSession, resetRoute?: boolean) => Promise<void>;
+  onSignedOut: () => Promise<void>;
+}) {
   const queryClient = useQueryClient();
   const { setOpenMobile } = useSidebar();
+  const pendingMutations = useIsMutating();
+  const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
+  const [workspaceName, setWorkspaceName] = useState('');
+  const switchWorkspace = useMutation({
+    mutationFn: (id: string) => api.switchTenant({ tenant_id: id }),
+    onSuccess: (next) => onSessionChange(next),
+    onError: (error) =>
+      toast.error('Workspace could not be opened', {
+        description: error.message,
+      }),
+  });
+  const createWorkspace = useMutation({
+    mutationFn: () => api.createTenant({ name: workspaceName }),
+    onSuccess: (next) => onSessionChange(next),
+    onError: (error) =>
+      toast.error('Workspace could not be created', {
+        description: error.message,
+      }),
+  });
+  const signOut = useMutation({
+    mutationFn: api.logout,
+    onSuccess: onSignedOut,
+    onError: (error) => {
+      if (!(error instanceof ApiError && error.status === 401))
+        toast.error('Sign-out failed', { description: error.message });
+    },
+  });
   const [route, setRoute] = useState<WorkspaceRoute>(readRoute);
   const { page, businessId, assessmentId: initialAssessmentId } = route;
   useEffect(() => {
@@ -196,7 +408,10 @@ function WorkspaceApp() {
     setOpenMobile(false);
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
-  const activeLabel = navigation.find((item) => item.id === page)!.label;
+  const activeLabel =
+    page === 'invite'
+      ? 'Team invitation'
+      : navigation.find((item) => item.id === page)!.label;
 
   return (
     <>
@@ -231,6 +446,50 @@ function WorkspaceApp() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
+          <div className="mt-4 space-y-2">
+            <Label
+              htmlFor="workspace-switch"
+              className="text-[10px] tracking-widest text-muted-foreground uppercase"
+            >
+              Active workspace
+            </Label>
+            <Select
+              value={session.tenant.id}
+              onValueChange={(id) => {
+                if (id !== session.tenant.id) switchWorkspace.mutate(id);
+              }}
+              disabled={pendingMutations > 0}
+            >
+              <SelectTrigger
+                id="workspace-switch"
+                aria-label="Switch workspace"
+                className="w-full min-w-0"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {session.tenants.map((tenant) => (
+                  <SelectItem key={tenant.id} value={tenant.id}>
+                    {tenant.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start px-2 text-xs text-muted-foreground"
+              disabled={pendingMutations > 0}
+              onClick={() => {
+                createWorkspace.reset();
+                setWorkspaceName('');
+                setCreateWorkspaceOpen(true);
+              }}
+            >
+              <Plus className="size-3.5" />
+              Create workspace
+            </Button>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -239,29 +498,63 @@ function WorkspaceApp() {
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
-                {navigation.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      aria-label={item.label}
-                      onClick={() => navigate(item.id)}
-                      isActive={page === item.id}
-                      className="h-10 px-3 data-[active=true]:bg-emerald-50 data-[active=true]:text-emerald-800"
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                      {item.id === 'businesses' && businesses.data && (
-                        <span className="ml-auto text-xs text-muted-foreground">
-                          {businesses.data.items.length}
-                        </span>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {navigation
+                  .filter(
+                    (item) =>
+                      item.id !== 'team' || session.tenant.role === 'admin',
+                  )
+                  .map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        aria-label={item.label}
+                        onClick={() => navigate(item.id)}
+                        isActive={page === item.id}
+                        className="h-10 px-3 data-[active=true]:bg-emerald-50 data-[active=true]:text-emerald-800"
+                      >
+                        <item.icon />
+                        <span>{item.label}</span>
+                        {item.id === 'businesses' && businesses.data && (
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            {businesses.data.items.length}
+                          </span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter className="gap-4 p-4">
+          <div className="min-w-0 rounded-md border bg-muted/20 p-3">
+            <p
+              className="truncate text-sm font-medium"
+              title={session.user.display_name}
+            >
+              {session.user.display_name}
+            </p>
+            <p
+              className="mt-1 truncate text-[11px] text-muted-foreground"
+              title={session.user.email}
+            >
+              {session.user.email}
+            </p>
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <Badge variant="secondary" className="text-[10px]">
+                {session.tenant.role === 'admin' ? 'Admin' : 'Credit officer'}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs"
+                disabled={pendingMutations > 0}
+                onClick={() => signOut.mutate()}
+              >
+                <LogOut className="size-3.5" />
+                Sign out
+              </Button>
+            </div>
+          </div>
           <Card className="gap-3 border-dashed bg-background shadow-none">
             <CardHeader className="px-4 py-0">
               <CardTitle className="flex items-center gap-2 text-sm">
@@ -296,7 +589,7 @@ function WorkspaceApp() {
             <SidebarTrigger aria-label="Toggle sidebar" />
             <Separator orientation="vertical" className="h-4!" />
             <span className="hidden text-sm text-muted-foreground sm:inline">
-              Workspace
+              {session.tenant.name}
             </span>
             <ChevronRight className="hidden size-3 text-muted-foreground sm:block" />
             <span className="truncate text-sm font-medium">{activeLabel}</span>
@@ -350,6 +643,28 @@ function WorkspaceApp() {
               </div>
             }
           >
+            {page === 'team' &&
+              (session.tenant.role === 'admin' ? (
+                <TeamPage session={session} />
+              ) : (
+                <Alert>
+                  <ShieldCheck />
+                  <AlertTitle>Administrator access required</AlertTitle>
+                  <AlertDescription>
+                    Team settings are managed by your workspace admin. Your
+                    credit-officer access includes the portfolio, assessments,
+                    and human review decisions.
+                  </AlertDescription>
+                </Alert>
+              ))}
+            {page === 'invite' && (
+              <InvitationPage
+                token={readInvitationToken()}
+                session={session}
+                onAccepted={onSessionChange}
+                onBack={() => navigate('overview')}
+              />
+            )}
             {page === 'overview' && (
               <OverviewPage
                 businesses={businesses}
@@ -371,6 +686,7 @@ function WorkspaceApp() {
               <BusinessWorkspace
                 key={businessId}
                 businessId={businessId}
+                reviewerName={session.user.display_name}
                 initialAssessmentId={initialAssessmentId}
                 mlConfigured={health.data?.ml_configured}
                 onBack={() => navigate('businesses')}
@@ -407,6 +723,68 @@ function WorkspaceApp() {
           </span>
         </footer>
       </SidebarInset>
+      <Dialog
+        open={createWorkspaceOpen}
+        onOpenChange={(open) => {
+          if (!createWorkspace.isPending) setCreateWorkspaceOpen(open);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create a workspace</DialogTitle>
+            <DialogDescription>
+              Create a separate workspace for another bank or team. You will be
+              its admin, with a fresh synthetic demo portfolio.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              createWorkspace.mutate();
+            }}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="new-workspace-name">Workspace name</Label>
+              <Input
+                id="new-workspace-name"
+                value={workspaceName}
+                onChange={(event) => setWorkspaceName(event.target.value)}
+                minLength={2}
+                maxLength={100}
+                required
+                disabled={createWorkspace.isPending}
+                placeholder="e.g. Samarkand Review Team"
+              />
+            </div>
+            {createWorkspace.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  {createWorkspace.error.message}
+                </AlertDescription>
+              </Alert>
+            )}
+            <DialogFooter>
+              <Button
+                variant="outline"
+                type="button"
+                disabled={createWorkspace.isPending}
+                onClick={() => setCreateWorkspaceOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createWorkspace.isPending}>
+                {createWorkspace.isPending ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Plus />
+                )}
+                Create new workspace
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={importOpen}
         onOpenChange={(open) => {

@@ -1,4 +1,4 @@
-"""Rebuild artifact from fixed-seed synthetic train/validation businesses only."""
+"""Train real revenue and synthetic expenses; select transfer on validation only."""
 
 import argparse
 import json
@@ -10,6 +10,7 @@ from threadpoolctl import threadpool_limits
 
 from .forecasting import (
     FEATURE_NAMES,
+    TRANSFER_WEIGHTS,
     ForecastModel,
     aggregate,
     feature_matrix,
@@ -18,6 +19,7 @@ from .forecasting import (
 )
 from .generator import SEED, TRAIN_COUNT, VALIDATION_COUNT, generate_split
 from .public_data import calibration_digest
+from .public_revenue import fit_public_revenue_model
 from .schemas import ScoreRequest
 
 
@@ -27,7 +29,7 @@ def fit_model() -> ForecastModel:
     train_ids = {business.business_id for business in train}
     validation_ids = {business.business_id for business in validation}
     assert not train_ids & validation_ids
-    x_parts, y_parts = [], []
+    x_parts, y_parts, expense_parts = [], [], []
     origins = 0
     for business in train:
         # Rolling origins use only transactions before each cutoff. Targets are
@@ -52,6 +54,9 @@ def fit_model() -> ForecastModel:
                     (business.inflow - business.outflow)[cutoff : cutoff + 12]
                     / normalizer(history)
                 )
+                expense_parts.append(
+                    business.outflow[cutoff : cutoff + 12] / normalizer(history)
+                )
                 origins += 1
     estimator = HistGradientBoostingRegressor(
         loss="absolute_error",
@@ -64,8 +69,13 @@ def fit_model() -> ForecastModel:
         random_state=SEED,
     )
     with threadpool_limits(limits=1):
-        estimator.fit(np.vstack(x_parts), np.concatenate(y_parts))
-    model = ForecastModel(estimator, 0.0, "pending", {})
+        x = np.vstack(x_parts)
+        estimator.fit(x, np.concatenate(y_parts))
+        expense_estimator = HistGradientBoostingRegressor(**estimator.get_params())
+        expense_estimator.fit(x, np.concatenate(expense_parts))
+    model = ForecastModel(
+        estimator, 0.0, "pending", {}, fit_public_revenue_model(), expense_estimator
+    )
     errors: dict[str, list[float]] = {
         "seasonal_naive": [],
         "gradient_boosting": [],
@@ -82,6 +92,20 @@ def fit_model() -> ForecastModel:
         "gradient_boosting": 1.0,
         "blend_50": 0.5,
     }[chosen]
+    # Candidate weights are fixed in source before reading any held-out targets.
+    # Real aggregates provide no expenses; that component is synthetic-only.
+    transfer_errors = {weight: [] for weight in TRANSFER_WEIGHTS}
+    for business in validation:
+        for weight, forecast in model.predict_transfer_candidates(
+            aggregate(business.request())
+        ).items():
+            transfer_errors[weight].extend(
+                np.abs(forecast - business.future_net).tolist()
+            )
+    transfer_mae = {
+        weight: float(np.mean(values)) for weight, values in transfer_errors.items()
+    }
+    model.transfer_weight = min(transfer_mae, key=transfer_mae.get)
     model.selection = {
         "seed": SEED,
         "selected_candidate": chosen,
@@ -96,6 +120,14 @@ def fit_model() -> ForecastModel:
         "train_ids": sorted(train_ids),
         "validation_ids": sorted(validation_ids),
         "test_used_for_selection": False,
+        "public_revenue_training": model.public_revenue_model.metadata,
+        "expense_training": "Actual generated outflows from synthetic training businesses only; no public expense/default labels",
+        "transfer_validation_mae_index": transfer_mae,
+        "transfer_weight": model.transfer_weight,
+        "serving_mode": "public_revenue_and_synthetic_expenses_blend"
+        if model.transfer_weight
+        else "synthetic_net_public_transfer_rejected",
+        "transfer_selection_metric": "Same 60 held-out synthetic validation businesses, future-12-month net MAE; public candidate chosen separately on geographic validation only",
         "source_sha256": pipeline_source_digest(),
         "public_calibration": {
             "source": "Uzbekistan SIAT retail aggregate turnover, CC BY 4.0",
@@ -112,7 +144,7 @@ def fit_model() -> ForecastModel:
         },
     }
     # Source digest includes data generation, feature/scoring policy and settings.
-    model.version = f"synthetic-v1-{model.selection['source_sha256'][:12]}-{chosen}"
+    model.version = f"local-v2-{model.selection['source_sha256'][:12]}-{chosen}-public{round(100 * model.transfer_weight)}"
     return model
 
 

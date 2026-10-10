@@ -11,6 +11,7 @@ import type {
 } from '@wiut/contracts';
 import type { AppConfig } from './config.js';
 import { ApiProblem } from './problem.js';
+import type { AuthContext } from './auth-types.js';
 import {
   generateSyntheticBusinesses,
   type StoredBusiness,
@@ -32,7 +33,7 @@ interface AssessmentRow {
 const selection = `SELECT a.id, a.business_id, a.requested_amount, to_char(a.as_of_date, 'YYYY-MM-DD') AS as_of_date,
   a.status, a.created_at, a.request_id, a.input_hash, a.result, a.error,
   CASE WHEN d.id IS NULL THEN NULL ELSE jsonb_build_object('id', d.id, 'assessment_id', d.assessment_id,
-    'decision', d.decision, 'reviewer_name', d.reviewer_name, 'notes', d.notes, 'created_at', d.created_at) END AS decision
+    'decision', d.decision, 'reviewer_name', d.reviewer_name, 'reviewer_user_id', d.reviewer_user_id, 'notes', d.notes, 'created_at', d.created_at) END AS decision
   FROM assessments a LEFT JOIN decisions d ON d.assessment_id = a.id`;
 
 @Injectable()
@@ -59,6 +60,40 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         "SELECT pg_advisory_xact_lock(hashtext('wiut-hackathon-schema-v1'))",
       );
       await client.query(`
+        CREATE TABLE IF NOT EXISTS app_users (
+          id uuid PRIMARY KEY, email text NOT NULL UNIQUE, display_name text NOT NULL,
+          password_hash text NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE TABLE IF NOT EXISTS tenants (
+          id uuid PRIMARY KEY, name text NOT NULL, is_legacy boolean NOT NULL DEFAULT false,
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
+        INSERT INTO tenants(id,name,is_legacy) VALUES('00000000-0000-4000-8000-000000000001','Legacy demonstration',true) ON CONFLICT(id) DO NOTHING;
+        CREATE TABLE IF NOT EXISTS memberships (
+          user_id uuid NOT NULL REFERENCES app_users(id), tenant_id uuid NOT NULL REFERENCES tenants(id),
+          role text NOT NULL CHECK(role IN ('admin','officer')), created_at timestamptz NOT NULL DEFAULT now(),
+          PRIMARY KEY(user_id,tenant_id)
+        );
+        CREATE TABLE IF NOT EXISTS auth_sessions (
+          token_hash text PRIMARY KEY, user_id uuid NOT NULL REFERENCES app_users(id),
+          tenant_id uuid NOT NULL REFERENCES tenants(id), csrf_token text NOT NULL,
+          expires_at timestamptz NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+          FOREIGN KEY(user_id,tenant_id) REFERENCES memberships(user_id,tenant_id)
+        );
+        CREATE INDEX IF NOT EXISTS auth_sessions_expiry_idx ON auth_sessions(expires_at);
+        CREATE TABLE IF NOT EXISTS invitations (
+          id uuid PRIMARY KEY, tenant_id uuid NOT NULL REFERENCES tenants(id), email text NOT NULL,
+          role text NOT NULL CHECK(role IN ('admin','officer')), token_hash text NOT NULL UNIQUE,
+          created_by uuid NOT NULL REFERENCES app_users(id), expires_at timestamptz NOT NULL,
+          accepted_by uuid REFERENCES app_users(id), revoked_at timestamptz,
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE INDEX IF NOT EXISTS invitations_tenant_idx ON invitations(tenant_id,created_at DESC);
+        CREATE TABLE IF NOT EXISTS security_events (
+          id uuid PRIMARY KEY, tenant_id uuid REFERENCES tenants(id), actor_user_id uuid REFERENCES app_users(id),
+          event_type text NOT NULL, request_id text NOT NULL, metadata jsonb NOT NULL DEFAULT '{}',
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
         CREATE TABLE IF NOT EXISTS synthetic_businesses (
           id text PRIMARY KEY, name text NOT NULL, sector text NOT NULL, location text NOT NULL,
           archetype text NOT NULL, transactions jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
@@ -82,10 +117,43 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           actor text NOT NULL, metadata jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE INDEX IF NOT EXISTS audit_events_business_created_idx ON audit_events(business_id, created_at DESC);
+        ALTER TABLE synthetic_businesses ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
+        ALTER TABLE assessments ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
+        ALTER TABLE decisions ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
+        ALTER TABLE decisions ADD COLUMN IF NOT EXISTS reviewer_user_id uuid REFERENCES app_users(id);
+        ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
+        ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS actor_user_id uuid REFERENCES app_users(id);
+        UPDATE synthetic_businesses SET tenant_id='00000000-0000-4000-8000-000000000001' WHERE tenant_id IS NULL;
+        UPDATE assessments a SET tenant_id=b.tenant_id FROM synthetic_businesses b WHERE a.business_id=b.id AND a.tenant_id IS NULL;
+        UPDATE decisions d SET tenant_id=a.tenant_id FROM assessments a WHERE d.assessment_id=a.id AND d.tenant_id IS NULL;
+        UPDATE audit_events e SET tenant_id=b.tenant_id FROM synthetic_businesses b WHERE e.business_id=b.id AND e.tenant_id IS NULL;
+        ALTER TABLE synthetic_businesses ALTER COLUMN tenant_id SET NOT NULL;
+        ALTER TABLE assessments ALTER COLUMN tenant_id SET NOT NULL;
+        ALTER TABLE decisions ALTER COLUMN tenant_id SET NOT NULL;
+        ALTER TABLE audit_events ALTER COLUMN tenant_id SET NOT NULL;
+        CREATE INDEX IF NOT EXISTS businesses_tenant_created_idx ON synthetic_businesses(tenant_id,created_at DESC);
+        CREATE INDEX IF NOT EXISTS assessments_tenant_business_idx ON assessments(tenant_id,business_id,created_at DESC);
+        CREATE INDEX IF NOT EXISTS audit_tenant_created_idx ON audit_events(tenant_id,created_at DESC);
+        CREATE UNIQUE INDEX IF NOT EXISTS businesses_tenant_id_unique ON synthetic_businesses(tenant_id,id);
+        CREATE UNIQUE INDEX IF NOT EXISTS assessments_tenant_id_unique ON assessments(tenant_id,id);
+        DO $$ BEGIN
+          IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='assessments_tenant_business_fk') THEN
+            ALTER TABLE assessments ADD CONSTRAINT assessments_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES synthetic_businesses(tenant_id,id);
+          END IF;
+          IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='decisions_tenant_assessment_fk') THEN
+            ALTER TABLE decisions ADD CONSTRAINT decisions_tenant_assessment_fk FOREIGN KEY(tenant_id,assessment_id) REFERENCES assessments(tenant_id,id);
+          END IF;
+          IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='audit_tenant_business_fk') THEN
+            ALTER TABLE audit_events ADD CONSTRAINT audit_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES synthetic_businesses(tenant_id,id);
+          END IF;
+          IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='audit_tenant_assessment_fk') THEN
+            ALTER TABLE audit_events ADD CONSTRAINT audit_tenant_assessment_fk FOREIGN KEY(tenant_id,assessment_id) REFERENCES assessments(tenant_id,id);
+          END IF;
+        END $$;
       `);
       for (const business of generateSyntheticBusinesses()) {
         await client.query(
-          'INSERT INTO synthetic_businesses(id, name, sector, location, archetype, transactions) VALUES($1,$2,$3,$4,$5,$6::jsonb) ON CONFLICT(id) DO NOTHING',
+          "INSERT INTO synthetic_businesses(id, name, sector, location, archetype, transactions,tenant_id) VALUES($1,$2,$3,$4,$5,$6::jsonb,'00000000-0000-4000-8000-000000000001') ON CONFLICT(id) DO NOTHING",
           [
             business.id,
             business.name,
@@ -102,8 +170,9 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         business_id: string;
         request_id: string;
         input_hash: string;
+        tenant_id: string;
       }>(
-        "UPDATE assessments SET status='failed', error='Assessment interrupted before a model response was saved.', completed_at=now() WHERE status='pending' RETURNING id,business_id,request_id,input_hash",
+        "UPDATE assessments SET status='failed', error='Assessment interrupted before a model response was saved.', completed_at=now() WHERE status='pending' RETURNING id,business_id,request_id,input_hash,tenant_id",
       );
       for (const row of interrupted.rows) {
         await this.audit(
@@ -118,6 +187,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
               reason: 'process_interrupted',
             },
           },
+          row.tenant_id,
           client,
         );
       }
@@ -136,30 +206,35 @@ export class Database implements OnModuleInit, OnModuleDestroy {
   async health() {
     await this.pool.query('SELECT 1');
   }
-  async businesses(): Promise<StoredBusiness[]> {
+  async businesses(tenantId: string): Promise<StoredBusiness[]> {
     return (
       await this.pool.query<StoredBusiness>(
-        'SELECT id,name,sector,location,archetype,transactions FROM synthetic_businesses ORDER BY created_at DESC,id LIMIT 200',
+        'SELECT id,name,sector,location,archetype,transactions FROM synthetic_businesses WHERE tenant_id=$1 ORDER BY created_at DESC,id LIMIT 200',
+        [tenantId],
       )
     ).rows;
   }
-  async business(id: string): Promise<StoredBusiness | null> {
+  async business(id: string, tenantId: string): Promise<StoredBusiness | null> {
     return (
       (
         await this.pool.query<StoredBusiness>(
-          'SELECT id,name,sector,location,archetype,transactions FROM synthetic_businesses WHERE id=$1',
-          [id],
+          'SELECT id,name,sector,location,archetype,transactions FROM synthetic_businesses WHERE id=$1 AND tenant_id=$2',
+          [id, tenantId],
         )
       ).rows[0] ?? null
     );
   }
 
-  async importBusiness(business: StoredBusiness, requestId: string) {
+  async importBusiness(
+    business: StoredBusiness,
+    requestId: string,
+    auth: AuthContext,
+  ) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       await client.query(
-        'INSERT INTO synthetic_businesses(id,name,sector,location,archetype,transactions) VALUES($1,$2,$3,$4,$5,$6::jsonb)',
+        'INSERT INTO synthetic_businesses(id,name,sector,location,archetype,transactions,tenant_id) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7)',
         [
           business.id,
           business.name,
@@ -167,6 +242,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           business.location,
           business.archetype,
           JSON.stringify(business.transactions),
+          auth.tenant.id,
         ],
       );
       await this.audit(
@@ -175,12 +251,14 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           assessment_id: null,
           event_type: 'business_imported',
           request_id: requestId,
-          actor: 'officer',
+          actor: auth.user.display_name,
           metadata: {
             data_source: 'synthetic',
             transaction_count: business.transactions.length,
+            actor_user_id: auth.user.id,
           },
         },
+        auth.tenant.id,
         client,
       );
       await client.query('COMMIT');
@@ -197,12 +275,13 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     request: ScoreRequest,
     requestId: string,
     hash: string,
+    auth: AuthContext,
   ) {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       await client.query(
-        "INSERT INTO assessments(id,business_id,requested_amount,as_of_date,status,request_id,input_hash,request_input) VALUES($1,$2,$3,$4,'pending',$5,$6,$7::jsonb)",
+        "INSERT INTO assessments(id,business_id,requested_amount,as_of_date,status,request_id,input_hash,request_input,tenant_id) SELECT $1,$2,$3,$4,'pending',$5,$6,$7::jsonb,$8 WHERE EXISTS(SELECT 1 FROM synthetic_businesses WHERE id=$2 AND tenant_id=$8)",
         [
           id,
           request.business_id,
@@ -211,6 +290,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           requestId,
           hash,
           JSON.stringify(request),
+          auth.tenant.id,
         ],
       );
       await this.audit(
@@ -219,14 +299,16 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           assessment_id: id,
           event_type: 'assessment_requested',
           request_id: requestId,
-          actor: 'officer',
+          actor: auth.user.display_name,
           metadata: {
             input_hash: hash,
             transaction_count: request.transactions.length,
             requested_amount_uzs: request.requested_amount,
             as_of_date: request.as_of_date,
+            actor_user_id: auth.user.id,
           },
         },
+        auth.tenant.id,
         client,
       );
       await client.query('COMMIT');
@@ -242,6 +324,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     id: string,
     result: ScoreResponse | null,
     error: string | null,
+    tenantId: string,
     failureStatus?: number,
   ) {
     const client = await this.pool.connect();
@@ -252,12 +335,13 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         request_id: string;
         input_hash: string;
       }>(
-        "UPDATE assessments SET status=$2,result=$3::jsonb,error=$4,completed_at=now() WHERE id=$1 AND status='pending' RETURNING business_id,request_id,input_hash",
+        "UPDATE assessments SET status=$2,result=$3::jsonb,error=$4,completed_at=now() WHERE id=$1 AND tenant_id=$5 AND status='pending' RETURNING business_id,request_id,input_hash",
         [
           id,
           result ? 'completed' : 'failed',
           result ? JSON.stringify(result) : null,
           error,
+          tenantId,
         ],
       );
       const row = completed.rows[0];
@@ -285,6 +369,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
               : { reason: error, status: failureStatus }),
           },
         },
+        tenantId,
         client,
       );
       await client.query('COMMIT');
@@ -315,7 +400,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         : null,
     };
   }
-  async assessment(id: string): Promise<Assessment | null> {
+  async assessment(id: string, tenantId: string): Promise<Assessment | null> {
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         id,
@@ -323,39 +408,52 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     )
       return null;
     const row = (
-      await this.pool.query<AssessmentRow>(`${selection} WHERE a.id=$1`, [id])
+      await this.pool.query<AssessmentRow>(
+        `${selection} WHERE a.id=$1 AND a.tenant_id=$2`,
+        [id, tenantId],
+      )
     ).rows[0];
     return row ? this.mapAssessment(row) : null;
   }
-  async assessments(businessId?: string): Promise<Assessment[]> {
+  async assessments(
+    tenantId: string,
+    businessId?: string,
+  ): Promise<Assessment[]> {
     const rows = await this.pool.query<AssessmentRow>(
-      `${selection} WHERE a.status <> 'pending' ${businessId ? 'AND a.business_id=$1' : ''} ORDER BY a.created_at DESC,a.id LIMIT 100`,
-      businessId ? [businessId] : [],
+      `${selection} WHERE a.tenant_id=$1 AND a.status <> 'pending' ${businessId ? 'AND a.business_id=$2' : ''} ORDER BY a.created_at DESC,a.id LIMIT 100`,
+      businessId ? [tenantId, businessId] : [tenantId],
     );
     return rows.rows.map((row) => this.mapAssessment(row));
   }
-  async latestAssessment(businessId: string) {
-    return (await this.latestAssessments([businessId])).get(businessId) ?? null;
+  async latestAssessment(businessId: string, tenantId: string) {
+    return (
+      (await this.latestAssessments([businessId], tenantId)).get(businessId) ??
+      null
+    );
   }
 
   async latestAssessments(
     businessIds: string[],
+    tenantId: string,
   ): Promise<Map<string, Assessment>> {
     if (businessIds.length === 0) return new Map();
     const rows = await this.pool.query<AssessmentRow>(
-      `${selection} WHERE a.id IN (
+      `${selection} WHERE a.tenant_id=$2 AND a.id IN (
         SELECT DISTINCT ON (business_id) id FROM assessments
-        WHERE business_id = ANY($1::text[]) AND status <> 'pending'
+        WHERE business_id = ANY($1::text[]) AND tenant_id=$2 AND status <> 'pending'
         ORDER BY business_id,created_at DESC,id
       )`,
-      [businessIds],
+      [businessIds, tenantId],
     );
     return new Map(
       rows.rows.map((row) => [row.business_id, this.mapAssessment(row)]),
     );
   }
 
-  async assessmentBusinessId(id: string): Promise<string | null> {
+  async assessmentBusinessId(
+    id: string,
+    tenantId: string,
+  ): Promise<string | null> {
     if (
       !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
         id,
@@ -365,8 +463,8 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     return (
       (
         await this.pool.query<{ business_id: string }>(
-          'SELECT business_id FROM assessments WHERE id=$1',
-          [id],
+          'SELECT business_id FROM assessments WHERE id=$1 AND tenant_id=$2',
+          [id, tenantId],
         )
       ).rows[0]?.business_id ?? null
     );
@@ -376,14 +474,15 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     id: string,
     input: DecisionInput,
     requestId: string,
+    auth: AuthContext,
   ): Promise<Assessment> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
       const assessment = (
         await client.query<{ business_id: string; status: string }>(
-          'SELECT business_id,status FROM assessments WHERE id=$1 FOR UPDATE',
-          [id],
+          'SELECT business_id,status FROM assessments WHERE id=$1 AND tenant_id=$2 FOR UPDATE',
+          [id, auth.tenant.id],
         )
       ).rows[0];
       if (!assessment)
@@ -400,9 +499,10 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         );
       if (
         (
-          await client.query('SELECT 1 FROM decisions WHERE assessment_id=$1', [
-            id,
-          ])
+          await client.query(
+            'SELECT 1 FROM decisions WHERE assessment_id=$1 AND tenant_id=$2',
+            [id, auth.tenant.id],
+          )
         ).rowCount
       )
         throw new ApiProblem(
@@ -412,8 +512,16 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         );
       const decisionId = randomUUID();
       await client.query(
-        'INSERT INTO decisions(id,assessment_id,decision,reviewer_name,notes) VALUES($1,$2,$3,$4,$5)',
-        [decisionId, id, input.decision, input.reviewer_name, input.notes],
+        'INSERT INTO decisions(id,assessment_id,decision,reviewer_name,notes,tenant_id,reviewer_user_id) VALUES($1,$2,$3,$4,$5,$6,$7)',
+        [
+          decisionId,
+          id,
+          input.decision,
+          auth.user.display_name,
+          input.notes,
+          auth.tenant.id,
+          auth.user.id,
+        ],
       );
       await this.audit(
         {
@@ -421,17 +529,19 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           assessment_id: id,
           event_type: 'decision_recorded',
           request_id: requestId,
-          actor: input.reviewer_name,
+          actor: auth.user.display_name,
           metadata: {
             decision_id: decisionId,
             decision: input.decision,
             notes: input.notes,
+            actor_user_id: auth.user.id,
           },
         },
+        auth.tenant.id,
         client,
       );
       await client.query('COMMIT');
-      return (await this.assessment(id))!;
+      return (await this.assessment(id, auth.tenant.id))!;
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -442,10 +552,11 @@ export class Database implements OnModuleInit, OnModuleDestroy {
 
   async audit(
     event: Omit<AuditEvent, 'id' | 'created_at'>,
+    tenantId: string,
     client?: PoolClient,
   ) {
     await (client ?? this.pool).query(
-      'INSERT INTO audit_events(id,business_id,assessment_id,event_type,request_id,actor,metadata) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb)',
+      'INSERT INTO audit_events(id,business_id,assessment_id,event_type,request_id,actor,metadata,tenant_id,actor_user_id) SELECT $1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9 WHERE EXISTS(SELECT 1 FROM synthetic_businesses WHERE id=$2 AND tenant_id=$8)',
       [
         randomUUID(),
         event.business_id,
@@ -454,15 +565,20 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         event.request_id,
         event.actor,
         JSON.stringify(event.metadata),
+        tenantId,
+        event.actor_user_id ?? event.metadata.actor_user_id ?? null,
       ],
     );
   }
-  async auditEvents(businessId?: string): Promise<AuditEvent[]> {
+  async auditEvents(
+    tenantId: string,
+    businessId?: string,
+  ): Promise<AuditEvent[]> {
     const result = await this.pool.query<
       Omit<AuditEvent, 'created_at'> & { created_at: Date }
     >(
-      `SELECT id,business_id,assessment_id,event_type,request_id,actor,metadata,created_at FROM audit_events ${businessId ? 'WHERE business_id=$1' : ''} ORDER BY created_at DESC,id LIMIT 500`,
-      businessId ? [businessId] : [],
+      `SELECT id,business_id,assessment_id,event_type,request_id,actor,actor_user_id,metadata,created_at FROM audit_events WHERE tenant_id=$1 ${businessId ? 'AND business_id=$2' : ''} ORDER BY created_at DESC,id LIMIT 500`,
+      businessId ? [tenantId, businessId] : [tenantId],
     );
     return result.rows.map((row) => ({
       ...row,

@@ -86,7 +86,16 @@ def evaluate(model_path: str | Path) -> dict:
         [],
         {name: [] for name in ("seasonal_naive", "gradient_boosting", "blend_50")},
     )
-    rows, partial_actual, partial_predictions, inference_ms = [], [], [], []
+    rows, partial_actual, partial_predictions, inference_ms, serving_parts = (
+        [],
+        [],
+        [],
+        [],
+        [],
+    )
+    transfer_parts = {
+        weight: [] for weight in model.selection["transfer_validation_mae_index"]
+    }
     weak_precision, strong_precision = [], []
     digest = hashlib.sha256()
     for business in businesses:
@@ -98,10 +107,13 @@ def evaluate(model_path: str | Path) -> dict:
         digest.update(actual.astype("<f8").tobytes())
         for name, prediction in model.predict_candidates(history).items():
             candidate_parts[name].append(prediction)
+        for weight, prediction in model.predict_transfer_candidates(history).items():
+            transfer_parts[weight].append(prediction)
         started = time.perf_counter()
         response = score_request(request, model, "evaluation")
         inference_ms.append((time.perf_counter() - started) * 1000)
         forecast = np.asarray(response.seasonality.monthly_forecast_index)
+        serving_parts.append(forecast)
         plan = capacity_plan(history, forecast)
         payments = plan["payments"]
         assert np.all(payments >= 0)
@@ -214,7 +226,15 @@ def evaluate(model_path: str | Path) -> dict:
             "mape_policy": "Exclude abs(actual)<1 index. Negative actuals use absolute denominator. MAPE remains unstable near zero and is not the selection metric.",
         },
         "forecast_candidates": candidate_metrics,
-        "selected_forecast": candidate_metrics[selection["selected_candidate"]],
+        "transfer_candidates": {
+            weight: forecast_metrics(
+                np.concatenate(actual_parts), np.concatenate(parts)
+            )
+            for weight, parts in transfer_parts.items()
+        },
+        "selected_forecast": forecast_metrics(
+            np.concatenate(actual_parts), np.concatenate(serving_parts)
+        ),
         "partial_assessment_month_selected_forecast": forecast_metrics(
             np.concatenate(partial_actual), np.concatenate(partial_predictions)
         ),
@@ -273,7 +293,7 @@ def markdown(report: dict) -> str:
         "",
         "All results below were produced by `uv run python -m capacity_ml.evaluate` on generated future transactions. They are synthetic engineering measurements, not evidence of bank performance or default prediction.",
         "",
-        "Public Uzbekistan SIAT 2020–2022 retail aggregates calibrate half the calendar component for four retail-like synthetic cohorts; test/validation aggregate years are excluded from calibration. Every business transaction, expense and future net-flow target remains synthetic. The separate public-data report measures actual aggregate revenue forecasts only.",
+        "Public Uzbekistan SIAT 2020–2022 retail aggregates calibrate half the calendar component for four retail-like synthetic cohorts; later aggregate years are excluded from generator calibration. Every borrower transaction, expense and future net-flow target remains synthetic. An additional real-revenue component is trained directly from licensed aggregates and transferred only if synthetic validation MAE improves; its separate report measures actual public revenue forecasts, never borrower capacity.",
         "",
         f"Selection used 180 training businesses (complete/partial rolling origins) and 60 separate validation businesses. The selected candidate is **{selected}** by validation MAE. The held-out 120 test businesses are disjoint from both sets and each contributes 12 future actual months. Test metrics did not change model selection, buffers, score weights or schedule policy.",
         "",
@@ -287,6 +307,19 @@ def markdown(report: dict) -> str:
     lines.extend(
         [
             "",
+            f"The real-revenue model minus separately synthetic-trained expenses is compared with the chosen synthetic net model at fixed weights 0/0.25/0.5/1. Validation selects public weight **{report['selection']['transfer_weight']}** and serving mode `{report['selection']['serving_mode']}`. This decision precedes the held-out results below; a zero weight explicitly rejects unsuitable transfer.",
+            "",
+            "| Public component weight | Synthetic validation MAE (index) | Held-out MAE (index) |",
+            "| --- | ---: | ---: |",
+        ]
+    )
+    for weight, values in report["transfer_candidates"].items():
+        lines.append(
+            f"| {weight} | {report['selection']['transfer_validation_mae_index'][weight]:.2f} | {values['mae_index']:.2f} |"
+        )
+    lines.extend(
+        [
+            "",
             f"MAPE excludes {report['selected_forecast']['mape_excluded_months']} months with absolute actual surplus below 1 index; negative actuals use an absolute denominator. Near-zero/negative net flow makes this percentage difficult to interpret. MAE is the selection metric; WAPE is also shown. No forecast intervals or calibrated confidence probabilities are claimed.",
             "",
             f"The selected model's separate partial-assessment-month test MAE is **{report['partial_assessment_month_selected_forecast']['mae_index']:.2f} indices**. Incomplete current-month events are excluded while the target remains the next 12 calendar months after assessment.",
@@ -295,7 +328,7 @@ def markdown(report: dict) -> str:
             "",
             f"For the same principal, 12-month term and explicit 0% APR, adaptive schedules produce **{capacity['adaptive_overload_months']} overload months** versus **{capacity['annuity_overload_months']}** for equal installments (the zero-interest annuity). **{display(capacity['adaptive_fewer_overloads_businesses_pct'])}%** of eligible businesses improve, **{display(capacity['adaptive_same_overloads_businesses_pct'])}%** tie and **{display(capacity['adaptive_more_overloads_businesses_pct'])}%** worsen. Overload means payment exceeds actual net surplus; zero payments in negative months count too. Forecast-based caps cannot guarantee future affordability.",
             "",
-            f"The measured aggregate adaptive benefit is only **{capacity['annuity_overload_months'] - capacity['adaptive_overload_months']} fewer overload months** in this test. It is not a consistent advantage for every business and must not be marketed as proven repayment improvement. Model and buffer settings remain fixed rather than being retuned on these test outcomes.",
+            f"The measured overload reduction (equal minus adaptive) is **{capacity['annuity_overload_months'] - capacity['adaptive_overload_months']} months** in this test; a negative value means adaptive is worse. It is not a consistent advantage for every business and must not be marketed as proven repayment improvement. Model and buffer settings remain fixed rather than being retuned on these test outcomes.",
             "",
             f"Weak/strong-month precision against future realised quartiles is **{display(report['seasonality']['weak_month_precision_pct'])}% / {display(report['seasonality']['strong_month_precision_pct'])}%**. Many forecast labels miss the realised quartiles. The evaluator never reads hidden generator seasonal parameters as labels.",
             "",

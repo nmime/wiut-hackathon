@@ -218,7 +218,13 @@ def create_app(
             "status": "ok",
             "model_version": request.app.state.model.version,
             "local_inference": True,
-            "synthetic_training_only": True,
+            "synthetic_training_only": False,
+            "serving_mode": request.app.state.model.selection["serving_mode"],
+            "public_transfer_weight": request.app.state.model.transfer_weight,
+            "public_training_targets": request.app.state.model.public_revenue_model.metadata[
+                "training_examples"
+            ],
+            "provenance": "Licensed Uzbekistan SIAT revenue aggregates; borrower net flow and expenses remain synthetic",
         }
 
     @application.post("/score", response_model=ScoreResponse)

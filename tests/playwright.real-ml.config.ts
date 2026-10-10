@@ -58,6 +58,7 @@ export default defineConfig({
         ML_SERVICE_URL: 'http://127.0.0.1:8110',
         ML_TIMEOUT_MS: '8000',
         CORS_ORIGINS: 'http://127.0.0.1:5176',
+        AUTH_RATE_LIMIT_MAX: '200',
       },
       timeout: 60_000,
       reuseExistingServer: false,

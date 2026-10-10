@@ -81,7 +81,11 @@ def capacity_plan(history: MonthlyHistory, forecast: np.ndarray) -> dict:
     # Heuristic evidence indicator, not a calibrated probabilistic interval.
     buffer = 0.55 / (1 + min(statistics["cv"], 2)) * (0.5 + 0.5 * confidence)
     capacities = np.maximum(forecast, 0) * buffer
-    flags = ["synthetic_training_only", "uncalibrated_confidence", "zero_interest_mvp"]
+    flags = [
+        "synthetic_borrower_expenses",
+        "uncalibrated_confidence",
+        "zero_interest_mvp",
+    ]
     if count < 12:
         flags.append("short_history")
     if count < 6 or history.partial_only:
@@ -171,6 +175,11 @@ def score_request(
     if forecast.shape != (12,) or not np.all(np.isfinite(forecast)):
         raise ValueError("Local forecast is malformed/nonfinite")
     plan = capacity_plan(history, forecast)
+    plan["flags"].append(
+        "public_revenue_transfer_used"
+        if model.transfer_weight
+        else "public_revenue_transfer_not_selected"
+    )
     stats = plan["statistics"]
     q25, q75 = np.quantile(forecast, [0.25, 0.75])
     calendar_months = [(history.forecast_start + i) % 12 + 1 for i in range(12)]
@@ -238,6 +247,16 @@ def score_request(
         "The displayed maximum installment is the 20th percentile of buffered month capacities for an equal-payment reference; adaptive months have separate caps. "
         "All amounts are indices; no UZS conversion is declared."
     )
+    if model.transfer_weight:
+        rationale += (
+            f" Forecast blends {100 * model.transfer_weight:.0f}% real-public-trained revenue minus synthetic-trained expenses with {100 * (1 - model.transfer_weight):.0f}% synthetic net forecast, selected on synthetic validation MAE. "
+            "Public Uzbekistan SIAT turnover/service aggregates provide normalized revenue patterns, not borrower expenses or repayment evidence."
+        )
+    else:
+        rationale += (
+            " The real-public-trained revenue plus synthetic expense candidate did not improve synthetic validation MAE; the selected synthetic net forecast is used. "
+            "Public revenue aggregates supply no borrower expense or repayment labels."
+        )
     if plan["principal"] == 0:
         rationale += (
             " Evidence or surplus is insufficient for a positive loan recommendation."

@@ -8,6 +8,22 @@ import { type MlClient } from './ml.js';
 import { ApiProblem, validate } from './problem.js';
 import { inputHash, ProductService } from './service.js';
 import { generateSyntheticBusinesses } from './synthetic.js';
+import type { AuthContext } from './auth-types.js';
+const auth: AuthContext = {
+  user: {
+    id: '11111111-1111-4111-8111-111111111111',
+    email: 'officer@example.test',
+    display_name: 'Authenticated officer',
+  },
+  tenant: {
+    id: '22222222-2222-4222-8222-222222222222',
+    name: 'Test bank',
+    role: 'officer',
+  },
+  tenants: [],
+  csrf_token: 'a'.repeat(43),
+  session_hash: 'test-session',
+};
 
 test('portfolio summaries use one batch lookup while preserving each business latest assessment', async () => {
   const businesses = generateSyntheticBusinesses();
@@ -45,7 +61,7 @@ test('portfolio summaries use one batch lookup while preserving each business la
     database,
     {} as MlClient,
     loadConfig({}),
-  ).businesses();
+  ).businesses(auth);
   assert.equal(batchCalls, 1);
   assert.equal(result.synthetic, true);
   assert.deepEqual(result.items[0]!.latest_assessment, attempt);
@@ -81,11 +97,13 @@ test('ML failure is preceded by durable attempt creation and followed by durable
       _id: string,
       result: unknown,
       error: string,
+      tenantId: string,
       status: number,
     ) => {
       assert.equal(result, null);
       assert.equal(error, 'ML unavailable');
       assert.equal(status, 503);
+      assert.equal(tenantId, auth.tenant.id);
       events.push('persist_failure');
     },
   } as unknown as Database;
@@ -103,6 +121,7 @@ test('ML failure is preceded by durable attempt creation and followed by durable
         requested_amount: null,
       },
       'test-request',
+      auth,
     ),
     (error: unknown) => error instanceof ApiProblem && error.status === 503,
   );
@@ -132,6 +151,7 @@ test('invalid assessment requests for a known business are audited without calli
     service.createAssessment(
       { business_id: 'synthetic-bakery', as_of_date: '2026-02-31' },
       'test-request',
+      auth,
     ),
     (error: unknown) => error instanceof ApiProblem && error.status === 400,
   );
@@ -139,13 +159,14 @@ test('invalid assessment requests for a known business are audited without calli
     service.createAssessment(
       { business_id: 'synthetic-bakery', as_of_date: '2025-01-01' },
       'test-request',
+      auth,
     ),
     (error: unknown) => error instanceof ApiProblem && error.status === 400,
   );
   assert.equal(audits, 2);
 });
 
-test('human decisions require reviewer identity and substantive notes, with strict fields', () => {
+test('human decisions accept optional deprecated reviewer field and require substantive notes, with strict fields', () => {
   assert.deepEqual(
     validate(DecisionInputSchema, {
       decision: 'approved',
@@ -157,6 +178,13 @@ test('human decisions require reviewer identity and substantive notes, with stri
       reviewer_name: 'Reviewer',
       notes: 'Reviewed synthetic cash flow.',
     },
+  );
+  assert.deepEqual(
+    validate(DecisionInputSchema, {
+      decision: 'approved',
+      notes: 'Reviewed synthetic cash flow.',
+    }),
+    { decision: 'approved', notes: 'Reviewed synthetic cash flow.' },
   );
   for (const input of [
     {
@@ -175,7 +203,7 @@ test('human decisions require reviewer identity and substantive notes, with stri
     assert.throws(() => validate(DecisionInputSchema, input), ApiProblem);
 });
 
-test('a rejected duplicate human decision keeps its reviewer and validated submission in the audit', async () => {
+test('a rejected duplicate human decision uses authenticated reviewer rather than a forged submission', async () => {
   const submission = {
     decision: 'declined' as const,
     reviewer_name: 'Second reviewer',
@@ -196,8 +224,11 @@ test('a rejected duplicate human decision keeps its reviewer and validated submi
       metadata: { submission: unknown };
       event_type: string;
     }) => {
-      assert.equal(event.actor, submission.reviewer_name);
-      assert.deepEqual(event.metadata.submission, submission);
+      assert.equal(event.actor, auth.user.display_name);
+      assert.deepEqual(event.metadata.submission, {
+        ...submission,
+        reviewer_name: auth.user.display_name,
+      });
       assert.equal(event.event_type, 'decision_rejected');
       audited = true;
     },
@@ -207,6 +238,7 @@ test('a rejected duplicate human decision keeps its reviewer and validated submi
       'assessment-id',
       submission,
       'test-request',
+      auth,
     ),
     (error: unknown) => error instanceof ApiProblem && error.status === 409,
   );

@@ -8,10 +8,17 @@ from capacity_ml.api import MAX_BODY_BYTES, canonical_hash, create_app
 from capacity_ml.schemas import ScoreResponse
 
 
-def test_live_inference_audited_and_invalid_attempts_persist(request_payload, tmp_path):
+def test_live_inference_audited_and_invalid_attempts_persist(
+    model, request_payload, tmp_path
+):
     audit_path = tmp_path / "audit.jsonl"
     with TestClient(create_app(audit_path=audit_path)) as client:
-        assert client.get("/health").json()["local_inference"] is True
+        health = client.get("/health").json()
+        assert health["local_inference"] is True
+        assert health["synthetic_training_only"] is False
+        assert health["public_training_targets"] == 8880
+        assert health["public_transfer_weight"] == model.transfer_weight
+        assert health["serving_mode"] == model.selection["serving_mode"]
         raw = json.dumps(request_payload).encode()
         response = client.post(
             "/score",

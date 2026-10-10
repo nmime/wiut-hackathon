@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect, test } from '../auth-fixtures';
 import {
   AssessmentListSchema,
   AssessmentSchema,
@@ -15,6 +15,8 @@ import {
   assessRealBusiness,
   importRealBusiness,
 } from './helpers';
+
+test.use({ authApiUrl: REAL_API_URL });
 
 test('the trained synthetic ML service produces input-sensitive validated outputs through NestJS and preserves a human review', async ({
   request,
@@ -63,7 +65,7 @@ test('the trained synthetic ML service produces input-sensitive validated output
     {
       data: {
         decision: 'needs_information',
-        reviewer_name: 'Synthetic ML Officer',
+        reviewer_name: 'Integration Officer',
         notes:
           'Synthetic model transport verified; request updated expense evidence before approval.',
       },
@@ -71,7 +73,7 @@ test('the trained synthetic ML service produces input-sensitive validated output
   );
   expect(response.status()).toBe(201);
   const reviewed = AssessmentSchema.parse(await response.json());
-  expect(reviewed.decision?.reviewer_name).toBe('Synthetic ML Officer');
+  expect(reviewed.decision?.reviewer_name).toBe('Integration Officer');
   const history = AssessmentListSchema.parse(
     await (
       await request.get(`${REAL_API_URL}/assessments`, {
@@ -194,7 +196,6 @@ test('the browser renders a real model response and adaptive schedule and record
   await expect(
     page.getByText('TEST FIXTURE ONLY', { exact: true }),
   ).toHaveCount(0);
-  await page.getByLabel('Reviewer name').fill('Real Integration Officer');
   await page
     .getByLabel('Review notes')
     .fill(
@@ -210,11 +211,17 @@ test('the browser renders a real model response and adaptive schedule and record
     .getByRole('button', { name: 'Confirm decision', exact: true })
     .click();
   await expect(
-    page.getByText('Real Integration Officer', { exact: true }),
+    page
+      .getByRole('main')
+      .getByText('Integration Officer', { exact: true })
+      .first(),
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByText('Real Integration Officer', { exact: true }),
+    page
+      .getByRole('main')
+      .getByText('Integration Officer', { exact: true })
+      .first(),
   ).toBeVisible();
   const event = page.waitForEvent('download');
   await page
@@ -228,7 +235,7 @@ test('the browser renders a real model response and adaptive schedule and record
   );
   expect(exported.id).toBe(assessment.id);
   expect(exported.result).toEqual(result);
-  expect(exported.decision?.reviewer_name).toBe('Real Integration Officer');
+  expect(exported.decision?.reviewer_name).toBe('Integration Officer');
   await page.screenshot({
     path: test.info().outputPath('real-model-desktop.png'),
     fullPage: true,

@@ -7,6 +7,10 @@ import {
   ScoreRequestSchema,
   ScoreResponseSchema,
   TransactionSchema,
+  AuthRegisterSchema,
+  AuthLoginSchema,
+  InvitationCreateSchema,
+  AuthSessionSchema,
 } from './index.js';
 
 test('transaction input rejects invalid dates, negative amounts and unknown fields', () => {
@@ -85,7 +89,14 @@ test('score input enforces a historical cutoff and synthetic import declaration'
   );
 });
 
-test('human decisions require a reviewer and substantive notes', () => {
+test('human decisions accept an optional legacy reviewer field and require substantive notes', () => {
+  assert.equal(
+    DecisionInputSchema.safeParse({
+      decision: 'approved',
+      notes: 'Reviewed cash flow.',
+    }).success,
+    true,
+  );
   assert.equal(
     DecisionInputSchema.safeParse({
       decision: 'approved',
@@ -99,6 +110,72 @@ test('human decisions require a reviewer and substantive notes', () => {
       decision: 'approved',
       reviewer_name: ' ',
       notes: 'ok',
+    }).success,
+    false,
+  );
+});
+
+test('registration has one workspace destination, bounded password and normalized email', () => {
+  const input = {
+    email: '  Officer@Example.test  ',
+    password: 'correct-horse-battery',
+    display_name: '  Test Officer  ',
+    tenant_name: '  Test bank  ',
+  };
+  const parsed = AuthRegisterSchema.parse(input);
+  assert.equal(parsed.email, 'officer@example.test');
+  assert.equal(parsed.display_name, 'Test Officer');
+  assert.equal(parsed.tenant_name, 'Test bank');
+  assert.equal(
+    AuthRegisterSchema.safeParse({ ...input, invitation_token: 'a'.repeat(43) })
+      .success,
+    false,
+  );
+  const { tenant_name: _name, ...withoutTenant } = input;
+  assert.equal(AuthRegisterSchema.safeParse(withoutTenant).success, false);
+  assert.equal(
+    AuthRegisterSchema.safeParse({
+      ...withoutTenant,
+      invitation_token: 'a'.repeat(43),
+    }).success,
+    true,
+  );
+  assert.equal(
+    AuthRegisterSchema.safeParse({ ...input, password: 'short' }).success,
+    false,
+  );
+  assert.equal(
+    AuthRegisterSchema.safeParse({ ...input, role: 'admin' }).success,
+    false,
+  );
+});
+
+test('authentication and invitations reject privilege fields and malformed secrets', () => {
+  assert.equal(
+    AuthLoginSchema.safeParse({
+      email: 'officer@example.test',
+      password: 'correct-horse-battery',
+      tenant_id: 'forged',
+    }).success,
+    false,
+  );
+  assert.equal(
+    InvitationCreateSchema.safeParse({
+      email: 'join@example.test',
+      role: 'owner',
+    }).success,
+    false,
+  );
+  assert.equal(
+    AuthSessionSchema.safeParse({
+      user: {
+        id: 'user',
+        email: 'officer@example.test',
+        display_name: 'Officer',
+      },
+      tenant: { id: 'tenant', name: 'Bank', role: 'admin' },
+      tenants: [],
+      csrf_token: 'short',
     }).success,
     false,
   );

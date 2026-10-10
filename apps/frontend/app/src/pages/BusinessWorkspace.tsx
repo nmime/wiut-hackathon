@@ -113,12 +113,14 @@ import {
 
 export function BusinessWorkspace({
   businessId,
+  reviewerName,
   initialAssessmentId,
   mlConfigured,
   onBack,
   onSelectAssessment,
 }: {
   businessId: string;
+  reviewerName: string;
   initialAssessmentId: string | null;
   mlConfigured: boolean | undefined;
   onBack: () => void;
@@ -154,7 +156,6 @@ export function BusinessWorkspace({
   const [transactionPage, setTransactionPage] = useState(0);
   const [decision, setDecision] =
     useState<DecisionInput['decision']>('needs_information');
-  const [reviewer, setReviewer] = useState('');
   const [notes, setNotes] = useState('');
   const [decisionError, setDecisionError] = useState<string | null>(null);
   const [pendingDecision, setPendingDecision] = useState<{
@@ -1751,7 +1752,6 @@ export function BusinessWorkspace({
                     setDecisionError(null);
                     const parsed = DecisionInputSchema.safeParse({
                       decision,
-                      reviewer_name: reviewer,
                       notes,
                     });
                     if (!parsed.success) {
@@ -1794,17 +1794,19 @@ export function BusinessWorkspace({
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="reviewer-name">Reviewer name</Label>
+                      <Label htmlFor="reviewer-name">Reviewer</Label>
                       <Input
                         id="reviewer-name"
-                        value={reviewer}
-                        onChange={(event) => setReviewer(event.target.value)}
-                        placeholder="Your full name"
-                        required
-                        minLength={2}
-                        maxLength={100}
-                        disabled={decisionMutation.isPending}
+                        value={reviewerName}
+                        readOnly
+                        aria-describedby="reviewer-description"
                       />
+                      <p
+                        id="reviewer-description"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Recorded from your signed-in account.
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -1879,9 +1881,7 @@ export function BusinessWorkspace({
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Reviewer</p>
-                <p className="mt-1 text-sm font-medium">
-                  {pendingDecision.data.reviewer_name}
-                </p>
+                <p className="mt-1 text-sm font-medium">{reviewerName}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Review notes</p>
