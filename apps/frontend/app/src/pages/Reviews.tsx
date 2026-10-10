@@ -36,7 +36,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { api } from '@/lib/api';
-import { assessmentLabel, downloadJson, timeLabel } from '@/lib/format';
+import {
+  assessmentLabel,
+  downloadJson,
+  indexNumber,
+  timeLabel,
+} from '@/lib/format';
 
 export function ReviewsPage({
   assessments,
@@ -213,7 +218,7 @@ export function ReviewsPage({
                       {item.result ? (
                         <>
                           <span className="font-medium">
-                            {item.result.capacity_score}
+                            {indexNumber(item.result.capacity_score)}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {' '}

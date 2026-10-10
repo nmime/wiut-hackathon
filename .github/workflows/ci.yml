@@ -32,6 +32,26 @@ jobs:
         env:
           PGPASSWORD: wiut_dev
       - run: pnpm test:e2e
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: '0.11.28'
+          python-version: '3.12'
+      - run: uv sync --frozen
+        working-directory: ml-service
+      - run: uv run ruff check . && uv run ruff format --check .
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.train
+        working-directory: ml-service
+      - run: uv run pytest
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.evaluate
+        working-directory: ml-service
+      - run: uv run python -m capacity_ml.evaluate_public
+        working-directory: ml-service
+      - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_real_ml'
+        env:
+          PGPASSWORD: wiut_dev
+      - run: pnpm test:real-ml
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

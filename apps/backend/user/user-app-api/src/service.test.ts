@@ -1,12 +1,66 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DecisionInputSchema } from '@wiut/contracts';
+import type { Assessment } from '@wiut/contracts';
 import { loadConfig } from './config.js';
 import { type Database } from './database.js';
 import { type MlClient } from './ml.js';
 import { ApiProblem, validate } from './problem.js';
 import { inputHash, ProductService } from './service.js';
 import { generateSyntheticBusinesses } from './synthetic.js';
+
+test('portfolio summaries use one batch lookup while preserving each business latest assessment', async () => {
+  const businesses = generateSyntheticBusinesses();
+  const attempt: Assessment = {
+    id: 'ea7f3623-d512-4b51-8653-e6b9be38dd09',
+    business_id: businesses[0]!.id,
+    requested_amount: null,
+    as_of_date: '2026-09-27',
+    status: 'failed',
+    created_at: '2026-10-10T15:00:00.000Z',
+    request_id: 'test-only-failed-attempt',
+    input_hash: 'a'.repeat(64),
+    result: null,
+    error: 'Test-only unavailable ML attempt.',
+    decision: null,
+  };
+  let batchCalls = 0;
+  const database = {
+    businesses: async () => businesses,
+    latestAssessments: async (ids: string[]) => {
+      batchCalls++;
+      assert.deepEqual(
+        ids,
+        businesses.map((business) => business.id),
+      );
+      return new Map([[attempt.business_id, attempt]]);
+    },
+    latestAssessment: async () => {
+      assert.fail(
+        'Portfolio must not query latest assessments one business at a time',
+      );
+    },
+  } as unknown as Database;
+  const result = await new ProductService(
+    database,
+    {} as MlClient,
+    loadConfig({}),
+  ).businesses();
+  assert.equal(batchCalls, 1);
+  assert.equal(result.synthetic, true);
+  assert.deepEqual(result.items[0]!.latest_assessment, attempt);
+  assert.ok(
+    result.items
+      .slice(1)
+      .every((business) => business.latest_assessment === null),
+  );
+  assert.ok(
+    result.items.every(
+      (business) =>
+        !('transactions' in business) && !('monthly_cashflow' in business),
+    ),
+  );
+});
 
 test('ML failure is preceded by durable attempt creation and followed by durable failure', async () => {
   const events: string[] = [];

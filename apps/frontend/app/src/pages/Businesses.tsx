@@ -2,6 +2,9 @@ import { useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import {
   ArrowUpRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
   Building2,
   Import,
   Search,
@@ -44,7 +47,12 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { api } from '@/lib/api';
-import { assessmentLabel, compactNumber, dateLabel } from '@/lib/format';
+import {
+  assessmentLabel,
+  compactNumber,
+  dateLabel,
+  indexNumber,
+} from '@/lib/format';
 
 export function BusinessesPage({
   businesses,
@@ -58,6 +66,10 @@ export function BusinessesPage({
   const [search, setSearch] = useState('');
   const [sector, setSector] = useState('all');
   const [status, setStatus] = useState('all');
+  const [sortBy, setSortBy] = useState<'name' | 'inflow' | 'capacity'>('name');
+  const [sortDirection, setSortDirection] = useState<
+    'ascending' | 'descending'
+  >('ascending');
   const items = businesses.data?.items ?? [];
   const filtered = items.filter(
     (business) =>
@@ -74,6 +86,36 @@ export function BusinessesPage({
         (status === 'failed' &&
           business.latest_assessment?.status === 'failed')),
   );
+  filtered.sort((left, right) => {
+    const direction = sortDirection === 'ascending' ? 1 : -1;
+    if (sortBy === 'name')
+      return direction * left.name.localeCompare(right.name);
+    if (sortBy === 'inflow')
+      return (
+        direction *
+          (left.avg_monthly_inflow_index - right.avg_monthly_inflow_index) ||
+        left.name.localeCompare(right.name)
+      );
+    const leftScore = left.latest_assessment?.result?.capacity_score;
+    const rightScore = right.latest_assessment?.result?.capacity_score;
+    if (leftScore === undefined)
+      return rightScore === undefined ? left.name.localeCompare(right.name) : 1;
+    if (rightScore === undefined) return -1;
+    return (
+      direction * (leftScore - rightScore) ||
+      left.name.localeCompare(right.name)
+    );
+  });
+  function sort(field: typeof sortBy) {
+    if (sortBy === field)
+      setSortDirection(
+        sortDirection === 'ascending' ? 'descending' : 'ascending',
+      );
+    else {
+      setSortBy(field);
+      setSortDirection(field === 'name' ? 'ascending' : 'descending');
+    }
+  }
   return (
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -90,7 +132,7 @@ export function BusinessesPage({
           Import business
         </Button>
       </div>
-      <Card className="gap-0 shadow-none">
+      <Card className="gap-0 shadow-none" aria-busy={businesses.isPending}>
         <CardHeader className="border-b pb-5">
           <div className="flex flex-wrap items-end gap-3">
             <div className="min-w-[200px] flex-1 space-y-2">
@@ -160,6 +202,9 @@ export function BusinessesPage({
           <div className="overflow-x-auto">
             {businesses.isPending ? (
               <div className="space-y-4 p-6">
+                <span role="status" className="sr-only">
+                  Loading businesses…
+                </span>
                 {Array.from({ length: 5 }, (_, i) => (
                   <Skeleton key={i} className="h-14 w-full" />
                 ))}
@@ -213,14 +258,78 @@ export function BusinessesPage({
                 )}
               </Empty>
             ) : (
-              <Table>
+              <Table aria-label="Business portfolio" tabIndex={0}>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-6">Business</TableHead>
-                    <TableHead>Sector</TableHead>
-                    <TableHead>History</TableHead>
+                    <TableHead
+                      className="pl-6"
+                      aria-sort={sortBy === 'name' ? sortDirection : 'none'}
+                    >
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="-ml-3"
+                        onClick={() => sort('name')}
+                        aria-label="Sort businesses by name"
+                      >
+                        Business
+                        {sortBy !== 'name' ? (
+                          <ArrowUpDown aria-hidden="true" />
+                        ) : sortDirection === 'ascending' ? (
+                          <ArrowUp aria-hidden="true" />
+                        ) : (
+                          <ArrowDown aria-hidden="true" />
+                        )}
+                      </Button>
+                    </TableHead>
+                    <TableHead className="hidden 2xl:table-cell">
+                      Sector
+                    </TableHead>
+                    <TableHead className="hidden 2xl:table-cell">
+                      History
+                    </TableHead>
                     <TableHead>Transactions</TableHead>
+                    <TableHead
+                      aria-sort={sortBy === 'inflow' ? sortDirection : 'none'}
+                    >
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="-ml-3"
+                        onClick={() => sort('inflow')}
+                        aria-label="Sort businesses by average monthly inflow"
+                      >
+                        Monthly inflow index
+                        {sortBy !== 'inflow' ? (
+                          <ArrowUpDown aria-hidden="true" />
+                        ) : sortDirection === 'ascending' ? (
+                          <ArrowUp aria-hidden="true" />
+                        ) : (
+                          <ArrowDown aria-hidden="true" />
+                        )}
+                      </Button>
+                    </TableHead>
                     <TableHead>Inflow trend</TableHead>
+                    <TableHead
+                      aria-sort={sortBy === 'capacity' ? sortDirection : 'none'}
+                    >
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="-ml-3"
+                        onClick={() => sort('capacity')}
+                        aria-label="Sort businesses by latest capacity score"
+                      >
+                        Latest capacity
+                        {sortBy !== 'capacity' ? (
+                          <ArrowUpDown aria-hidden="true" />
+                        ) : sortDirection === 'ascending' ? (
+                          <ArrowUp aria-hidden="true" />
+                        ) : (
+                          <ArrowDown aria-hidden="true" />
+                        )}
+                      </Button>
+                    </TableHead>
                     <TableHead>Review status</TableHead>
                     <TableHead className="pr-6 text-right">
                       <span className="sr-only">Open business</span>
@@ -242,10 +351,10 @@ export function BusinessesPage({
                           {business.location} · {business.id}
                         </p>
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="hidden text-muted-foreground 2xl:table-cell">
                         {business.sector}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden 2xl:table-cell">
                         <p className="text-sm">
                           {business.history_months} months
                         </p>
@@ -255,6 +364,12 @@ export function BusinessesPage({
                       </TableCell>
                       <TableCell className="tabular-nums">
                         {compactNumber(business.transaction_count)}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {indexNumber(business.avg_monthly_inflow_index)}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          idx
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-xs capitalize">
@@ -267,6 +382,26 @@ export function BusinessesPage({
                           )}
                           {business.trend}
                         </span>
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {business.latest_assessment?.result ? (
+                          <>
+                            {indexNumber(
+                              business.latest_assessment.result.capacity_score,
+                            )}
+                            <span className="text-xs text-muted-foreground">
+                              {' '}
+                              / 100
+                            </span>
+                          </>
+                        ) : (
+                          <span
+                            className="text-muted-foreground"
+                            aria-label="No completed latest assessment"
+                          >
+                            —
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -302,8 +437,10 @@ export function BusinessesPage({
           </div>
         </CardContent>
         <CardFooter className="justify-between border-t py-4 text-xs text-muted-foreground">
-          <span>
-            {filtered.length} of {items.length} businesses
+          <span role="status" aria-live="polite" aria-atomic="true">
+            {businesses.isError
+              ? 'Portfolio unavailable'
+              : `${filtered.length} of ${items.length} businesses`}
           </span>
           <span>Synthetic data only</span>
         </CardFooter>

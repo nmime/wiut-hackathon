@@ -100,10 +100,12 @@ import { api, ApiError } from '@/lib/api';
 import {
   assessmentLabel,
   compactNumber,
+  calendarMonthLabel,
   dateLabel,
   downloadJson,
   downloadTransactions,
   eventLabel,
+  forecastMonthLabel,
   indexNumber,
   monthLabel,
   timeLabel,
@@ -199,7 +201,7 @@ export function BusinessWorkspace({
   }));
   const forecast =
     result?.seasonality.monthly_forecast_index.map((value, index) => ({
-      month: `M${index + 1}`,
+      month: forecastMonthLabel(result.as_of_date, index + 1),
       surplus: value,
     })) ?? [];
   const equalPayment = result?.adaptive_schedule.length
@@ -211,7 +213,7 @@ export function BusinessWorkspace({
   const schedule =
     result?.adaptive_schedule.map((row) => ({
       ...row,
-      month: `M${row.month_offset}`,
+      month: forecastMonthLabel(result.as_of_date, row.month_offset),
       equal_payment: equalPayment,
     })) ?? [];
 
@@ -307,7 +309,12 @@ export function BusinessWorkspace({
 
   if (businessQuery.isPending)
     return (
-      <div className="space-y-6">
+      <div
+        className="space-y-6"
+        role="status"
+        aria-label="Loading business workspace"
+        aria-busy="true"
+      >
         <Skeleton className="h-8 w-40" />
         <Skeleton className="h-16 w-72" />
         <div className="grid gap-4 md:grid-cols-3">
@@ -664,6 +671,8 @@ export function BusinessWorkspace({
                     </Label>
                     <Input
                       id="transaction-search"
+                      aria-controls="transaction-history-table"
+                      aria-describedby="transaction-filter-summary"
                       value={transactionSearch}
                       onChange={(event) => {
                         setTransactionSearch(event.target.value);
@@ -688,6 +697,8 @@ export function BusinessWorkspace({
                     >
                       <SelectTrigger
                         id="transaction-direction"
+                        aria-controls="transaction-history-table"
+                        aria-describedby="transaction-filter-summary"
                         className="w-full"
                       >
                         <SelectValue />
@@ -715,6 +726,8 @@ export function BusinessWorkspace({
                     >
                       <SelectTrigger
                         id="transaction-channel"
+                        aria-controls="transaction-history-table"
+                        aria-describedby="transaction-filter-summary"
                         className="w-full"
                       >
                         <SelectValue />
@@ -744,7 +757,11 @@ export function BusinessWorkspace({
                     </EmptyHeader>
                   </Empty>
                 ) : (
-                  <Table>
+                  <Table
+                    id="transaction-history-table"
+                    aria-label="Synthetic transaction history"
+                    tabIndex={0}
+                  >
                     <TableHeader>
                       <TableRow>
                         <TableHead className="pl-6">Timestamp</TableHead>
@@ -786,13 +803,19 @@ export function BusinessWorkspace({
                 )}
               </CardContent>
               <CardFooter className="flex-wrap justify-between gap-3 border-t py-3">
-                <p className="text-xs text-muted-foreground">
+                <p
+                  id="transaction-filter-summary"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className="text-xs text-muted-foreground"
+                >
                   {filteredTransactions.length ? currentPage * 20 + 1 : 0}–
                   {Math.min(
                     (currentPage + 1) * 20,
                     filteredTransactions.length,
                   )}{' '}
-                  of {filteredTransactions.length}
+                  of {filteredTransactions.length} transactions
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -891,7 +914,7 @@ export function BusinessWorkspace({
                           </TableCell>
                           <TableCell className="tabular-nums">
                             {item.result
-                              ? `${item.result.capacity_score} / 100`
+                              ? `${indexNumber(item.result.capacity_score)} / 100`
                               : '—'}
                           </TableCell>
                           <TableCell>
@@ -1245,7 +1268,7 @@ export function BusinessWorkspace({
                 </div>
                 <Progress
                   value={result.capacity_score}
-                  aria-label={`Capacity score ${result.capacity_score} out of 100`}
+                  aria-label={`Capacity score ${indexNumber(result.capacity_score)} out of 100`}
                 />
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   Measures ability to service debt. This score is not a
@@ -1412,8 +1435,8 @@ export function BusinessWorkspace({
                   12-month surplus forecast
                 </CardTitle>
                 <CardDescription>
-                  Net cash flow forecast in amount indices. M1–M12 preserve the
-                  ML service's ordered forecast.
+                  Net cash flow forecast in amount indices, starting the
+                  calendar month after {dateLabel(result.as_of_date)}.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1432,7 +1455,12 @@ export function BusinessWorkspace({
                     margin={{ left: 0, right: 12 }}
                   >
                     <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      axisLine={false}
+                      minTickGap={24}
+                    />
                     <YAxis
                       width={48}
                       tickLine={false}
@@ -1456,7 +1484,9 @@ export function BusinessWorkspace({
                     Weak months:{' '}
                     <span className="text-foreground">
                       {result.seasonality.weak_months.length
-                        ? result.seasonality.weak_months.join(', ')
+                        ? result.seasonality.weak_months
+                            .map(calendarMonthLabel)
+                            .join(', ')
                         : 'None reported'}
                     </span>
                   </span>
@@ -1464,7 +1494,9 @@ export function BusinessWorkspace({
                     Strong months:{' '}
                     <span className="text-foreground">
                       {result.seasonality.strong_months.length
-                        ? result.seasonality.strong_months.join(', ')
+                        ? result.seasonality.strong_months
+                            .map(calendarMonthLabel)
+                            .join(', ')
                         : 'None reported'}
                     </span>
                   </span>
@@ -1516,7 +1548,7 @@ export function BusinessWorkspace({
                           dataKey="month"
                           tickLine={false}
                           axisLine={false}
-                          minTickGap={15}
+                          minTickGap={24}
                         />
                         <YAxis
                           width={48}
@@ -1550,7 +1582,7 @@ export function BusinessWorkspace({
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Month offset</TableHead>
+                            <TableHead>Payment month</TableHead>
                             <TableHead className="text-right">
                               Installment index
                             </TableHead>
@@ -1561,7 +1593,10 @@ export function BusinessWorkspace({
                           {schedule.map((row) => (
                             <TableRow key={row.month_offset}>
                               <TableCell className="text-xs">
-                                Month {row.month_offset}
+                                {row.month}
+                                <span className="mt-1 block text-[10px] text-muted-foreground">
+                                  Month {row.month_offset}
+                                </span>
                               </TableCell>
                               <TableCell className="text-right text-xs tabular-nums">
                                 {indexNumber(row.installment_index)}

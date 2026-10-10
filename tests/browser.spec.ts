@@ -185,6 +185,9 @@ test('opening an older reviewed assessment preserves its identity through reload
     .getByRole('button', { name: business.name, exact: true })
     .click();
   await expect(
+    page.getByRole('heading', { name: business.name, exact: true }),
+  ).toBeVisible();
+  await expect(
     page.getByText('Historical Officer', { exact: true }),
   ).toBeVisible();
   await expect(

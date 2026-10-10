@@ -1,0 +1,13 @@
+{
+  "source_raw_sha256": "656b43c71a2d74ebfcad261cc31b0e10c37a5eb2a4c94b020e4d32f8b2020c4f",
+  "training_years": [2020, 2021, 2022],
+  "region_year_count": 42,
+  "method": "Normalize each complete positive regional year's monthly increments by its annual mean; median by calendar month; normalize median to mean one. National total excluded.",
+  "monthly_factors": [
+    0.7171977882371623, 0.8081793093813244, 0.875921577970261,
+    0.8266850892832069, 0.9066408236416833, 0.952978966706924,
+    0.9049141516976714, 1.0016232977403459, 1.0801197841241723,
+    1.0997889351554015, 1.2075380793728616, 1.6184121966889846
+  ],
+  "future_years_used": false
+}

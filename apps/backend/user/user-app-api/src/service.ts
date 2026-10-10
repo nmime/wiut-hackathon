@@ -53,19 +53,20 @@ export class ProductService {
 
   async businesses() {
     const stored = await this.database.businesses();
-    const items = await Promise.all(
-      stored.map(async (business) => {
-        const {
-          transactions: _transactions,
-          monthly_cashflow: _monthly,
-          ...summary
-        } = businessDetail(business);
-        return {
-          ...summary,
-          latest_assessment: await this.database.latestAssessment(business.id),
-        };
-      }),
+    const latest = await this.database.latestAssessments(
+      stored.map((business) => business.id),
     );
+    const items = stored.map((business) => {
+      const {
+        transactions: _transactions,
+        monthly_cashflow: _monthly,
+        ...summary
+      } = businessDetail(business);
+      return {
+        ...summary,
+        latest_assessment: latest.get(business.id) ?? null,
+      };
+    });
     return BusinessListSchema.parse({ items, synthetic: true });
   }
   async business(id: string) {

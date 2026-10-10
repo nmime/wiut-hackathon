@@ -12,6 +12,7 @@
     "typecheck": "pnpm --filter @wiut/contracts build && pnpm -r typecheck && tsc -p tests/tsconfig.json",
     "test": "pnpm --filter @wiut/contracts build && pnpm --filter @wiut/contracts test && pnpm --filter @wiut/api test",
     "test:e2e": "playwright test",
+    "test:real-ml": "playwright test --config tests/playwright.real-ml.config.ts",
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm format:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

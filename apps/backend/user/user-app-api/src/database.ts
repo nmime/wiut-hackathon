@@ -335,7 +335,24 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     return rows.rows.map((row) => this.mapAssessment(row));
   }
   async latestAssessment(businessId: string) {
-    return (await this.assessments(businessId))[0] ?? null;
+    return (await this.latestAssessments([businessId])).get(businessId) ?? null;
+  }
+
+  async latestAssessments(
+    businessIds: string[],
+  ): Promise<Map<string, Assessment>> {
+    if (businessIds.length === 0) return new Map();
+    const rows = await this.pool.query<AssessmentRow>(
+      `${selection} WHERE a.id IN (
+        SELECT DISTINCT ON (business_id) id FROM assessments
+        WHERE business_id = ANY($1::text[]) AND status <> 'pending'
+        ORDER BY business_id,created_at DESC,id
+      )`,
+      [businessIds],
+    );
+    return new Map(
+      rows.rows.map((row) => [row.business_id, this.mapAssessment(row)]),
+    );
   }
 
   async assessmentBusinessId(id: string): Promise<string | null> {

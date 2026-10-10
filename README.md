@@ -32,6 +32,45 @@ The ML service is optional during frontend/backend development. With
 analysis returns a clear unavailable error and records the failed attempt.
 No fabricated score or recommendation is substituted.
 
+## Run the included local ML service
+
+The repository also includes an optional FastAPI service trained on synthetic
+businesses whose seasonality is calibrated with licensed public Uzbekistan
+retail data. To run the complete demo:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build -d
+```
+
+Open http://localhost:8080. The ML container builds its model locally and NestJS
+connects to `http://ml:8000`. The ML API listens on localhost:8000 and retains
+request hashes, responses, and model identifiers in the `ml-audit` volume.
+Inference and explanations make no external API calls.
+
+For Python development, install [uv](https://docs.astral.sh/uv/getting-started/installation/),
+then run:
+
+```bash
+cd ml-service
+uv sync --frozen
+uv run python -m capacity_ml.train
+uv run python -m capacity_ml.evaluate
+uv run python -m capacity_ml.evaluate_public
+uv run pytest
+uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
+```
+
+Set `ML_SERVICE_URL=http://127.0.0.1:8000` for the local NestJS process.
+See [ML implementation and measured evaluation](ml-service/README.md) for the
+generator, split, forecast selection, capacity factors, and limitations.
+The [public dataset declaration](ml-service/data/README.md) documents the official
+source, CC BY 4.0 attribution, quality issue, and 2020–2022 calibration window.
+A separate benchmark trains on actual regional revenues and evaluates future
+2024–2025 revenue. These public aggregates do not contain borrower expenses or
+repayment outcomes.
+The included repayment model uses explicitly declared **0% interest**;
+recommendations remain indices and require human review.
+
 ## Connect the teammate's ML service
 
 Set `ML_SERVICE_URL=http://127.0.0.1:8000` in `.env`, then restart the API.
@@ -76,6 +115,17 @@ test infrastructure and is never started by the product's dev or Docker commands
 `WIUT_TEST_DATABASE_URL` and `WIUT_NO_ML_DATABASE_URL` may override the browser-test
 connections. The second database verifies the actual disconnected-ML behavior.
 
+After preparing the Python environment and training the local model, test its
+real integration through NestJS and the browser:
+
+```bash
+docker compose exec -T db createdb -U wiut wiut_real_ml
+pnpm test:real-ml
+```
+
+This suite uses the `wiut_real_ml` database and separate service ports. Its
+`WIUT_REAL_ML_DATABASE_URL` connection can be overridden.
+
 ## Container stack
 
 ```bash
@@ -109,8 +159,10 @@ Run one API process per database; startup recovers interrupted pending assessmen
 as failed attempts. Use the separate `wiut_test` database for browser tests.
 List views show the newest 200 businesses, 100 assessment attempts, and 500 audit
 events. Overview counts describe the returned records, not unbounded portfolio totals.
-Measured model quality and failure-case evaluation belong to the teammate's ML
-report; the interface does not invent metrics or claim trained-model accuracy.
+The optional ML service has its own synthetic generator and measured held-out
+evaluation. Its report describes performance on unseen synthetic businesses and
+future months; it does not establish real borrower performance or default risk.
+The teammate's service can replace it without changing the frontend.
 
 ## Repository
 
@@ -118,6 +170,7 @@ report; the interface does not invent metrics or claim trained-model accuracy.
 apps/frontend/app/                  React, Tailwind, official shadcn/ui
 apps/backend/user/user-app-api/      NestJS, PostgreSQL, ML adapter, audit
 libs/common/api-contracts/           Runtime schemas and shared TypeScript types
+ml-service/                         Optional local FastAPI model and evaluation
 tests/                              Isolated API and browser integration tests
 docs/                               ML contract and fork provenance
 ```

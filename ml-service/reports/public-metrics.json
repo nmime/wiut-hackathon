@@ -1,0 +1,593 @@
+{
+  "measured_at_utc": "2026-10-10T18:37:21.694418+00:00",
+  "scope": "Public aggregate monthly retail turnover revenue forecasting only; not borrower payment capacity, default probability, or repayment validation",
+  "source": {
+    "publisher": "National Statistics Committee of the Republic of Uzbekistan",
+    "indicator": "1.07.02.0002",
+    "title": "Retail trade volume (by month)",
+    "landing_url": "https://siat.stat.uz/data/2699/?lang=en",
+    "download_url": "https://api.siat.stat.uz/media/uploads/sdmx/sdmx_data_2699.json",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_modified": "2026-09-24",
+    "raw_sha256": "656b43c71a2d74ebfcad261cc31b0e10c37a5eb2a4c94b020e4d32f8b2020c4f",
+    "retrieved_utc": "2026-10-10",
+    "units_as_published": "million sums (UZS)",
+    "interpretation": "Year-to-date turnover; monthly increments difference within each year and reset in January.",
+    "ytd_confirmation_url": "https://stat.uz/en/press-center/news-of-committee/70489-chakana-savdo-tovar-ajlanmasi-azhmi-370-trln-s-mdan-oshdi-4",
+    "transformations": [
+      "English region labels only",
+      "Within-year monthly differences",
+      "No clipping or imputation"
+    ]
+  },
+  "snapshot_canonical_sha256": "e48e55882bfeeb71ecfb068da7330742f29772fa962fb2cd4cc34fcb97d38f16",
+  "protocol": {
+    "training_years": [2020, 2021, 2022],
+    "validation_years": [2023],
+    "held_out_test_years": [2024, 2025],
+    "unused_future_years": [2026],
+    "temporal_holdout": true,
+    "entity_disjoint": false,
+    "national_total_excluded": true,
+    "test_used_for_training_or_selection": false,
+    "history_policy": "Contiguous observations from 2020-01 to the month before each forecast; exclude a case if any history or target increment is missing, nonfinite or negative; no clipping or imputation",
+    "test_history_policy": "Annual January forecasts: 2024 uses observations through 2023-12; 2025 uses observations through 2024-12. Parameters and validation-selected candidate stay fixed; only observed input history updates",
+    "training_origin_policy": "Monthly rolling origins with at least 12 historical months, 12-month targets entirely within 2020-2022; overlapping targets are training examples, not independent evaluation samples",
+    "selection_metric": "Pooled 2023 validation MAE in million UZS; absolute errors favor larger regions. MAPE and per-year results reported separately",
+    "mape_policy": "Mean absolute percentage error over actual>0 monthly revenue; exact zero actuals excluded and counted, negative source increments exclude the entire affected case",
+    "features": [
+      "lag1",
+      "lag2",
+      "lag3",
+      "lag6",
+      "lag12",
+      "mean3",
+      "mean6",
+      "mean12",
+      "volatility12",
+      "trend12",
+      "horizon",
+      "calendar_sin",
+      "calendar_cos",
+      "seasonal_naive",
+      "history_length",
+      "inflow_mean12",
+      "outflow_mean12"
+    ],
+    "single_series_feature_mapping": "Observed revenue is the generic helper's inflow/net series. Its zero subtraction array is a mathematical neutral value, not observed or invented business expense data. No margins, loan labels, or credit outcomes are created",
+    "model_separation": "Independent in-memory public revenue estimator; never saved as the synthetic capacity model artifact or used by /score",
+    "trend_baseline": "Last year's same-month turnover multiplied by (latest 12-month turnover sum / previous 12-month sum); ratio=1 with fewer than 24 observations or zero previous-year total"
+  },
+  "training": {
+    "seed": 20261010,
+    "estimator": "HistGradientBoostingRegressor, absolute_error loss",
+    "hyperparameters": {
+      "learning_rate": 0.08,
+      "max_iter": 160,
+      "max_leaf_nodes": 15,
+      "l2_regularization": 2.0,
+      "min_samples_leaf": 25,
+      "early_stopping": false
+    },
+    "regions": 14,
+    "rolling_origins": 182,
+    "training_examples": 2184,
+    "latest_history_month": "2021-12",
+    "earliest_target_month": "2021-01",
+    "latest_target_month": "2022-12"
+  },
+  "selection": {
+    "selected_candidate": "trend_adjusted_seasonal",
+    "test_used_for_selection": false,
+    "validation": {
+      "region_year_cases": 13,
+      "regions": 13,
+      "candidates": {
+        "seasonal_naive": {
+          "mae_million_uzs": 450376.6224358974,
+          "mape_positive_actual_pct": 25.621111370921888,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 23.46776544137763,
+          "wape_denominator_million_uzs": 299384077.6,
+          "months": 156
+        },
+        "trend_adjusted_seasonal": {
+          "mae_million_uzs": 368852.54241566255,
+          "mape_positive_actual_pct": 22.9396210004505,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 19.21979187340835,
+          "wape_denominator_million_uzs": 299384077.6,
+          "months": 156
+        },
+        "gradient_boosting": {
+          "mae_million_uzs": 425887.4991345966,
+          "mape_positive_actual_pct": 24.528627848298754,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 22.19171119506359,
+          "wape_denominator_million_uzs": 299384077.6,
+          "months": 156
+        }
+      }
+    }
+  },
+  "held_out_test": {
+    "region_year_cases": 26,
+    "regions": 13,
+    "candidates": {
+      "seasonal_naive": {
+        "mae_million_uzs": 571656.9291666667,
+        "mape_positive_actual_pct": 23.74256798162174,
+        "mape_included_months": 312,
+        "mape_excluded_zero_months": 0,
+        "wape_pct": 22.05537680653797,
+        "wape_denominator_million_uzs": 808677917.6999999,
+        "months": 312
+      },
+      "trend_adjusted_seasonal": {
+        "mae_million_uzs": 405882.0032502897,
+        "mape_positive_actual_pct": 18.993691685398424,
+        "mape_included_months": 312,
+        "mape_excluded_zero_months": 0,
+        "wape_pct": 15.659532954017052,
+        "wape_denominator_million_uzs": 808677917.6999999,
+        "months": 312
+      },
+      "gradient_boosting": {
+        "mae_million_uzs": 440180.7746400143,
+        "mape_positive_actual_pct": 18.31111250721339,
+        "mape_included_months": 312,
+        "mape_excluded_zero_months": 0,
+        "wape_pct": 16.982830702029005,
+        "wape_denominator_million_uzs": 808677917.6999999,
+        "months": 312
+      }
+    }
+  },
+  "held_out_test_by_year": {
+    "2024": {
+      "region_year_cases": 13,
+      "regions": 13,
+      "candidates": {
+        "seasonal_naive": {
+          "mae_million_uzs": 540855.6102564102,
+          "mape_positive_actual_pct": 23.46579002636402,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 22.90085002581148,
+          "wape_denominator_million_uzs": 368429447.4,
+          "months": 156
+        },
+        "trend_adjusted_seasonal": {
+          "mae_million_uzs": 381456.344816076,
+          "mape_positive_actual_pct": 16.413958017773016,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 16.15158348803252,
+          "wape_denominator_million_uzs": 368429447.4,
+          "months": 156
+        },
+        "gradient_boosting": {
+          "mae_million_uzs": 433614.0475717545,
+          "mape_positive_actual_pct": 17.14780348463033,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 18.36003932328285,
+          "wape_denominator_million_uzs": 368429447.4,
+          "months": 156
+        }
+      }
+    },
+    "2025": {
+      "region_year_cases": 13,
+      "regions": 13,
+      "candidates": {
+        "seasonal_naive": {
+          "mae_million_uzs": 602458.248076923,
+          "mape_positive_actual_pct": 24.019345936879454,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 21.347828110784008,
+          "wape_denominator_million_uzs": 440248470.3,
+          "months": 156
+        },
+        "trend_adjusted_seasonal": {
+          "mae_million_uzs": 430307.6616845034,
+          "mape_positive_actual_pct": 21.573425353023833,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 15.247752065336936,
+          "wape_denominator_million_uzs": 440248470.3,
+          "months": 156
+        },
+        "gradient_boosting": {
+          "mae_million_uzs": 446747.5017082739,
+          "mape_positive_actual_pct": 19.474421529796444,
+          "mape_included_months": 156,
+          "mape_excluded_zero_months": 0,
+          "wape_pct": 15.830290158418917,
+          "wape_denominator_million_uzs": 440248470.3,
+          "months": 156
+        }
+      }
+    }
+  },
+  "selected_held_out_test": {
+    "mae_million_uzs": 405882.0032502897,
+    "mape_positive_actual_pct": 18.993691685398424,
+    "mape_included_months": 312,
+    "mape_excluded_zero_months": 0,
+    "wape_pct": 15.659532954017052,
+    "wape_denominator_million_uzs": 808677917.6999999,
+    "months": 312
+  },
+  "exclusions": [
+    {
+      "split": "validation",
+      "code": "1730",
+      "region": "Fergana region",
+      "target_start": "2023-01",
+      "target_end": "2023-12",
+      "issues": [
+        {
+          "month": "2023-11",
+          "reason": "negative_monthly_increment"
+        }
+      ]
+    },
+    {
+      "split": "test",
+      "code": "1730",
+      "region": "Fergana region",
+      "target_start": "2024-01",
+      "target_end": "2024-12",
+      "issues": [
+        {
+          "month": "2023-11",
+          "reason": "negative_monthly_increment"
+        }
+      ]
+    },
+    {
+      "split": "test",
+      "code": "1730",
+      "region": "Fergana region",
+      "target_start": "2025-01",
+      "target_end": "2025-12",
+      "issues": [
+        {
+          "month": "2023-11",
+          "reason": "negative_monthly_increment"
+        }
+      ]
+    }
+  ],
+  "evaluated_cases": {
+    "validation": [
+      {
+        "code": "1735",
+        "region": "Republic of Karakalpakstan",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1703",
+        "region": "Andijan region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1706",
+        "region": "Bukhara region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1708",
+        "region": "Jizzakh region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1710",
+        "region": "Kashkadarya region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1712",
+        "region": "Navoi region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1714",
+        "region": "Namangan region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1718",
+        "region": "Samarkand region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1722",
+        "region": "Surkhandarya region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1724",
+        "region": "Syrdarya region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1727",
+        "region": "Tashkent region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1733",
+        "region": "Khorezm region",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      },
+      {
+        "code": "1726",
+        "region": "Tashkent city",
+        "history_start": "2020-01",
+        "history_end": "2022-12",
+        "target_start": "2023-01",
+        "target_end": "2023-12"
+      }
+    ],
+    "test": [
+      {
+        "code": "1735",
+        "region": "Republic of Karakalpakstan",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1735",
+        "region": "Republic of Karakalpakstan",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1703",
+        "region": "Andijan region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1703",
+        "region": "Andijan region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1706",
+        "region": "Bukhara region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1706",
+        "region": "Bukhara region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1708",
+        "region": "Jizzakh region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1708",
+        "region": "Jizzakh region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1710",
+        "region": "Kashkadarya region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1710",
+        "region": "Kashkadarya region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1712",
+        "region": "Navoi region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1712",
+        "region": "Navoi region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1714",
+        "region": "Namangan region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1714",
+        "region": "Namangan region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1718",
+        "region": "Samarkand region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1718",
+        "region": "Samarkand region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1722",
+        "region": "Surkhandarya region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1722",
+        "region": "Surkhandarya region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1724",
+        "region": "Syrdarya region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1724",
+        "region": "Syrdarya region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1727",
+        "region": "Tashkent region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1727",
+        "region": "Tashkent region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1733",
+        "region": "Khorezm region",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1733",
+        "region": "Khorezm region",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      },
+      {
+        "code": "1726",
+        "region": "Tashkent city",
+        "history_start": "2020-01",
+        "history_end": "2023-12",
+        "target_start": "2024-01",
+        "target_end": "2024-12"
+      },
+      {
+        "code": "1726",
+        "region": "Tashkent city",
+        "history_start": "2020-01",
+        "history_end": "2024-12",
+        "target_start": "2025-01",
+        "target_end": "2025-12"
+      }
+    ]
+  },
+  "limitations": [
+    "Regions repeat across years. This is a temporal regional revenue benchmark, not an unseen-business test; the separate synthetic evaluation is business-disjoint.",
+    "Current published snapshot may contain historical revisions. Release-vintage data are unavailable, so this is not a fully vintage-correct historical backtest.",
+    "Turnover is nominal aggregate revenue in published million UZS, without expenses, inflation adjustment, borrower balances, payment outcomes, or default labels.",
+    "Only 13 valid regional cases per evaluation year remain in this snapshot. Growth, reporting changes and regional aggregation limit transfer to individual businesses.",
+    "Public benchmark results do not validate the capacity heuristic, its confidence, or adaptive repayment safety. No bank production-performance claim is made."
+  ]
+}

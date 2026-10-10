@@ -28,6 +28,19 @@ export const monthLabel = (value: string) =>
     year: '2-digit',
     timeZone: 'UTC',
   }).format(new Date(`${value.slice(0, 7)}-01T00:00:00Z`));
+export function forecastMonthLabel(asOfDate: string, monthOffset: number) {
+  const month = new Date(`${asOfDate.slice(0, 7)}-01T00:00:00Z`);
+  month.setUTCMonth(month.getUTCMonth() + monthOffset);
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(month);
+}
+export const calendarMonthLabel = (month: number) =>
+  new Intl.DateTimeFormat('en-GB', { month: 'long', timeZone: 'UTC' }).format(
+    new Date(Date.UTC(2026, month - 1, 1)),
+  );
 export const assessmentLabel = (assessment: Assessment | null) =>
   !assessment
     ? 'Awaiting analysis'

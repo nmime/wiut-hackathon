@@ -1,0 +1,6139 @@
+{
+  "source": {
+    "publisher": "National Statistics Committee of the Republic of Uzbekistan",
+    "indicator": "1.07.02.0002",
+    "title": "Retail trade volume (by month)",
+    "landing_url": "https://siat.stat.uz/data/2699/?lang=en",
+    "download_url": "https://api.siat.stat.uz/media/uploads/sdmx/sdmx_data_2699.json",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0/",
+    "source_modified": "2026-09-24",
+    "raw_sha256": "656b43c71a2d74ebfcad261cc31b0e10c37a5eb2a4c94b020e4d32f8b2020c4f",
+    "retrieved_utc": "2026-10-10",
+    "units_as_published": "million sums (UZS)",
+    "interpretation": "Year-to-date turnover; monthly increments difference within each year and reset in January.",
+    "ytd_confirmation_url": "https://stat.uz/en/press-center/news-of-committee/70489-chakana-savdo-tovar-ajlanmasi-azhmi-370-trln-s-mdan-oshdi-4",
+    "transformations": [
+      "English region labels only",
+      "Within-year monthly differences",
+      "No clipping or imputation"
+    ]
+  },
+  "quality_issues": [
+    {
+      "region": "Fergana region",
+      "month": "2023-11",
+      "value_ytd_million_uzs": 21923018.3,
+      "monthly_million_uzs": -213822.8,
+      "quality_issue": "nonpositive_monthly_increment"
+    }
+  ],
+  "series": [
+    {
+      "code": "1700",
+      "region": "Republic of Uzbekistan",
+      "is_national_total": true,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 12860509.6,
+          "monthly_million_uzs": 12860509.6
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 27094830.9,
+          "monthly_million_uzs": 14234321.3
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 41684652.7,
+          "monthly_million_uzs": 14589821.8
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 55198072.4,
+          "monthly_million_uzs": 13513419.7
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 69085301.4,
+          "monthly_million_uzs": 13887229.0
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 85609547.8,
+          "monthly_million_uzs": 16524246.4
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 101169000.5,
+          "monthly_million_uzs": 15559452.7
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 117534373.7,
+          "monthly_million_uzs": 16365373.2
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 135993988.4,
+          "monthly_million_uzs": 18459614.7
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 154449313.1,
+          "monthly_million_uzs": 18455324.7
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 174346118.4,
+          "monthly_million_uzs": 19896805.3
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 199518817.9,
+          "monthly_million_uzs": 25172699.5
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 14955287.1,
+          "monthly_million_uzs": 14955287.1
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 31709765.1,
+          "monthly_million_uzs": 16754478.0
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 50011590.4,
+          "monthly_million_uzs": 18301825.3
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 68073423.9,
+          "monthly_million_uzs": 18061833.5
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 88274163.9,
+          "monthly_million_uzs": 20200740.0
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 109101484.6,
+          "monthly_million_uzs": 20827320.7
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 128229065.7,
+          "monthly_million_uzs": 19127581.1
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 148615927.3,
+          "monthly_million_uzs": 20386861.6
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 171631219.7,
+          "monthly_million_uzs": 23015292.4
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 193707942.0,
+          "monthly_million_uzs": 22076722.3
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 218666290.4,
+          "monthly_million_uzs": 24958348.4
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 252056644.0,
+          "monthly_million_uzs": 33390353.6
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 15282056.4,
+          "monthly_million_uzs": 15282056.4
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 32209577.7,
+          "monthly_million_uzs": 16927521.3
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 49619964.7,
+          "monthly_million_uzs": 17410387.0
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 67812476.5,
+          "monthly_million_uzs": 18192511.8
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 90164070.3,
+          "monthly_million_uzs": 22351593.8
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 111330037.9,
+          "monthly_million_uzs": 21165967.6
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 131052014.6,
+          "monthly_million_uzs": 19721976.7
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 154685238.8,
+          "monthly_million_uzs": 23633224.2
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 172653662.3,
+          "monthly_million_uzs": 17968423.5
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 197315541.6,
+          "monthly_million_uzs": 24661879.3
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 224655919.4,
+          "monthly_million_uzs": 27340377.8
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 270687151.7,
+          "monthly_million_uzs": 46031232.3
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 15824701.8,
+          "monthly_million_uzs": 15824701.8
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 36567391.3,
+          "monthly_million_uzs": 20742689.5
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 59050800.4,
+          "monthly_million_uzs": 22483409.1
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 81391343.4,
+          "monthly_million_uzs": 22340543.0
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 108653981.6,
+          "monthly_million_uzs": 27262638.2
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 133174735.4,
+          "monthly_million_uzs": 24520753.8
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 156432077.4,
+          "monthly_million_uzs": 23257342.0
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 184274158.2,
+          "monthly_million_uzs": 27842080.8
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 223222540.9,
+          "monthly_million_uzs": 38948382.7
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 252918770.9,
+          "monthly_million_uzs": 29696230.0
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 268315282.4,
+          "monthly_million_uzs": 15396511.5
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 326160093.5,
+          "monthly_million_uzs": 57844811.1
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 23589035.7,
+          "monthly_million_uzs": 23589035.7
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 49432376.8,
+          "monthly_million_uzs": 25843341.1
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 78571962.3,
+          "monthly_million_uzs": 29139585.5
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 109658113.6,
+          "monthly_million_uzs": 31086151.3
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 142274704.2,
+          "monthly_million_uzs": 32616590.6
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 171527473.8,
+          "monthly_million_uzs": 29252769.6
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 203609402.0,
+          "monthly_million_uzs": 32081928.2
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 237364045.5,
+          "monthly_million_uzs": 33754643.5
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 269358787.7,
+          "monthly_million_uzs": 31994742.2
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 305443069.1,
+          "monthly_million_uzs": 36084281.4
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 342939592.1,
+          "monthly_million_uzs": 37496523.0
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 403431822.9,
+          "monthly_million_uzs": 60492230.8
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 26977948.5,
+          "monthly_million_uzs": 26977948.5
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 57100085.4,
+          "monthly_million_uzs": 30122136.9
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 90320659.2,
+          "monthly_million_uzs": 33220573.8
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 125690715.6,
+          "monthly_million_uzs": 35370056.4
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 165248218.5,
+          "monthly_million_uzs": 39557502.9
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 198492226.6,
+          "monthly_million_uzs": 33244008.1
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 244722916.3,
+          "monthly_million_uzs": 46230689.7
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 294959824.1,
+          "monthly_million_uzs": 50236907.8
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 316378450.9,
+          "monthly_million_uzs": 21418626.8
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 356606017.6,
+          "monthly_million_uzs": 40227566.7
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 402952386.3,
+          "monthly_million_uzs": 46346368.7
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 482443065.2,
+          "monthly_million_uzs": 79490678.9
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 32698357.3,
+          "monthly_million_uzs": 32698357.3
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 69879416.4,
+          "monthly_million_uzs": 37181059.1
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 123961940.4,
+          "monthly_million_uzs": 54082524.0
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 165865849.7,
+          "monthly_million_uzs": 41903909.3
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 210243078.8,
+          "monthly_million_uzs": 44377229.1
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 251756441.5,
+          "monthly_million_uzs": 41513362.7
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 310901887.3,
+          "monthly_million_uzs": 59145445.8
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 370557063.5,
+          "monthly_million_uzs": 59655176.2
+        }
+      ]
+    },
+    {
+      "code": "1735",
+      "region": "Republic of Karakalpakstan",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 458931.9,
+          "monthly_million_uzs": 458931.9
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 974508.9,
+          "monthly_million_uzs": 515577.0
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 1498196.7,
+          "monthly_million_uzs": 523687.8
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 1950298.5,
+          "monthly_million_uzs": 452101.8
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 2457025.2,
+          "monthly_million_uzs": 506726.7
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 2993837.9,
+          "monthly_million_uzs": 536812.7
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 3537349.9,
+          "monthly_million_uzs": 543512.0
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 4102680.0,
+          "monthly_million_uzs": 565330.1
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 4747334.6,
+          "monthly_million_uzs": 644654.6
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 5369417.6,
+          "monthly_million_uzs": 622083.0
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 6044623.9,
+          "monthly_million_uzs": 675206.3
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 6861755.8,
+          "monthly_million_uzs": 817131.9
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 505219.1,
+          "monthly_million_uzs": 505219.1
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 1071808.0,
+          "monthly_million_uzs": 566588.9
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 1692771.8,
+          "monthly_million_uzs": 620963.8
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 2317097.7,
+          "monthly_million_uzs": 624325.9
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 2975910.5,
+          "monthly_million_uzs": 658812.8
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 3676494.4,
+          "monthly_million_uzs": 700583.9
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 4323622.2,
+          "monthly_million_uzs": 647127.8
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 5003184.5,
+          "monthly_million_uzs": 679562.3
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 5762685.8,
+          "monthly_million_uzs": 759501.3
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 6532092.6,
+          "monthly_million_uzs": 769406.8
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 7375790.9,
+          "monthly_million_uzs": 843698.3
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 8498566.5,
+          "monthly_million_uzs": 1122775.6
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 517655.5,
+          "monthly_million_uzs": 517655.5
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 1092460.9,
+          "monthly_million_uzs": 574805.4
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 1674651.0,
+          "monthly_million_uzs": 582190.1
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 2222307.6,
+          "monthly_million_uzs": 547656.6
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 3081759.0,
+          "monthly_million_uzs": 859451.4
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 3802004.5,
+          "monthly_million_uzs": 720245.5
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 4462644.9,
+          "monthly_million_uzs": 660640.4
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 5300527.1,
+          "monthly_million_uzs": 837882.2
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 5950711.3,
+          "monthly_million_uzs": 650184.2
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 6880574.2,
+          "monthly_million_uzs": 929862.9
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 7888074.3,
+          "monthly_million_uzs": 1007500.1
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 9557869.1,
+          "monthly_million_uzs": 1669794.8
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 528869.0,
+          "monthly_million_uzs": 528869.0
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 1238067.4,
+          "monthly_million_uzs": 709198.4
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 1968341.5,
+          "monthly_million_uzs": 730274.1
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 2657271.3,
+          "monthly_million_uzs": 688929.8
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 3581937.5,
+          "monthly_million_uzs": 924666.2
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 4392805.0,
+          "monthly_million_uzs": 810867.5
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 5177203.8,
+          "monthly_million_uzs": 784398.8
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 6144783.7,
+          "monthly_million_uzs": 967579.9
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 7661941.5,
+          "monthly_million_uzs": 1517157.8
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 8746578.1,
+          "monthly_million_uzs": 1084636.6
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 9229479.0,
+          "monthly_million_uzs": 482900.9
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 11271767.8,
+          "monthly_million_uzs": 2042288.8
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 773972.4,
+          "monthly_million_uzs": 773972.4
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 1681120.3,
+          "monthly_million_uzs": 907147.9
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 2681619.9,
+          "monthly_million_uzs": 1000499.6
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 3645991.5,
+          "monthly_million_uzs": 964371.6
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 4646436.3,
+          "monthly_million_uzs": 1000444.8
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 5872257.5,
+          "monthly_million_uzs": 1225821.2
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 6912723.0,
+          "monthly_million_uzs": 1040465.5
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 8035815.3,
+          "monthly_million_uzs": 1123092.3
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 9169767.4,
+          "monthly_million_uzs": 1133952.1
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 10501457.4,
+          "monthly_million_uzs": 1331690.0
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 11876530.6,
+          "monthly_million_uzs": 1375073.2
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 13683668.2,
+          "monthly_million_uzs": 1807137.6
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 865070.8,
+          "monthly_million_uzs": 865070.8
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 1893639.8,
+          "monthly_million_uzs": 1028569.0
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 2992173.1,
+          "monthly_million_uzs": 1098533.3
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 4109388.6,
+          "monthly_million_uzs": 1117215.5
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 5589810.5,
+          "monthly_million_uzs": 1480421.9
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 7348425.1,
+          "monthly_million_uzs": 1758614.6
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 8727331.0,
+          "monthly_million_uzs": 1378905.9
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 10366577.3,
+          "monthly_million_uzs": 1639246.3
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 10590470.3,
+          "monthly_million_uzs": 223893.0
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 12140544.1,
+          "monthly_million_uzs": 1550073.8
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 13767519.4,
+          "monthly_million_uzs": 1626975.3
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 16560611.7,
+          "monthly_million_uzs": 2793092.3
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 1064857.1,
+          "monthly_million_uzs": 1064857.1
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 2425729.1,
+          "monthly_million_uzs": 1360872.0
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 4660061.6,
+          "monthly_million_uzs": 2234332.5
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 6304740.7,
+          "monthly_million_uzs": 1644679.1
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 7764352.3,
+          "monthly_million_uzs": 1459611.6
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 9964209.6,
+          "monthly_million_uzs": 2199857.3
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 10431685.7,
+          "monthly_million_uzs": 467476.1
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 11982433.8,
+          "monthly_million_uzs": 1550748.1
+        }
+      ]
+    },
+    {
+      "code": "1703",
+      "region": "Andijan region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 976147.6,
+          "monthly_million_uzs": 976147.6
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 2062804.8,
+          "monthly_million_uzs": 1086657.2
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 3161377.2,
+          "monthly_million_uzs": 1098572.4
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 4133163.5,
+          "monthly_million_uzs": 971786.3
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 5175602.1,
+          "monthly_million_uzs": 1042438.6
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 6419306.7,
+          "monthly_million_uzs": 1243704.6
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 7578336.1,
+          "monthly_million_uzs": 1159029.4
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 8770940.7,
+          "monthly_million_uzs": 1192604.6
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 10072268.7,
+          "monthly_million_uzs": 1301328.0
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 11427873.8,
+          "monthly_million_uzs": 1355605.1
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 12981551.8,
+          "monthly_million_uzs": 1553678.0
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 14821908.7,
+          "monthly_million_uzs": 1840356.9
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 1033807.0,
+          "monthly_million_uzs": 1033807.0
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 2208813.5,
+          "monthly_million_uzs": 1175006.5
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 3486586.9,
+          "monthly_million_uzs": 1277773.4
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 4724002.6,
+          "monthly_million_uzs": 1237415.7
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 6019488.1,
+          "monthly_million_uzs": 1295485.5
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 7410796.7,
+          "monthly_million_uzs": 1391308.6
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 8739529.2,
+          "monthly_million_uzs": 1328732.5
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 10183255.7,
+          "monthly_million_uzs": 1443726.5
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 11779300.4,
+          "monthly_million_uzs": 1596044.7
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 13406124.8,
+          "monthly_million_uzs": 1626824.4
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 15097172.4,
+          "monthly_million_uzs": 1691047.6
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 17402795.0,
+          "monthly_million_uzs": 2305622.6
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 1045503.1,
+          "monthly_million_uzs": 1045503.1
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 2283875.8,
+          "monthly_million_uzs": 1238372.7
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 3555162.7,
+          "monthly_million_uzs": 1271286.9
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 4914381.9,
+          "monthly_million_uzs": 1359219.2
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 6491340.1,
+          "monthly_million_uzs": 1576958.2
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 7841935.4,
+          "monthly_million_uzs": 1350595.3
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 9214458.8,
+          "monthly_million_uzs": 1372523.4
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 10893061.6,
+          "monthly_million_uzs": 1678602.8
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 12186172.7,
+          "monthly_million_uzs": 1293111.1
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 13902647.0,
+          "monthly_million_uzs": 1716474.3
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 15850340.4,
+          "monthly_million_uzs": 1947693.4
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 19046911.7,
+          "monthly_million_uzs": 3196571.3
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 1048281.5,
+          "monthly_million_uzs": 1048281.5
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 2428587.1,
+          "monthly_million_uzs": 1380305.6
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 4098047.7,
+          "monthly_million_uzs": 1669460.6
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 5703908.3,
+          "monthly_million_uzs": 1605860.6
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 7634656.1,
+          "monthly_million_uzs": 1930747.8
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 9216417.5,
+          "monthly_million_uzs": 1581761.4
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 10857594.4,
+          "monthly_million_uzs": 1641176.9
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 12825962.4,
+          "monthly_million_uzs": 1968368.0
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 15641106.1,
+          "monthly_million_uzs": 2815143.7
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 17783746.0,
+          "monthly_million_uzs": 2142639.9
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 18615149.0,
+          "monthly_million_uzs": 831403.0
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 22636259.7,
+          "monthly_million_uzs": 4021110.7
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 1634574.2,
+          "monthly_million_uzs": 1634574.2
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 3447180.5,
+          "monthly_million_uzs": 1812606.3
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 5432590.5,
+          "monthly_million_uzs": 1985410.0
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 7505418.8,
+          "monthly_million_uzs": 2072828.3
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 9855875.4,
+          "monthly_million_uzs": 2350456.6
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 12127681.5,
+          "monthly_million_uzs": 2271806.1
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 14378517.4,
+          "monthly_million_uzs": 2250835.9
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 16661967.8,
+          "monthly_million_uzs": 2283450.4
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 18747120.0,
+          "monthly_million_uzs": 2085152.2
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 21238322.0,
+          "monthly_million_uzs": 2491202.0
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 23809690.9,
+          "monthly_million_uzs": 2571368.9
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 27518294.8,
+          "monthly_million_uzs": 3708603.9
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 1834834.4,
+          "monthly_million_uzs": 1834834.4
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 3923982.6,
+          "monthly_million_uzs": 2089148.2
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 6137480.2,
+          "monthly_million_uzs": 2213497.6
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 8525316.0,
+          "monthly_million_uzs": 2387835.8
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 11593332.6,
+          "monthly_million_uzs": 3068016.6
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 13702803.1,
+          "monthly_million_uzs": 2109470.5
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 17112381.9,
+          "monthly_million_uzs": 3409578.8
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 20352236.0,
+          "monthly_million_uzs": 3239854.1
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 21601449.6,
+          "monthly_million_uzs": 1249213.6
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 24272166.0,
+          "monthly_million_uzs": 2670716.4
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 27334044.5,
+          "monthly_million_uzs": 3061878.5
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 32849914.4,
+          "monthly_million_uzs": 5515869.9
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 2255753.1,
+          "monthly_million_uzs": 2255753.1
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 4706610.3,
+          "monthly_million_uzs": 2450857.2
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 7360616.9,
+          "monthly_million_uzs": 2654006.6
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 10550746.7,
+          "monthly_million_uzs": 3190129.8
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 13425286.5,
+          "monthly_million_uzs": 2874539.8
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 16628114.6,
+          "monthly_million_uzs": 3202828.1
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 21938563.2,
+          "monthly_million_uzs": 5310448.6
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 26757085.6,
+          "monthly_million_uzs": 4818522.4
+        }
+      ]
+    },
+    {
+      "code": "1706",
+      "region": "Bukhara region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 783645.6,
+          "monthly_million_uzs": 783645.6
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1681426.7,
+          "monthly_million_uzs": 897781.1
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 2637000.5,
+          "monthly_million_uzs": 955573.8
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 3417057.3,
+          "monthly_million_uzs": 780056.8
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 4282308.6,
+          "monthly_million_uzs": 865251.3
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 5205806.2,
+          "monthly_million_uzs": 923497.6
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 6134397.8,
+          "monthly_million_uzs": 928591.6
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 7130884.9,
+          "monthly_million_uzs": 996487.1
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 8310571.0,
+          "monthly_million_uzs": 1179686.1
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 9466061.6,
+          "monthly_million_uzs": 1155490.6
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 10673376.8,
+          "monthly_million_uzs": 1207315.2
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 12072815.1,
+          "monthly_million_uzs": 1399438.3
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 857959.7,
+          "monthly_million_uzs": 857959.7
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 1816328.1,
+          "monthly_million_uzs": 958368.4
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 2900580.5,
+          "monthly_million_uzs": 1084252.4
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 3957939.3,
+          "monthly_million_uzs": 1057358.8
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 5038099.4,
+          "monthly_million_uzs": 1080160.1
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 6163123.4,
+          "monthly_million_uzs": 1125024.0
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 7244366.3,
+          "monthly_million_uzs": 1081242.9
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 8425421.7,
+          "monthly_million_uzs": 1181055.4
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 9782954.9,
+          "monthly_million_uzs": 1357533.2
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 11163726.3,
+          "monthly_million_uzs": 1380771.4
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 12642397.5,
+          "monthly_million_uzs": 1478671.2
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 14605327.3,
+          "monthly_million_uzs": 1962929.8
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 893231.1,
+          "monthly_million_uzs": 893231.1
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 1875936.9,
+          "monthly_million_uzs": 982705.8
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 2932022.8,
+          "monthly_million_uzs": 1056085.9
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 3978330.1,
+          "monthly_million_uzs": 1046307.3
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 5212545.3,
+          "monthly_million_uzs": 1234215.2
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 6432199.6,
+          "monthly_million_uzs": 1219654.3
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 7513801.7,
+          "monthly_million_uzs": 1081602.1
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 8879139.0,
+          "monthly_million_uzs": 1365337.3
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 9840288.6,
+          "monthly_million_uzs": 961149.6
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 11262494.3,
+          "monthly_million_uzs": 1422205.7
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 12858592.7,
+          "monthly_million_uzs": 1596098.4
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 15522015.9,
+          "monthly_million_uzs": 2663423.2
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 929780.9,
+          "monthly_million_uzs": 929780.9
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 2102722.6,
+          "monthly_million_uzs": 1172941.7
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 3422721.8,
+          "monthly_million_uzs": 1319999.2
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 4641441.6,
+          "monthly_million_uzs": 1218719.8
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 6053394.3,
+          "monthly_million_uzs": 1411952.7
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 7388483.0,
+          "monthly_million_uzs": 1335088.7
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 8696499.9,
+          "monthly_million_uzs": 1308016.9
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 10300301.0,
+          "monthly_million_uzs": 1603801.1
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 12491580.9,
+          "monthly_million_uzs": 2191279.9
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 14197911.1,
+          "monthly_million_uzs": 1706330.2
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 15081353.1,
+          "monthly_million_uzs": 883442.0
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 18358313.3,
+          "monthly_million_uzs": 3276960.2
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 1247267.9,
+          "monthly_million_uzs": 1247267.9
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 2710455.2,
+          "monthly_million_uzs": 1463187.3
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 4345223.7,
+          "monthly_million_uzs": 1634768.5
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 5928808.7,
+          "monthly_million_uzs": 1583585.0
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 7658861.3,
+          "monthly_million_uzs": 1730052.6
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 9494367.3,
+          "monthly_million_uzs": 1835506.0
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 11249250.3,
+          "monthly_million_uzs": 1754883.0
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 13151445.2,
+          "monthly_million_uzs": 1902194.9
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 14931995.5,
+          "monthly_million_uzs": 1780550.3
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 16949581.9,
+          "monthly_million_uzs": 2017586.4
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 19024350.2,
+          "monthly_million_uzs": 2074768.3
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 22101534.7,
+          "monthly_million_uzs": 3077184.5
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 1411764.3,
+          "monthly_million_uzs": 1411764.3
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 3042393.4,
+          "monthly_million_uzs": 1630629.1
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 4831808.9,
+          "monthly_million_uzs": 1789415.5
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 6667307.7,
+          "monthly_million_uzs": 1835498.8
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 9127972.1,
+          "monthly_million_uzs": 2460664.4
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 10646326.2,
+          "monthly_million_uzs": 1518354.1
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 13192745.0,
+          "monthly_million_uzs": 2546418.8
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 15472049.2,
+          "monthly_million_uzs": 2279304.2
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 17020702.6,
+          "monthly_million_uzs": 1548653.4
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 19231054.7,
+          "monthly_million_uzs": 2210352.1
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 21844002.6,
+          "monthly_million_uzs": 2612947.9
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 25811944.5,
+          "monthly_million_uzs": 3967941.9
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 1658719.3,
+          "monthly_million_uzs": 1658719.3
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 3729198.3,
+          "monthly_million_uzs": 2070479.0
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 6677988.8,
+          "monthly_million_uzs": 2948790.5
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 8524545.1,
+          "monthly_million_uzs": 1846556.3
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 10701698.7,
+          "monthly_million_uzs": 2177153.6
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 12616240.7,
+          "monthly_million_uzs": 1914542.0
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 15404970.4,
+          "monthly_million_uzs": 2788729.7
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 19189106.2,
+          "monthly_million_uzs": 3784135.8
+        }
+      ]
+    },
+    {
+      "code": "1708",
+      "region": "Jizzakh region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 505301.3,
+          "monthly_million_uzs": 505301.3
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1057058.4,
+          "monthly_million_uzs": 551757.1
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 1589482.8,
+          "monthly_million_uzs": 532424.4
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 2015551.2,
+          "monthly_million_uzs": 426068.4
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 2514598.4,
+          "monthly_million_uzs": 499047.2
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 3089320.5,
+          "monthly_million_uzs": 574722.1
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 3617637.3,
+          "monthly_million_uzs": 528316.8
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 3966843.0,
+          "monthly_million_uzs": 349205.7
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 4677586.3,
+          "monthly_million_uzs": 710743.3
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 5313592.9,
+          "monthly_million_uzs": 636006.6
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 6401130.6,
+          "monthly_million_uzs": 1087537.7
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 7233597.9,
+          "monthly_million_uzs": 832467.3
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 536226.3,
+          "monthly_million_uzs": 536226.3
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 1125149.8,
+          "monthly_million_uzs": 588923.5
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 1781022.3,
+          "monthly_million_uzs": 655872.5
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 2451162.4,
+          "monthly_million_uzs": 670140.1
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 3145284.5,
+          "monthly_million_uzs": 694122.1
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 3906699.6,
+          "monthly_million_uzs": 761415.1
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 4553297.9,
+          "monthly_million_uzs": 646598.3
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 5258591.6,
+          "monthly_million_uzs": 705293.7
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 6086158.4,
+          "monthly_million_uzs": 827566.8
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 6899856.4,
+          "monthly_million_uzs": 813698.0
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 7800010.4,
+          "monthly_million_uzs": 900154.0
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 9109683.5,
+          "monthly_million_uzs": 1309673.1
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 442094.3,
+          "monthly_million_uzs": 442094.3
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 912376.0,
+          "monthly_million_uzs": 470281.7
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 1337895.4,
+          "monthly_million_uzs": 425519.4
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 1875833.0,
+          "monthly_million_uzs": 537937.6
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 2499224.3,
+          "monthly_million_uzs": 623391.3
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 3118112.1,
+          "monthly_million_uzs": 618887.8
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 3611370.8,
+          "monthly_million_uzs": 493258.7
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 4344174.2,
+          "monthly_million_uzs": 732803.4
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 4928057.5,
+          "monthly_million_uzs": 583883.3
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 5664914.0,
+          "monthly_million_uzs": 736856.5
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 6449207.2,
+          "monthly_million_uzs": 784293.2
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 7995430.7,
+          "monthly_million_uzs": 1546223.5
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 443308.2,
+          "monthly_million_uzs": 443308.2
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 1016815.9,
+          "monthly_million_uzs": 573507.7
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 1560465.1,
+          "monthly_million_uzs": 543649.2
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 2176652.9,
+          "monthly_million_uzs": 616187.8
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 2953472.0,
+          "monthly_million_uzs": 776819.1
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 3651969.5,
+          "monthly_million_uzs": 698497.5
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 4236604.9,
+          "monthly_million_uzs": 584635.4
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 5109049.7,
+          "monthly_million_uzs": 872444.8
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 6006185.0,
+          "monthly_million_uzs": 897135.3
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 6818551.1,
+          "monthly_million_uzs": 812366.1
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 7569492.3,
+          "monthly_million_uzs": 750941.2
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 9484571.6,
+          "monthly_million_uzs": 1915079.3
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 614576.0,
+          "monthly_million_uzs": 614576.0
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 1287710.1,
+          "monthly_million_uzs": 673134.1
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 2046265.6,
+          "monthly_million_uzs": 758555.5
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 2900486.7,
+          "monthly_million_uzs": 854221.1
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 3755385.5,
+          "monthly_million_uzs": 854898.8
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 4629257.7,
+          "monthly_million_uzs": 873872.2
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 5552707.9,
+          "monthly_million_uzs": 923450.2
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 6457247.4,
+          "monthly_million_uzs": 904539.5
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 7318320.0,
+          "monthly_million_uzs": 861072.6
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 8327304.9,
+          "monthly_million_uzs": 1008984.9
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 9442261.5,
+          "monthly_million_uzs": 1114956.6
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 11590568.5,
+          "monthly_million_uzs": 2148307.0
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 709460.1,
+          "monthly_million_uzs": 709460.1
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 1480803.5,
+          "monthly_million_uzs": 771343.4
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 2341830.9,
+          "monthly_million_uzs": 861027.4
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 3298426.7,
+          "monthly_million_uzs": 956595.8
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 4613940.3,
+          "monthly_million_uzs": 1315513.6
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 5280550.3,
+          "monthly_million_uzs": 666610.0
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 6918914.0,
+          "monthly_million_uzs": 1638363.7
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 8168722.2,
+          "monthly_million_uzs": 1249808.2
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 8450290.6,
+          "monthly_million_uzs": 281568.4
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 9576554.9,
+          "monthly_million_uzs": 1126264.3
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 10869631.2,
+          "monthly_million_uzs": 1293076.3
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 13086039.9,
+          "monthly_million_uzs": 2216408.7
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 811608.2,
+          "monthly_million_uzs": 811608.2
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 1830703.7,
+          "monthly_million_uzs": 1019095.5
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 3511252.1,
+          "monthly_million_uzs": 1680548.4
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 4715009.7,
+          "monthly_million_uzs": 1203757.6
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 5849159.0,
+          "monthly_million_uzs": 1134149.3
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 6796580.4,
+          "monthly_million_uzs": 947421.4
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 9058139.1,
+          "monthly_million_uzs": 2261558.7
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 10394496.4,
+          "monthly_million_uzs": 1336357.3
+        }
+      ]
+    },
+    {
+      "code": "1710",
+      "region": "Kashkadarya region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 871682.4,
+          "monthly_million_uzs": 871682.4
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1818859.7,
+          "monthly_million_uzs": 947177.3
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 2809028.3,
+          "monthly_million_uzs": 990168.6
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 3671898.1,
+          "monthly_million_uzs": 862869.8
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 4557067.1,
+          "monthly_million_uzs": 885169.0
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 5551567.2,
+          "monthly_million_uzs": 994500.1
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 6516831.8,
+          "monthly_million_uzs": 965264.6
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 7523018.7,
+          "monthly_million_uzs": 1006186.9
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 8642413.1,
+          "monthly_million_uzs": 1119394.4
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 9833893.9,
+          "monthly_million_uzs": 1191480.8
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 11184200.4,
+          "monthly_million_uzs": 1350306.5
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 13536759.4,
+          "monthly_million_uzs": 2352559.0
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 955073.3,
+          "monthly_million_uzs": 955073.3
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 2029407.6,
+          "monthly_million_uzs": 1074334.3
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 3226578.9,
+          "monthly_million_uzs": 1197171.3
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 4375413.7,
+          "monthly_million_uzs": 1148834.8
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 5613835.4,
+          "monthly_million_uzs": 1238421.7
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 7270035.0,
+          "monthly_million_uzs": 1656199.6
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 8500135.7,
+          "monthly_million_uzs": 1230100.7
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 9515526.5,
+          "monthly_million_uzs": 1015390.8
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 10807828.3,
+          "monthly_million_uzs": 1292301.8
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 12337380.1,
+          "monthly_million_uzs": 1529551.8
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 14006866.5,
+          "monthly_million_uzs": 1669486.4
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 16170495.0,
+          "monthly_million_uzs": 2163628.5
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 1076635.8,
+          "monthly_million_uzs": 1076635.8
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 2238414.1,
+          "monthly_million_uzs": 1161778.3
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 3461023.8,
+          "monthly_million_uzs": 1222609.7
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 4763532.3,
+          "monthly_million_uzs": 1302508.5
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 6214540.6,
+          "monthly_million_uzs": 1451008.3
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 7612596.2,
+          "monthly_million_uzs": 1398055.6
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 9214742.0,
+          "monthly_million_uzs": 1602145.8
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 10735866.6,
+          "monthly_million_uzs": 1521124.6
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 11568427.0,
+          "monthly_million_uzs": 832560.4
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 13330076.2,
+          "monthly_million_uzs": 1761649.2
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 15219859.0,
+          "monthly_million_uzs": 1889782.8
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 18165882.9,
+          "monthly_million_uzs": 2946023.9
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 1094866.1,
+          "monthly_million_uzs": 1094866.1
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 2424237.6,
+          "monthly_million_uzs": 1329371.5
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 3957579.5,
+          "monthly_million_uzs": 1533341.9
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 5455002.9,
+          "monthly_million_uzs": 1497423.4
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 7227027.5,
+          "monthly_million_uzs": 1772024.6
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 8874397.8,
+          "monthly_million_uzs": 1647370.3
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 10695995.2,
+          "monthly_million_uzs": 1821597.4
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 12448280.5,
+          "monthly_million_uzs": 1752285.3
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 14951441.5,
+          "monthly_million_uzs": 2503161.0
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 16900114.8,
+          "monthly_million_uzs": 1948673.3
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 17800188.7,
+          "monthly_million_uzs": 900073.9
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 21549420.4,
+          "monthly_million_uzs": 3749231.7
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 1511810.6,
+          "monthly_million_uzs": 1511810.6
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 3261433.3,
+          "monthly_million_uzs": 1749622.7
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 5074064.9,
+          "monthly_million_uzs": 1812631.6
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 6996862.4,
+          "monthly_million_uzs": 1922797.5
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 9026859.2,
+          "monthly_million_uzs": 2029996.8
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 11242725.9,
+          "monthly_million_uzs": 2215866.7
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 13346119.0,
+          "monthly_million_uzs": 2103393.1
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 15625923.1,
+          "monthly_million_uzs": 2279804.1
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 17724382.8,
+          "monthly_million_uzs": 2098459.7
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 19958611.1,
+          "monthly_million_uzs": 2234228.3
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 22313948.7,
+          "monthly_million_uzs": 2355337.6
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 26071094.2,
+          "monthly_million_uzs": 3757145.5
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 1712207.3,
+          "monthly_million_uzs": 1712207.3
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 3699314.4,
+          "monthly_million_uzs": 1987107.1
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 5756341.4,
+          "monthly_million_uzs": 2057027.0
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 7915946.1,
+          "monthly_million_uzs": 2159604.7
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 10502030.4,
+          "monthly_million_uzs": 2586084.3
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 12845372.9,
+          "monthly_million_uzs": 2343342.5
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 15309930.0,
+          "monthly_million_uzs": 2464557.1
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 18185916.9,
+          "monthly_million_uzs": 2875986.9
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 20442282.2,
+          "monthly_million_uzs": 2256365.3
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 22826166.8,
+          "monthly_million_uzs": 2383884.6
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 25596380.3,
+          "monthly_million_uzs": 2770213.5
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 30857074.9,
+          "monthly_million_uzs": 5260694.6
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 1998873.6,
+          "monthly_million_uzs": 1998873.6
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 4381644.6,
+          "monthly_million_uzs": 2382771.0
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 6652848.5,
+          "monthly_million_uzs": 2271203.9
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 9341317.9,
+          "monthly_million_uzs": 2688469.4
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 11969986.8,
+          "monthly_million_uzs": 2628668.9
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 14882140.2,
+          "monthly_million_uzs": 2912153.4
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 19654806.5,
+          "monthly_million_uzs": 4772666.3
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 23110976.3,
+          "monthly_million_uzs": 3456169.8
+        }
+      ]
+    },
+    {
+      "code": "1712",
+      "region": "Navoi region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 464863.4,
+          "monthly_million_uzs": 464863.4
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1016459.1,
+          "monthly_million_uzs": 551595.7
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 1566391.1,
+          "monthly_million_uzs": 549932.0
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 2214320.2,
+          "monthly_million_uzs": 647929.1
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 2776418.9,
+          "monthly_million_uzs": 562098.7
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 3457919.5,
+          "monthly_million_uzs": 681500.6
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 4098545.4,
+          "monthly_million_uzs": 640625.9
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 4791098.2,
+          "monthly_million_uzs": 692552.8
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 5516344.5,
+          "monthly_million_uzs": 725246.3
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 6221231.4,
+          "monthly_million_uzs": 704886.9
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 6962009.5,
+          "monthly_million_uzs": 740778.1
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 7922765.3,
+          "monthly_million_uzs": 960755.8
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 527212.8,
+          "monthly_million_uzs": 527212.8
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 1150855.9,
+          "monthly_million_uzs": 623643.1
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 1870189.3,
+          "monthly_million_uzs": 719333.4
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 2559741.2,
+          "monthly_million_uzs": 689551.9
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 3351473.6,
+          "monthly_million_uzs": 791732.4
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 4138774.2,
+          "monthly_million_uzs": 787300.6
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 4887393.4,
+          "monthly_million_uzs": 748619.2
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 5652029.4,
+          "monthly_million_uzs": 764636.0
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 6515380.7,
+          "monthly_million_uzs": 863351.3
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 7424212.6,
+          "monthly_million_uzs": 908831.9
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 8352804.9,
+          "monthly_million_uzs": 928592.3
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 9619537.4,
+          "monthly_million_uzs": 1266732.5
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 529490.5,
+          "monthly_million_uzs": 529490.5
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 1153107.4,
+          "monthly_million_uzs": 623616.9
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 1787182.5,
+          "monthly_million_uzs": 634075.1
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 2457278.1,
+          "monthly_million_uzs": 670095.6
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 3286271.6,
+          "monthly_million_uzs": 828993.5
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 4040421.8,
+          "monthly_million_uzs": 754150.2
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 4837812.7,
+          "monthly_million_uzs": 797390.9
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 5783595.7,
+          "monthly_million_uzs": 945783.0
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 6391979.0,
+          "monthly_million_uzs": 608383.3
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 7307136.8,
+          "monthly_million_uzs": 915157.8
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 8355826.8,
+          "monthly_million_uzs": 1048690.0
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 10101567.9,
+          "monthly_million_uzs": 1745741.1
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 518404.5,
+          "monthly_million_uzs": 518404.5
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 1217856.5,
+          "monthly_million_uzs": 699452.0
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 2063970.7,
+          "monthly_million_uzs": 846114.2
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 2857193.0,
+          "monthly_million_uzs": 793222.3
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 3843408.4,
+          "monthly_million_uzs": 986215.4
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 4780376.0,
+          "monthly_million_uzs": 936967.6
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 5739185.7,
+          "monthly_million_uzs": 958809.7
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 6852372.2,
+          "monthly_million_uzs": 1113186.5
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 8464748.8,
+          "monthly_million_uzs": 1612376.6
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 9589653.4,
+          "monthly_million_uzs": 1124904.6
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 9847847.0,
+          "monthly_million_uzs": 258193.6
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 11985807.2,
+          "monthly_million_uzs": 2137960.2
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 773578.5,
+          "monthly_million_uzs": 773578.5
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 1724343.7,
+          "monthly_million_uzs": 950765.2
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 2846174.7,
+          "monthly_million_uzs": 1121831.0
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 3907409.2,
+          "monthly_million_uzs": 1061234.5
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 4975893.0,
+          "monthly_million_uzs": 1068483.8
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 6170969.4,
+          "monthly_million_uzs": 1195076.4
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 7378584.6,
+          "monthly_million_uzs": 1207615.2
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 8649023.8,
+          "monthly_million_uzs": 1270439.2
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 9884506.6,
+          "monthly_million_uzs": 1235482.8
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 11253049.0,
+          "monthly_million_uzs": 1368542.4
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 12724904.0,
+          "monthly_million_uzs": 1471855.0
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 15000029.1,
+          "monthly_million_uzs": 2275125.1
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 903587.0,
+          "monthly_million_uzs": 903587.0
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 1998051.4,
+          "monthly_million_uzs": 1094464.4
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 3247287.0,
+          "monthly_million_uzs": 1249235.6
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 4483854.7,
+          "monthly_million_uzs": 1236567.7
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 5818882.4,
+          "monthly_million_uzs": 1335027.7
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 7125285.0,
+          "monthly_million_uzs": 1306402.6
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 8904647.5,
+          "monthly_million_uzs": 1779362.5
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 10655108.5,
+          "monthly_million_uzs": 1750461.0
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 11549041.7,
+          "monthly_million_uzs": 893933.2
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 13005930.3,
+          "monthly_million_uzs": 1456888.6
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 14877151.8,
+          "monthly_million_uzs": 1871221.5
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 17863351.3,
+          "monthly_million_uzs": 2986199.5
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 1160355.6,
+          "monthly_million_uzs": 1160355.6
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 2439890.1,
+          "monthly_million_uzs": 1279534.5
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 4031815.6,
+          "monthly_million_uzs": 1591925.5
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 5604229.6,
+          "monthly_million_uzs": 1572414.0
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 7064316.0,
+          "monthly_million_uzs": 1460086.4
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 8416229.4,
+          "monthly_million_uzs": 1351913.4
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 11129526.5,
+          "monthly_million_uzs": 2713297.1
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 12843114.9,
+          "monthly_million_uzs": 1713588.4
+        }
+      ]
+    },
+    {
+      "code": "1714",
+      "region": "Namangan region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 811741.6,
+          "monthly_million_uzs": 811741.6
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1724491.7,
+          "monthly_million_uzs": 912750.1
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 2656646.4,
+          "monthly_million_uzs": 932154.7
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 3401202.2,
+          "monthly_million_uzs": 744555.8
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 4211671.9,
+          "monthly_million_uzs": 810469.7
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 5147763.3,
+          "monthly_million_uzs": 936091.4
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 6065003.5,
+          "monthly_million_uzs": 917240.2
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 7070882.6,
+          "monthly_million_uzs": 1005879.1
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 8158286.9,
+          "monthly_million_uzs": 1087404.3
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 9299865.6,
+          "monthly_million_uzs": 1141578.7
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 10614188.9,
+          "monthly_million_uzs": 1314323.3
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 12246619.9,
+          "monthly_million_uzs": 1632431.0
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 894512.4,
+          "monthly_million_uzs": 894512.4
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 1908403.3,
+          "monthly_million_uzs": 1013890.9
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 2996373.6,
+          "monthly_million_uzs": 1087970.3
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 4062956.4,
+          "monthly_million_uzs": 1066582.8
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 5204265.7,
+          "monthly_million_uzs": 1141309.3
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 6407124.0,
+          "monthly_million_uzs": 1202858.3
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 7558047.6,
+          "monthly_million_uzs": 1150923.6
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 8814284.9,
+          "monthly_million_uzs": 1256237.3
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 10210366.2,
+          "monthly_million_uzs": 1396081.3
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 11675239.8,
+          "monthly_million_uzs": 1464873.6
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 13199951.0,
+          "monthly_million_uzs": 1524711.2
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 15311259.1,
+          "monthly_million_uzs": 2111308.1
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 933351.7,
+          "monthly_million_uzs": 933351.7
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 2015607.8,
+          "monthly_million_uzs": 1082256.1
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 3095647.1,
+          "monthly_million_uzs": 1080039.3
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 4269949.6,
+          "monthly_million_uzs": 1174302.5
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 5702588.3,
+          "monthly_million_uzs": 1432638.7
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 7086616.8,
+          "monthly_million_uzs": 1384028.5
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 8406061.9,
+          "monthly_million_uzs": 1319445.1
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 9845802.6,
+          "monthly_million_uzs": 1439740.7
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 10915608.6,
+          "monthly_million_uzs": 1069806.0
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 12425840.6,
+          "monthly_million_uzs": 1510232.0
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 14246262.8,
+          "monthly_million_uzs": 1820422.2
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 17273119.9,
+          "monthly_million_uzs": 3026857.1
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 919965.9,
+          "monthly_million_uzs": 919965.9
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 2206282.7,
+          "monthly_million_uzs": 1286316.8
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 3576406.0,
+          "monthly_million_uzs": 1370123.3
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 4985251.9,
+          "monthly_million_uzs": 1408845.9
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 6775591.3,
+          "monthly_million_uzs": 1790339.4
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 8438247.6,
+          "monthly_million_uzs": 1662656.3
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 9973693.4,
+          "monthly_million_uzs": 1535445.8
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 11643535.2,
+          "monthly_million_uzs": 1669841.8
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 14175086.6,
+          "monthly_million_uzs": 2531551.4
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 15995159.6,
+          "monthly_million_uzs": 1820073.0
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 16883787.7,
+          "monthly_million_uzs": 888628.1
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 20650733.7,
+          "monthly_million_uzs": 3766946.0
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 1331340.8,
+          "monthly_million_uzs": 1331340.8
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 2829973.6,
+          "monthly_million_uzs": 1498632.8
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 4537613.7,
+          "monthly_million_uzs": 1707640.1
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 6350383.3,
+          "monthly_million_uzs": 1812769.6
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 8344005.3,
+          "monthly_million_uzs": 1993622.0
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 10164368.5,
+          "monthly_million_uzs": 1820363.2
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 12151572.9,
+          "monthly_million_uzs": 1987204.4
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 14226266.2,
+          "monthly_million_uzs": 2074693.3
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 16204208.2,
+          "monthly_million_uzs": 1977942.0
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 18477669.7,
+          "monthly_million_uzs": 2273461.5
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 20899359.9,
+          "monthly_million_uzs": 2421690.2
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 25081248.1,
+          "monthly_million_uzs": 4181888.2
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 1555205.5,
+          "monthly_million_uzs": 1555205.5
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 3323723.0,
+          "monthly_million_uzs": 1768517.5
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 5280557.3,
+          "monthly_million_uzs": 1956834.3
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 7310333.1,
+          "monthly_million_uzs": 2029775.8
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 9881272.5,
+          "monthly_million_uzs": 2570939.4
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 11595849.6,
+          "monthly_million_uzs": 1714577.1
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 15870108.4,
+          "monthly_million_uzs": 4274258.8
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 18683059.2,
+          "monthly_million_uzs": 2812950.8
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 19306050.6,
+          "monthly_million_uzs": 622991.4
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 21747477.4,
+          "monthly_million_uzs": 2441426.8
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 24528003.8,
+          "monthly_million_uzs": 2780526.4
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 29577129.1,
+          "monthly_million_uzs": 5049125.3
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 1985413.3,
+          "monthly_million_uzs": 1985413.3
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 4554611.7,
+          "monthly_million_uzs": 2569198.4
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 7625302.2,
+          "monthly_million_uzs": 3070690.5
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 10207630.0,
+          "monthly_million_uzs": 2582327.8
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 12609793.0,
+          "monthly_million_uzs": 2402163.0
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 15270417.7,
+          "monthly_million_uzs": 2660624.7
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 20323337.7,
+          "monthly_million_uzs": 5052920.0
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 23026277.4,
+          "monthly_million_uzs": 2702939.7
+        }
+      ]
+    },
+    {
+      "code": "1718",
+      "region": "Samarkand region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 1060744.2,
+          "monthly_million_uzs": 1060744.2
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 2276157.1,
+          "monthly_million_uzs": 1215412.9
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 3533193.3,
+          "monthly_million_uzs": 1257036.2
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 4885603.0,
+          "monthly_million_uzs": 1352409.7
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 6038189.2,
+          "monthly_million_uzs": 1152586.2
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 7381133.4,
+          "monthly_million_uzs": 1342944.2
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 8717873.6,
+          "monthly_million_uzs": 1336740.2
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 10177385.8,
+          "monthly_million_uzs": 1459512.2
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 11757771.8,
+          "monthly_million_uzs": 1580386.0
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 13370310.4,
+          "monthly_million_uzs": 1612538.6
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 14741305.1,
+          "monthly_million_uzs": 1370994.7
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 16828499.1,
+          "monthly_million_uzs": 2087194.0
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 1348554.8,
+          "monthly_million_uzs": 1348554.8
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 2792010.2,
+          "monthly_million_uzs": 1443455.4
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 4406010.1,
+          "monthly_million_uzs": 1613999.9
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 5940861.9,
+          "monthly_million_uzs": 1534851.8
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 7518654.8,
+          "monthly_million_uzs": 1577792.9
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 9208121.0,
+          "monthly_million_uzs": 1689466.2
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 10822545.4,
+          "monthly_million_uzs": 1614424.4
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 12702688.1,
+          "monthly_million_uzs": 1880142.7
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 14737856.3,
+          "monthly_million_uzs": 2035168.2
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 16699357.3,
+          "monthly_million_uzs": 1961501.0
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 18801048.7,
+          "monthly_million_uzs": 2101691.4
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 21617948.7,
+          "monthly_million_uzs": 2816900.0
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 1514655.9,
+          "monthly_million_uzs": 1514655.9
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 3168061.1,
+          "monthly_million_uzs": 1653405.2
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 4816183.5,
+          "monthly_million_uzs": 1648122.4
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 6558975.5,
+          "monthly_million_uzs": 1742792.0
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 8477548.3,
+          "monthly_million_uzs": 1918572.8
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 10399462.1,
+          "monthly_million_uzs": 1921913.8
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 12236744.0,
+          "monthly_million_uzs": 1837281.9
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 14410133.2,
+          "monthly_million_uzs": 2173389.2
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 16271051.2,
+          "monthly_million_uzs": 1860918.0
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 18537496.4,
+          "monthly_million_uzs": 2266445.2
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 21099459.3,
+          "monthly_million_uzs": 2561962.9
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 25342508.0,
+          "monthly_million_uzs": 4243048.7
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 1489743.9,
+          "monthly_million_uzs": 1489743.9
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 3421019.8,
+          "monthly_million_uzs": 1931275.9
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 5583310.2,
+          "monthly_million_uzs": 2162290.4
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 7740880.3,
+          "monthly_million_uzs": 2157570.1
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 10105440.7,
+          "monthly_million_uzs": 2364560.4
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 12198793.8,
+          "monthly_million_uzs": 2093353.1
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 14358638.9,
+          "monthly_million_uzs": 2159845.1
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 16952410.3,
+          "monthly_million_uzs": 2593771.4
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 20163395.1,
+          "monthly_million_uzs": 3210984.8
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 23057933.9,
+          "monthly_million_uzs": 2894538.8
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 24966496.1,
+          "monthly_million_uzs": 1908562.2
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 30216555.9,
+          "monthly_million_uzs": 5250059.8
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 2305967.1,
+          "monthly_million_uzs": 2305967.1
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 4744144.5,
+          "monthly_million_uzs": 2438177.4
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 7408983.6,
+          "monthly_million_uzs": 2664839.1
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 10035762.5,
+          "monthly_million_uzs": 2626778.9
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 13052379.2,
+          "monthly_million_uzs": 3016616.7
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 15787879.3,
+          "monthly_million_uzs": 2735500.1
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 18621292.7,
+          "monthly_million_uzs": 2833413.4
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 21576590.5,
+          "monthly_million_uzs": 2955297.8
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 24385324.4,
+          "monthly_million_uzs": 2808733.9
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 27607943.0,
+          "monthly_million_uzs": 3222618.6
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 30923587.2,
+          "monthly_million_uzs": 3315644.2
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 35916775.0,
+          "monthly_million_uzs": 4993187.8
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 2582952.6,
+          "monthly_million_uzs": 2582952.6
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 5373750.5,
+          "monthly_million_uzs": 2790797.9
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 8379287.5,
+          "monthly_million_uzs": 3005537.0
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 11299494.0,
+          "monthly_million_uzs": 2920206.5
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 14921814.0,
+          "monthly_million_uzs": 3622320.0
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 17682393.7,
+          "monthly_million_uzs": 2760579.7
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 20723629.8,
+          "monthly_million_uzs": 3041236.1
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 24856211.9,
+          "monthly_million_uzs": 4132582.1
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 28148603.9,
+          "monthly_million_uzs": 3292392.0
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 31505592.7,
+          "monthly_million_uzs": 3356988.8
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 35711860.0,
+          "monthly_million_uzs": 4206267.3
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 41892427.0,
+          "monthly_million_uzs": 6180567.0
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 2951403.1,
+          "monthly_million_uzs": 2951403.1
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 6528831.2,
+          "monthly_million_uzs": 3577428.1
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 11223094.1,
+          "monthly_million_uzs": 4694262.9
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 15045669.7,
+          "monthly_million_uzs": 3822575.6
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 18915059.3,
+          "monthly_million_uzs": 3869389.6
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 22332483.6,
+          "monthly_million_uzs": 3417424.3
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 25794576.9,
+          "monthly_million_uzs": 3462093.3
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 30965145.1,
+          "monthly_million_uzs": 5170568.2
+        }
+      ]
+    },
+    {
+      "code": "1722",
+      "region": "Surkhandarya region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 919322.8,
+          "monthly_million_uzs": 919322.8
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1854081.3,
+          "monthly_million_uzs": 934758.5
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 2815645.7,
+          "monthly_million_uzs": 961564.4
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 3639619.5,
+          "monthly_million_uzs": 823973.8
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 4482788.9,
+          "monthly_million_uzs": 843169.4
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 5415893.6,
+          "monthly_million_uzs": 933104.7
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 6349517.8,
+          "monthly_million_uzs": 933624.2
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 7356365.9,
+          "monthly_million_uzs": 1006848.1
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 8488814.7,
+          "monthly_million_uzs": 1132448.8
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 9641099.9,
+          "monthly_million_uzs": 1152285.2
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 10992512.4,
+          "monthly_million_uzs": 1351412.5
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 12558684.8,
+          "monthly_million_uzs": 1566172.4
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 1031555.8,
+          "monthly_million_uzs": 1031555.8
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 2069247.5,
+          "monthly_million_uzs": 1037691.7
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 3190510.4,
+          "monthly_million_uzs": 1121262.9
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 4296263.5,
+          "monthly_million_uzs": 1105753.1
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 5460310.0,
+          "monthly_million_uzs": 1164046.5
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 6708275.6,
+          "monthly_million_uzs": 1247965.6
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 7833839.3,
+          "monthly_million_uzs": 1125563.7
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 9040099.6,
+          "monthly_million_uzs": 1206260.3
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 10362743.9,
+          "monthly_million_uzs": 1322644.3
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 11679709.2,
+          "monthly_million_uzs": 1316965.3
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 13126587.8,
+          "monthly_million_uzs": 1446878.6
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 15151297.2,
+          "monthly_million_uzs": 2024709.4
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 1122249.7,
+          "monthly_million_uzs": 1122249.7
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 2234562.3,
+          "monthly_million_uzs": 1112312.6
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 3350141.1,
+          "monthly_million_uzs": 1115578.8
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 4491195.6,
+          "monthly_million_uzs": 1141054.5
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 5987003.8,
+          "monthly_million_uzs": 1495808.2
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 7407732.4,
+          "monthly_million_uzs": 1420728.6
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 8948980.8,
+          "monthly_million_uzs": 1541248.4
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 10443575.4,
+          "monthly_million_uzs": 1494594.6
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 11467309.7,
+          "monthly_million_uzs": 1023734.3
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 12969343.3,
+          "monthly_million_uzs": 1502033.6
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 14666615.2,
+          "monthly_million_uzs": 1697271.9
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 17428477.8,
+          "monthly_million_uzs": 2761862.6
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 1069686.1,
+          "monthly_million_uzs": 1069686.1
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 2477833.4,
+          "monthly_million_uzs": 1408147.3
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 3918923.1,
+          "monthly_million_uzs": 1441089.7
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 5309367.0,
+          "monthly_million_uzs": 1390443.9
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 7030222.9,
+          "monthly_million_uzs": 1720855.9
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 8576851.9,
+          "monthly_million_uzs": 1546629.0
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 10332096.5,
+          "monthly_million_uzs": 1755244.6
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 12065393.1,
+          "monthly_million_uzs": 1733296.6
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 14033744.5,
+          "monthly_million_uzs": 1968351.4
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 15922613.8,
+          "monthly_million_uzs": 1888869.3
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 17211930.5,
+          "monthly_million_uzs": 1289316.7
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 20787461.9,
+          "monthly_million_uzs": 3575531.4
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 1613064.4,
+          "monthly_million_uzs": 1613064.4
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 3336098.6,
+          "monthly_million_uzs": 1723034.2
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 5144950.8,
+          "monthly_million_uzs": 1808852.2
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 6973255.0,
+          "monthly_million_uzs": 1828304.2
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 8916048.8,
+          "monthly_million_uzs": 1942793.8
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 11009672.4,
+          "monthly_million_uzs": 2093623.6
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 13065196.2,
+          "monthly_million_uzs": 2055523.8
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 15165414.1,
+          "monthly_million_uzs": 2100217.9
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 17143955.7,
+          "monthly_million_uzs": 1978541.6
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 19323741.4,
+          "monthly_million_uzs": 2179785.7
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 21575182.9,
+          "monthly_million_uzs": 2251441.5
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 24883160.5,
+          "monthly_million_uzs": 3307977.6
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 1832937.0,
+          "monthly_million_uzs": 1832937.0
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 3835280.2,
+          "monthly_million_uzs": 2002343.2
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 5847128.0,
+          "monthly_million_uzs": 2011847.8
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 7955665.4,
+          "monthly_million_uzs": 2108537.4
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 10885361.8,
+          "monthly_million_uzs": 2929696.4
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 12698096.3,
+          "monthly_million_uzs": 1812734.5
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 14958430.1,
+          "monthly_million_uzs": 2260333.8
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 17856663.0,
+          "monthly_million_uzs": 2898232.9
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 19928489.7,
+          "monthly_million_uzs": 2071826.7
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 22435509.6,
+          "monthly_million_uzs": 2507019.9
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 25050950.9,
+          "monthly_million_uzs": 2615441.3
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 29569406.4,
+          "monthly_million_uzs": 4518455.5
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 2144478.0,
+          "monthly_million_uzs": 2144478.0
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 4767849.8,
+          "monthly_million_uzs": 2623371.8
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 8118524.9,
+          "monthly_million_uzs": 3350675.1
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 10950871.1,
+          "monthly_million_uzs": 2832346.2
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 13881246.4,
+          "monthly_million_uzs": 2930375.3
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 15931010.7,
+          "monthly_million_uzs": 2049764.3
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 18263465.8,
+          "monthly_million_uzs": 2332455.1
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 22517990.8,
+          "monthly_million_uzs": 4254525.0
+        }
+      ]
+    },
+    {
+      "code": "1724",
+      "region": "Syrdarya region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 223581.6,
+          "monthly_million_uzs": 223581.6
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 474289.6,
+          "monthly_million_uzs": 250708.0
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 728225.3,
+          "monthly_million_uzs": 253935.7
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 961728.1,
+          "monthly_million_uzs": 233502.8
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 1179909.6,
+          "monthly_million_uzs": 218181.5
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 1428031.4,
+          "monthly_million_uzs": 248121.8
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 1670688.3,
+          "monthly_million_uzs": 242656.9
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 2171919.7,
+          "monthly_million_uzs": 501231.4
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 2497220.2,
+          "monthly_million_uzs": 325300.5
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 2824979.5,
+          "monthly_million_uzs": 327759.3
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 3199502.8,
+          "monthly_million_uzs": 374523.3
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 3598704.1,
+          "monthly_million_uzs": 399201.3
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 244547.4,
+          "monthly_million_uzs": 244547.4
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 521766.6,
+          "monthly_million_uzs": 277219.2
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 845187.9,
+          "monthly_million_uzs": 323421.3
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 1130009.4,
+          "monthly_million_uzs": 284821.5
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 1423866.8,
+          "monthly_million_uzs": 293857.4
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 1732567.9,
+          "monthly_million_uzs": 308701.1
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 2029902.0,
+          "monthly_million_uzs": 297334.1
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 2359421.8,
+          "monthly_million_uzs": 329519.8
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 2726876.2,
+          "monthly_million_uzs": 367454.4
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 3093739.0,
+          "monthly_million_uzs": 366862.8
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 3528177.3,
+          "monthly_million_uzs": 434438.3
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 4080094.1,
+          "monthly_million_uzs": 551916.8
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 276092.1,
+          "monthly_million_uzs": 276092.1
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 584627.0,
+          "monthly_million_uzs": 308534.9
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 907803.5,
+          "monthly_million_uzs": 323176.5
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 1209020.1,
+          "monthly_million_uzs": 301216.6
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 1530175.8,
+          "monthly_million_uzs": 321155.7
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 1891595.6,
+          "monthly_million_uzs": 361419.8
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 2176252.4,
+          "monthly_million_uzs": 284656.8
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 2571692.8,
+          "monthly_million_uzs": 395440.4
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 2871675.2,
+          "monthly_million_uzs": 299982.4
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 3259319.7,
+          "monthly_million_uzs": 387644.5
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 3674123.7,
+          "monthly_million_uzs": 414804.0
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 4453660.8,
+          "monthly_million_uzs": 779537.1
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 273391.0,
+          "monthly_million_uzs": 273391.0
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 647051.8,
+          "monthly_million_uzs": 373660.8
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 1049295.4,
+          "monthly_million_uzs": 402243.6
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 1409453.2,
+          "monthly_million_uzs": 360157.8
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 1803190.8,
+          "monthly_million_uzs": 393737.6
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 2206315.3,
+          "monthly_million_uzs": 403124.5
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 2528163.2,
+          "monthly_million_uzs": 321847.9
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 2974719.4,
+          "monthly_million_uzs": 446556.2
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 3685851.8,
+          "monthly_million_uzs": 711132.4
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 4176773.1,
+          "monthly_million_uzs": 490921.3
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 4303364.5,
+          "monthly_million_uzs": 126591.4
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 5252847.8,
+          "monthly_million_uzs": 949483.3
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 369286.3,
+          "monthly_million_uzs": 369286.3
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 792368.9,
+          "monthly_million_uzs": 423082.6
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 1259748.8,
+          "monthly_million_uzs": 467379.9
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 1731142.2,
+          "monthly_million_uzs": 471393.4
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 2213382.7,
+          "monthly_million_uzs": 482240.5
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 2674545.9,
+          "monthly_million_uzs": 461163.2
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 3173390.7,
+          "monthly_million_uzs": 498844.8
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 3708016.1,
+          "monthly_million_uzs": 534625.4
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 4199952.4,
+          "monthly_million_uzs": 491936.3
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 4776713.9,
+          "monthly_million_uzs": 576761.5
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 5393856.9,
+          "monthly_million_uzs": 617143.0
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 6495425.8,
+          "monthly_million_uzs": 1101568.9
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 425173.7,
+          "monthly_million_uzs": 425173.7
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 916009.2,
+          "monthly_million_uzs": 490835.5
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 1437388.3,
+          "monthly_million_uzs": 521379.1
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 1984611.6,
+          "monthly_million_uzs": 547223.3
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 2586871.9,
+          "monthly_million_uzs": 602260.3
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 3084739.7,
+          "monthly_million_uzs": 497867.8
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 3938465.9,
+          "monthly_million_uzs": 853726.2
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 4567433.0,
+          "monthly_million_uzs": 628967.1
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 4888037.2,
+          "monthly_million_uzs": 320604.2
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 5532684.9,
+          "monthly_million_uzs": 644647.7
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 6296044.5,
+          "monthly_million_uzs": 763359.6
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 7464496.3,
+          "monthly_million_uzs": 1168451.8
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 499983.9,
+          "monthly_million_uzs": 499983.9
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 1105760.1,
+          "monthly_million_uzs": 605776.2
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 1694452.3,
+          "monthly_million_uzs": 588692.2
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 2684004.7,
+          "monthly_million_uzs": 989552.4
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 3449103.1,
+          "monthly_million_uzs": 765098.4
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 3791432.7,
+          "monthly_million_uzs": 342329.6
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 5075394.4,
+          "monthly_million_uzs": 1283961.7
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 5912189.6,
+          "monthly_million_uzs": 836795.2
+        }
+      ]
+    },
+    {
+      "code": "1727",
+      "region": "Tashkent region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 1265038.3,
+          "monthly_million_uzs": 1265038.3
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 2671328.2,
+          "monthly_million_uzs": 1406289.9
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 4124941.0,
+          "monthly_million_uzs": 1453612.8
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 5572969.0,
+          "monthly_million_uzs": 1448028.0
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 7309559.0,
+          "monthly_million_uzs": 1736590.0
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 8930028.2,
+          "monthly_million_uzs": 1620469.2
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 10497626.8,
+          "monthly_million_uzs": 1567598.6
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 12179377.0,
+          "monthly_million_uzs": 1681750.2
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 14382664.8,
+          "monthly_million_uzs": 2203287.8
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 16245421.1,
+          "monthly_million_uzs": 1862756.3
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 18336049.8,
+          "monthly_million_uzs": 2090628.7
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 20883859.1,
+          "monthly_million_uzs": 2547809.3
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 1388943.0,
+          "monthly_million_uzs": 1388943.0
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 2973870.1,
+          "monthly_million_uzs": 1584927.1
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 4653799.1,
+          "monthly_million_uzs": 1679929.0
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 6340567.1,
+          "monthly_million_uzs": 1686768.0
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 8626654.3,
+          "monthly_million_uzs": 2286087.2
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 10759979.8,
+          "monthly_million_uzs": 2133325.5
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 12576587.0,
+          "monthly_million_uzs": 1816607.2
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 14545557.2,
+          "monthly_million_uzs": 1968970.2
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 17178479.6,
+          "monthly_million_uzs": 2632922.4
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 19531779.5,
+          "monthly_million_uzs": 2353299.9
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 22075298.9,
+          "monthly_million_uzs": 2543519.4
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 25662937.5,
+          "monthly_million_uzs": 3587638.6
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 1293319.7,
+          "monthly_million_uzs": 1293319.7
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 2775646.2,
+          "monthly_million_uzs": 1482326.5
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 4343449.0,
+          "monthly_million_uzs": 1567802.8
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 5877612.6,
+          "monthly_million_uzs": 1534163.6
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 8307735.9,
+          "monthly_million_uzs": 2430123.3
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 10311307.8,
+          "monthly_million_uzs": 2003571.9
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 12030167.9,
+          "monthly_million_uzs": 1718860.1
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 14136191.0,
+          "monthly_million_uzs": 2106023.1
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 16053444.0,
+          "monthly_million_uzs": 1917253.0
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 18280509.1,
+          "monthly_million_uzs": 2227065.1
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 20849530.6,
+          "monthly_million_uzs": 2569021.5
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 25249956.4,
+          "monthly_million_uzs": 4400425.8
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 1401274.8,
+          "monthly_million_uzs": 1401274.8
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 3232234.8,
+          "monthly_million_uzs": 1830960.0
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 5232801.7,
+          "monthly_million_uzs": 2000566.9
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 7092685.8,
+          "monthly_million_uzs": 1859884.1
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 9919274.5,
+          "monthly_million_uzs": 2826588.7
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 12311628.4,
+          "monthly_million_uzs": 2392353.9
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 14243943.0,
+          "monthly_million_uzs": 1932314.6
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 16703785.8,
+          "monthly_million_uzs": 2459842.8
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 20694606.6,
+          "monthly_million_uzs": 3990820.8
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 23409682.7,
+          "monthly_million_uzs": 2715076.1
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 24583181.5,
+          "monthly_million_uzs": 1173498.8
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 30130828.8,
+          "monthly_million_uzs": 5547647.3
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 2083055.9,
+          "monthly_million_uzs": 2083055.9
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 4562269.2,
+          "monthly_million_uzs": 2479213.3
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 7267898.0,
+          "monthly_million_uzs": 2705628.8
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 10006453.1,
+          "monthly_million_uzs": 2738555.1
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 13031131.5,
+          "monthly_million_uzs": 3024678.4
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 15917179.4,
+          "monthly_million_uzs": 2886047.9
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 18919558.3,
+          "monthly_million_uzs": 3002378.9
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 22087427.4,
+          "monthly_million_uzs": 3167869.1
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 25326746.4,
+          "monthly_million_uzs": 3239319.0
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 28764874.0,
+          "monthly_million_uzs": 3438127.6
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 32343855.1,
+          "monthly_million_uzs": 3578981.1
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 38662787.4,
+          "monthly_million_uzs": 6318932.3
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 2441277.8,
+          "monthly_million_uzs": 2441277.8
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 5288357.6,
+          "monthly_million_uzs": 2847079.8
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 8384352.0,
+          "monthly_million_uzs": 3095994.4
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 11618438.7,
+          "monthly_million_uzs": 3234086.7
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 15575145.8,
+          "monthly_million_uzs": 3956707.1
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 18150622.4,
+          "monthly_million_uzs": 2575476.6
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 23809785.6,
+          "monthly_million_uzs": 5659163.2
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 27525918.7,
+          "monthly_million_uzs": 3716133.1
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 29528501.1,
+          "monthly_million_uzs": 2002582.4
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 33605495.3,
+          "monthly_million_uzs": 4076994.2
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 37908341.9,
+          "monthly_million_uzs": 4302846.6
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 45213580.3,
+          "monthly_million_uzs": 7305238.4
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 2851364.9,
+          "monthly_million_uzs": 2851364.9
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 5992801.5,
+          "monthly_million_uzs": 3141436.6
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 9815698.5,
+          "monthly_million_uzs": 3822897.0
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 13386867.0,
+          "monthly_million_uzs": 3571168.5
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 17909026.0,
+          "monthly_million_uzs": 4522159.0
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 21276207.4,
+          "monthly_million_uzs": 3367181.4
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 31031878.3,
+          "monthly_million_uzs": 9755670.9
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 34965589.9,
+          "monthly_million_uzs": 3933711.6
+        }
+      ]
+    },
+    {
+      "code": "1730",
+      "region": "Fergana region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 1073280.0,
+          "monthly_million_uzs": 1073280.0
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 2291140.4,
+          "monthly_million_uzs": 1217860.4
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 3515449.9,
+          "monthly_million_uzs": 1224309.5
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 4571406.1,
+          "monthly_million_uzs": 1055956.2
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 5725710.0,
+          "monthly_million_uzs": 1154303.9
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 7044336.6,
+          "monthly_million_uzs": 1318626.6
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 8316645.2,
+          "monthly_million_uzs": 1272308.6
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 9706917.1,
+          "monthly_million_uzs": 1390271.9
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 11152211.9,
+          "monthly_million_uzs": 1445294.8
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 12645588.4,
+          "monthly_million_uzs": 1493376.5
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 14346870.7,
+          "monthly_million_uzs": 1701282.3
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 16428686.3,
+          "monthly_million_uzs": 2081815.6
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 1232820.5,
+          "monthly_million_uzs": 1232820.5
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 2657070.6,
+          "monthly_million_uzs": 1424250.1
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 4202515.7,
+          "monthly_million_uzs": 1545445.1
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 5694270.8,
+          "monthly_million_uzs": 1491755.1
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 7276929.8,
+          "monthly_million_uzs": 1582659.0
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 8957968.1,
+          "monthly_million_uzs": 1681038.3
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 10536455.3,
+          "monthly_million_uzs": 1578487.2
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 12242332.4,
+          "monthly_million_uzs": 1705877.1
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 14130514.5,
+          "monthly_million_uzs": 1888182.1
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 16031749.5,
+          "monthly_million_uzs": 1901235.0
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 18048321.9,
+          "monthly_million_uzs": 2016572.4
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 20852081.0,
+          "monthly_million_uzs": 2803759.1
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 1273212.6,
+          "monthly_million_uzs": 1273212.6
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 2803392.4,
+          "monthly_million_uzs": 1530179.8
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 4212495.0,
+          "monthly_million_uzs": 1409102.6
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 5744083.1,
+          "monthly_million_uzs": 1531588.1
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 7325406.4,
+          "monthly_million_uzs": 1581323.3
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 8935202.2,
+          "monthly_million_uzs": 1609795.8
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 10544733.2,
+          "monthly_million_uzs": 1609531.0
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 12608164.9,
+          "monthly_million_uzs": 2063431.7
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 14191081.2,
+          "monthly_million_uzs": 1582916.3
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 16224180.7,
+          "monthly_million_uzs": 2033099.5
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 18532204.3,
+          "monthly_million_uzs": 2308023.6
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 22448526.4,
+          "monthly_million_uzs": 3916322.1
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 1368668.8,
+          "monthly_million_uzs": 1368668.8
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 3238912.7,
+          "monthly_million_uzs": 1870243.9
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 5125184.6,
+          "monthly_million_uzs": 1886271.9
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 6936362.1,
+          "monthly_million_uzs": 1811177.5
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 8807867.9,
+          "monthly_million_uzs": 1871505.8
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 10640397.7,
+          "monthly_million_uzs": 1832529.8
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 12502492.1,
+          "monthly_million_uzs": 1862094.4
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 14944451.1,
+          "monthly_million_uzs": 2441959.0
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 19455940.1,
+          "monthly_million_uzs": 4511489.0
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 22136841.1,
+          "monthly_million_uzs": 2680901.0
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 21923018.3,
+          "monthly_million_uzs": -213822.8,
+          "quality_issue": "nonpositive_monthly_increment"
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 26776015.9,
+          "monthly_million_uzs": 4852997.6
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 1996251.8,
+          "monthly_million_uzs": 1996251.8
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 4210354.2,
+          "monthly_million_uzs": 2214102.4
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 6712414.6,
+          "monthly_million_uzs": 2502060.4
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 9368097.2,
+          "monthly_million_uzs": 2655682.6
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 12012558.0,
+          "monthly_million_uzs": 2644460.8
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 14918542.8,
+          "monthly_million_uzs": 2905984.8
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 17783891.4,
+          "monthly_million_uzs": 2865348.6
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 20702177.5,
+          "monthly_million_uzs": 2918286.1
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 23489573.7,
+          "monthly_million_uzs": 2787396.2
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 26669568.3,
+          "monthly_million_uzs": 3179994.6
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 30019234.6,
+          "monthly_million_uzs": 3349666.3
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 35002375.5,
+          "monthly_million_uzs": 4983140.9
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 2232564.3,
+          "monthly_million_uzs": 2232564.3
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 4832794.3,
+          "monthly_million_uzs": 2600230.0
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 7648230.0,
+          "monthly_million_uzs": 2815435.7
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 10598354.2,
+          "monthly_million_uzs": 2950124.2
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 14043316.2,
+          "monthly_million_uzs": 3444962.0
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 17133925.7,
+          "monthly_million_uzs": 3090609.5
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 22927811.8,
+          "monthly_million_uzs": 5793886.1
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 26844168.7,
+          "monthly_million_uzs": 3916356.9
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 27349874.5,
+          "monthly_million_uzs": 505705.8
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 30818061.8,
+          "monthly_million_uzs": 3468187.3
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 35009529.3,
+          "monthly_million_uzs": 4191467.5
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 42194595.0,
+          "monthly_million_uzs": 7185065.7
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 2704366.1,
+          "monthly_million_uzs": 2704366.1
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 5919805.0,
+          "monthly_million_uzs": 3215438.9
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 10066917.2,
+          "monthly_million_uzs": 4147112.2
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 13788622.6,
+          "monthly_million_uzs": 3721705.4
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 16849364.9,
+          "monthly_million_uzs": 3060742.3
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 20175941.6,
+          "monthly_million_uzs": 3326576.7
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 27692942.4,
+          "monthly_million_uzs": 7517000.8
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 32842225.9,
+          "monthly_million_uzs": 5149283.5
+        }
+      ]
+    },
+    {
+      "code": "1733",
+      "region": "Khorezm region",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 572160.0,
+          "monthly_million_uzs": 572160.0
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 1234228.4,
+          "monthly_million_uzs": 662068.4
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 1897206.4,
+          "monthly_million_uzs": 662978.0
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 2451868.3,
+          "monthly_million_uzs": 554661.9
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 3058542.9,
+          "monthly_million_uzs": 606674.6
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 3698251.4,
+          "monthly_million_uzs": 639708.5
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 4362114.8,
+          "monthly_million_uzs": 663863.4
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 5067002.8,
+          "monthly_million_uzs": 704888.0
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 5838139.2,
+          "monthly_million_uzs": 771136.4
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 6658249.4,
+          "monthly_million_uzs": 820110.2
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 7521492.2,
+          "monthly_million_uzs": 863242.8
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 8603880.9,
+          "monthly_million_uzs": 1082388.7
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 581191.3,
+          "monthly_million_uzs": 581191.3
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 1273486.3,
+          "monthly_million_uzs": 692295.0
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 2043101.3,
+          "monthly_million_uzs": 769615.0
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 2798268.3,
+          "monthly_million_uzs": 755167.0
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 3579553.5,
+          "monthly_million_uzs": 781285.2
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 4394090.9,
+          "monthly_million_uzs": 814537.4
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 5203798.7,
+          "monthly_million_uzs": 809707.8
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 6076212.2,
+          "monthly_million_uzs": 872413.5
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 7050047.1,
+          "monthly_million_uzs": 973834.9
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 8084864.4,
+          "monthly_million_uzs": 1034817.3
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 9166801.6,
+          "monthly_million_uzs": 1081937.2
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 10539811.2,
+          "monthly_million_uzs": 1373009.6
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 571120.3,
+          "monthly_million_uzs": 571120.3
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 1229606.0,
+          "monthly_million_uzs": 658485.7
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 1843319.8,
+          "monthly_million_uzs": 613713.8
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 2380132.3,
+          "monthly_million_uzs": 536812.5
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 3569901.5,
+          "monthly_million_uzs": 1189769.2
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 4478396.7,
+          "monthly_million_uzs": 908495.2
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 5256753.6,
+          "monthly_million_uzs": 778356.9
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 6290504.9,
+          "monthly_million_uzs": 1033751.3
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 7132367.6,
+          "monthly_million_uzs": 841862.7
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 8184892.7,
+          "monthly_million_uzs": 1052525.1
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 9305009.9,
+          "monthly_million_uzs": 1120117.2
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 11317196.1,
+          "monthly_million_uzs": 2012186.2
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 541138.2,
+          "monthly_million_uzs": 541138.2
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 1255602.6,
+          "monthly_million_uzs": 714464.4
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 2101574.8,
+          "monthly_million_uzs": 845972.2
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 2749234.6,
+          "monthly_million_uzs": 647659.8
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 4120869.7,
+          "monthly_million_uzs": 1371635.1
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 5160518.0,
+          "monthly_million_uzs": 1039648.3
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 6020881.5,
+          "monthly_million_uzs": 860363.5
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 7253543.4,
+          "monthly_million_uzs": 1232661.9
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 8853359.2,
+          "monthly_million_uzs": 1599815.8
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 10052150.5,
+          "monthly_million_uzs": 1198791.3
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 10879983.0,
+          "monthly_million_uzs": 827832.5
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 13392866.5,
+          "monthly_million_uzs": 2512883.5
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 911530.6,
+          "monthly_million_uzs": 911530.6
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 1753350.0,
+          "monthly_million_uzs": 841819.4
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 2817906.9,
+          "monthly_million_uzs": 1064556.9
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 4214943.0,
+          "monthly_million_uzs": 1397036.1
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 5443173.9,
+          "monthly_million_uzs": 1228230.9
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 6644457.4,
+          "monthly_million_uzs": 1201283.5
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 7875166.6,
+          "monthly_million_uzs": 1230709.2
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 9241020.9,
+          "monthly_million_uzs": 1365854.3
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 10582725.8,
+          "monthly_million_uzs": 1341704.9
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 12053198.8,
+          "monthly_million_uzs": 1470473.0
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 13486580.4,
+          "monthly_million_uzs": 1433381.6
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 16083559.8,
+          "monthly_million_uzs": 2596979.4
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 1020246.1,
+          "monthly_million_uzs": 1020246.1
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 2002264.5,
+          "monthly_million_uzs": 982018.4
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 3184992.4,
+          "monthly_million_uzs": 1182727.9
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 4753327.2,
+          "monthly_million_uzs": 1568334.8
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 6357564.8,
+          "monthly_million_uzs": 1604237.6
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 7599231.2,
+          "monthly_million_uzs": 1241666.4
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 9658902.1,
+          "monthly_million_uzs": 2059670.9
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 11531373.7,
+          "monthly_million_uzs": 1872471.6
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 12175073.2,
+          "monthly_million_uzs": 643699.5
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 13862346.5,
+          "monthly_million_uzs": 1687273.3
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 15589780.0,
+          "monthly_million_uzs": 1727433.5
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 18715924.2,
+          "monthly_million_uzs": 3126144.2
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 1256961.8,
+          "monthly_million_uzs": 1256961.8
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 2663322.6,
+          "monthly_million_uzs": 1406360.8
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 4656880.1,
+          "monthly_million_uzs": 1993557.5
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 6366177.6,
+          "monthly_million_uzs": 1709297.5
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 8241111.5,
+          "monthly_million_uzs": 1874933.9
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 9767470.9,
+          "monthly_million_uzs": 1526359.4
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 12869598.8,
+          "monthly_million_uzs": 3102127.9
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 14948383.5,
+          "monthly_million_uzs": 2078784.7
+        }
+      ]
+    },
+    {
+      "code": "1726",
+      "region": "Tashkent city",
+      "is_national_total": false,
+      "observations": [
+        {
+          "month": "2020-01",
+          "value_ytd_million_uzs": 2874068.9,
+          "monthly_million_uzs": 2874068.9
+        },
+        {
+          "month": "2020-02",
+          "value_ytd_million_uzs": 5957996.7,
+          "monthly_million_uzs": 3083927.8
+        },
+        {
+          "month": "2020-03",
+          "value_ytd_million_uzs": 9151867.9,
+          "monthly_million_uzs": 3193871.2
+        },
+        {
+          "month": "2020-04",
+          "value_ytd_million_uzs": 12311387.5,
+          "monthly_million_uzs": 3159519.6
+        },
+        {
+          "month": "2020-05",
+          "value_ytd_million_uzs": 15315909.6,
+          "monthly_million_uzs": 3004522.1
+        },
+        {
+          "month": "2020-06",
+          "value_ytd_million_uzs": 19846351.9,
+          "monthly_million_uzs": 4530442.3
+        },
+        {
+          "month": "2020-07",
+          "value_ytd_million_uzs": 23706432.3,
+          "monthly_million_uzs": 3860080.4
+        },
+        {
+          "month": "2020-08",
+          "value_ytd_million_uzs": 27519057.4,
+          "monthly_million_uzs": 3812625.1
+        },
+        {
+          "month": "2020-09",
+          "value_ytd_million_uzs": 31752360.7,
+          "monthly_million_uzs": 4233303.3
+        },
+        {
+          "month": "2020-10",
+          "value_ytd_million_uzs": 36131727.4,
+          "monthly_million_uzs": 4379366.7
+        },
+        {
+          "month": "2020-11",
+          "value_ytd_million_uzs": 40347303.6,
+          "monthly_million_uzs": 4215576.2
+        },
+        {
+          "month": "2020-12",
+          "value_ytd_million_uzs": 45920281.5,
+          "monthly_million_uzs": 5572977.9
+        },
+        {
+          "month": "2021-01",
+          "value_ytd_million_uzs": 3817663.6,
+          "monthly_million_uzs": 3817663.6
+        },
+        {
+          "month": "2021-02",
+          "value_ytd_million_uzs": 8111547.7,
+          "monthly_million_uzs": 4293884.1
+        },
+        {
+          "month": "2021-03",
+          "value_ytd_million_uzs": 12716362.5,
+          "monthly_million_uzs": 4604814.8
+        },
+        {
+          "month": "2021-04",
+          "value_ytd_million_uzs": 17424869.6,
+          "monthly_million_uzs": 4708507.1
+        },
+        {
+          "month": "2021-05",
+          "value_ytd_million_uzs": 23039837.4,
+          "monthly_million_uzs": 5614967.8
+        },
+        {
+          "month": "2021-06",
+          "value_ytd_million_uzs": 28367434.2,
+          "monthly_million_uzs": 5327596.8
+        },
+        {
+          "month": "2021-07",
+          "value_ytd_million_uzs": 33419545.9,
+          "monthly_million_uzs": 5052111.7
+        },
+        {
+          "month": "2021-08",
+          "value_ytd_million_uzs": 38797321.6,
+          "monthly_million_uzs": 5377775.7
+        },
+        {
+          "month": "2021-09",
+          "value_ytd_million_uzs": 44500027.2,
+          "monthly_million_uzs": 5702705.6
+        },
+        {
+          "month": "2021-10",
+          "value_ytd_million_uzs": 49148110.5,
+          "monthly_million_uzs": 4648083.3
+        },
+        {
+          "month": "2021-11",
+          "value_ytd_million_uzs": 55445060.7,
+          "monthly_million_uzs": 6296950.2
+        },
+        {
+          "month": "2021-12",
+          "value_ytd_million_uzs": 63434810.6,
+          "monthly_million_uzs": 7989749.9
+        },
+        {
+          "month": "2022-01",
+          "value_ytd_million_uzs": 3793444.3,
+          "monthly_million_uzs": 3793444.3
+        },
+        {
+          "month": "2022-02",
+          "value_ytd_million_uzs": 7841903.7,
+          "monthly_million_uzs": 4048459.4
+        },
+        {
+          "month": "2022-03",
+          "value_ytd_million_uzs": 12302987.2,
+          "monthly_million_uzs": 4461083.5
+        },
+        {
+          "month": "2022-04",
+          "value_ytd_million_uzs": 17069845.0,
+          "monthly_million_uzs": 4766857.8
+        },
+        {
+          "month": "2022-05",
+          "value_ytd_million_uzs": 22478029.5,
+          "monthly_million_uzs": 5408184.5
+        },
+        {
+          "month": "2022-06",
+          "value_ytd_million_uzs": 27972454.6,
+          "monthly_million_uzs": 5494425.1
+        },
+        {
+          "month": "2022-07",
+          "value_ytd_million_uzs": 32597489.8,
+          "monthly_million_uzs": 4625035.2
+        },
+        {
+          "month": "2022-08",
+          "value_ytd_million_uzs": 38442809.7,
+          "monthly_million_uzs": 5845319.9
+        },
+        {
+          "month": "2022-09",
+          "value_ytd_million_uzs": 42885488.7,
+          "monthly_million_uzs": 4442679.0
+        },
+        {
+          "month": "2022-10",
+          "value_ytd_million_uzs": 49086116.8,
+          "monthly_million_uzs": 6200628.1
+        },
+        {
+          "month": "2022-11",
+          "value_ytd_million_uzs": 55660813.2,
+          "monthly_million_uzs": 6574696.4
+        },
+        {
+          "month": "2022-12",
+          "value_ytd_million_uzs": 66784027.9,
+          "monthly_million_uzs": 11123214.7
+        },
+        {
+          "month": "2023-01",
+          "value_ytd_million_uzs": 4197322.9,
+          "monthly_million_uzs": 4197322.9
+        },
+        {
+          "month": "2023-02",
+          "value_ytd_million_uzs": 9660166.5,
+          "monthly_million_uzs": 5462843.6
+        },
+        {
+          "month": "2023-03",
+          "value_ytd_million_uzs": 15392178.4,
+          "monthly_million_uzs": 5732011.9
+        },
+        {
+          "month": "2023-04",
+          "value_ytd_million_uzs": 21676638.6,
+          "monthly_million_uzs": 6284460.2
+        },
+        {
+          "month": "2023-05",
+          "value_ytd_million_uzs": 28797627.9,
+          "monthly_million_uzs": 7120989.3
+        },
+        {
+          "month": "2023-06",
+          "value_ytd_million_uzs": 35337533.6,
+          "monthly_million_uzs": 6539905.7
+        },
+        {
+          "month": "2023-07",
+          "value_ytd_million_uzs": 41069085.0,
+          "monthly_million_uzs": 5731551.4
+        },
+        {
+          "month": "2023-08",
+          "value_ytd_million_uzs": 48055570.4,
+          "monthly_million_uzs": 6986485.4
+        },
+        {
+          "month": "2023-09",
+          "value_ytd_million_uzs": 56943553.2,
+          "monthly_million_uzs": 8887982.8
+        },
+        {
+          "month": "2023-10",
+          "value_ytd_million_uzs": 64131061.5,
+          "monthly_million_uzs": 7187508.3
+        },
+        {
+          "month": "2023-11",
+          "value_ytd_million_uzs": 69420011.5,
+          "monthly_million_uzs": 5288950.0
+        },
+        {
+          "month": "2023-12",
+          "value_ytd_million_uzs": 83666643.0,
+          "monthly_million_uzs": 14246631.5
+        },
+        {
+          "month": "2024-01",
+          "value_ytd_million_uzs": 6422759.1,
+          "monthly_million_uzs": 6422759.1
+        },
+        {
+          "month": "2024-02",
+          "value_ytd_million_uzs": 13091574.7,
+          "monthly_million_uzs": 6668815.6
+        },
+        {
+          "month": "2024-03",
+          "value_ytd_million_uzs": 20996506.7,
+          "monthly_million_uzs": 7904932.0
+        },
+        {
+          "month": "2024-04",
+          "value_ytd_million_uzs": 30093100.1,
+          "monthly_million_uzs": 9096593.4
+        },
+        {
+          "month": "2024-05",
+          "value_ytd_million_uzs": 39342714.0,
+          "monthly_million_uzs": 9249613.9
+        },
+        {
+          "month": "2024-06",
+          "value_ytd_million_uzs": 44873568.7,
+          "monthly_million_uzs": 5530854.7
+        },
+        {
+          "month": "2024-07",
+          "value_ytd_million_uzs": 53201431.0,
+          "monthly_million_uzs": 8327862.3
+        },
+        {
+          "month": "2024-08",
+          "value_ytd_million_uzs": 62075710.3,
+          "monthly_million_uzs": 8874279.3
+        },
+        {
+          "month": "2024-09",
+          "value_ytd_million_uzs": 70250208.8,
+          "monthly_million_uzs": 8174498.5
+        },
+        {
+          "month": "2024-10",
+          "value_ytd_million_uzs": 79541033.6,
+          "monthly_million_uzs": 9290824.8
+        },
+        {
+          "month": "2024-11",
+          "value_ytd_million_uzs": 89106249.2,
+          "monthly_million_uzs": 9565215.6
+        },
+        {
+          "month": "2024-12",
+          "value_ytd_million_uzs": 105341301.3,
+          "monthly_million_uzs": 16235052.1
+        },
+        {
+          "month": "2025-01",
+          "value_ytd_million_uzs": 7450667.6,
+          "monthly_million_uzs": 7450667.6
+        },
+        {
+          "month": "2025-02",
+          "value_ytd_million_uzs": 15489720.9,
+          "monthly_million_uzs": 8039053.3
+        },
+        {
+          "month": "2025-03",
+          "value_ytd_million_uzs": 24851802.4,
+          "monthly_million_uzs": 9362081.5
+        },
+        {
+          "month": "2025-04",
+          "value_ytd_million_uzs": 35170251.7,
+          "monthly_million_uzs": 10318449.3
+        },
+        {
+          "month": "2025-05",
+          "value_ytd_million_uzs": 43750903.3,
+          "monthly_million_uzs": 8580651.6
+        },
+        {
+          "month": "2025-06",
+          "value_ytd_million_uzs": 53598605.5,
+          "monthly_million_uzs": 9847702.2
+        },
+        {
+          "month": "2025-07",
+          "value_ytd_million_uzs": 62669833.3,
+          "monthly_million_uzs": 9071227.8
+        },
+        {
+          "month": "2025-08",
+          "value_ytd_million_uzs": 79894385.7,
+          "monthly_million_uzs": 17224552.4
+        },
+        {
+          "month": "2025-09",
+          "value_ytd_million_uzs": 85399583.9,
+          "monthly_million_uzs": 5505198.2
+        },
+        {
+          "month": "2025-10",
+          "value_ytd_million_uzs": 96046432.6,
+          "monthly_million_uzs": 10646848.7
+        },
+        {
+          "month": "2025-11",
+          "value_ytd_million_uzs": 108569146.2,
+          "monthly_million_uzs": 12522713.6
+        },
+        {
+          "month": "2025-12",
+          "value_ytd_million_uzs": 130786570.3,
+          "monthly_million_uzs": 22217424.1
+        },
+        {
+          "month": "2026-01",
+          "value_ytd_million_uzs": 9354219.3,
+          "monthly_million_uzs": 9354219.3
+        },
+        {
+          "month": "2026-02",
+          "value_ytd_million_uzs": 18832658.3,
+          "monthly_million_uzs": 9478439.0
+        },
+        {
+          "month": "2026-03",
+          "value_ytd_million_uzs": 37866487.7,
+          "monthly_million_uzs": 19033829.4
+        },
+        {
+          "month": "2026-04",
+          "value_ytd_million_uzs": 48395417.2,
+          "monthly_million_uzs": 10528929.5
+        },
+        {
+          "month": "2026-05",
+          "value_ytd_million_uzs": 61613575.3,
+          "monthly_million_uzs": 13218158.1
+        },
+        {
+          "month": "2026-06",
+          "value_ytd_million_uzs": 73907962.0,
+          "monthly_million_uzs": 12294386.7
+        },
+        {
+          "month": "2026-07",
+          "value_ytd_million_uzs": 82233001.6,
+          "monthly_million_uzs": 8325039.6
+        },
+        {
+          "month": "2026-08",
+          "value_ytd_million_uzs": 101102048.3,
+          "monthly_million_uzs": 18869046.7
+        }
+      ]
+    }
+  ]
+}

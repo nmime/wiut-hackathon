@@ -5,6 +5,11 @@ service. Set `ML_SERVICE_URL` to the service base URL; the adapter appends `/sco
 `ML_TIMEOUT_MS` defaults to 8000. Scoring, forecasting, and model inference must
 operate locally within the bank perimeter in a production implementation.
 
+The optional service in `ml-service` implements this contract locally. Run the
+complete stack with the `docker-compose.ml.yml` override, or point the adapter
+at the teammate's service. Default frontend/backend development still works
+with ML disconnected. See `ml-service/README.md` for training and evaluation.
+
 ## Request
 
 ```json
@@ -35,6 +40,31 @@ finite and positive. Histories contain 1–20,000 transactions. Timestamps suppo
 ISO timestamps with `Z`, timezone offset, or no offset (interpreted as UTC).
 NestJS selects transactions on or before the assessment date. An empty selected
 history is rejected. The business and date in the result must match the request.
+
+## Optional local service limits
+
+The teammate's transport contract remains the source of truth. The optional
+implementation in `ml-service` supports a narrower calendar window: at most
+240 inclusive calendar months from the earliest transaction month through the
+assessment month, and assessment years 0001–9998. The 12 forecast months must
+fit within the supported calendar. These implementation limits do not tighten
+the general NestJS/shared transport contract. Unsupported inputs return HTTP
+422 from the optional service; NestJS records the failed assessment and returns
+an upstream error.
+
+The optional service counts missing complete months as zero activity. It omits
+an incomplete assessment month from forecast features. If the only available
+history is that partial month, it retains the observed events as a cold-start
+fallback, reports low heuristic confidence, and recommends no positive loan.
+Forecast month 1 still begins after the assessment month. Confidence is an
+evidence heuristic and has not been calibrated as a probability.
+
+Its demonstration repayment policy uses an explicit 0% interest rate, stated
+in the returned rationale. Positive indexed payments sum to the indexed
+principal and stay below the model's buffered forecast capacity for each
+month. This forecast constraint cannot guarantee affordability against future
+realized cash flow. A provided UZS request is flagged and does not constrain
+the indexed principal while the conversion is undeclared.
 
 ## Response
 

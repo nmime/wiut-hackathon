@@ -1,0 +1,275 @@
+{
+  "measured_at_utc": "2026-10-10T18:35:58.229193+00:00",
+  "model_version": "synthetic-v1-9a0379ca910d-gradient_boosting",
+  "selection": {
+    "seed": 20261010,
+    "selected_candidate": "gradient_boosting",
+    "validation_mae_index": {
+      "seasonal_naive": 132.85729818701944,
+      "gradient_boosting": 106.08934572353618,
+      "blend_50": 115.03886265785992
+    },
+    "selection_metric": "pooled validation-business future-12-month MAE",
+    "training_businesses": 180,
+    "validation_businesses": 60,
+    "training_origins": 1746,
+    "training_origin_variants": ["complete_month", "partial_month_excluded"],
+    "training_examples": 20952,
+    "features": [
+      "lag1",
+      "lag2",
+      "lag3",
+      "lag6",
+      "lag12",
+      "mean3",
+      "mean6",
+      "mean12",
+      "volatility12",
+      "trend12",
+      "horizon",
+      "calendar_sin",
+      "calendar_cos",
+      "seasonal_naive",
+      "history_length",
+      "inflow_mean12",
+      "outflow_mean12"
+    ],
+    "test_used_for_selection": false,
+    "source_sha256": "9a0379ca910d0cf482adb915136a0dc9f554dce52829af35897b4043b4764df8",
+    "public_calibration": {
+      "source": "Uzbekistan SIAT retail aggregate turnover, CC BY 4.0",
+      "training_years": [2020, 2021, 2022],
+      "snapshot_calibration_sha256": "bf2827c6d1756fdf6abfc7e2477305935ec4a702aa300412a489eaffba6f3eb1",
+      "calibrated_cohorts": [
+        "seasonal",
+        "growing",
+        "declining",
+        "volatile_growth"
+      ],
+      "weight": 0.5,
+      "future_actuals_used": false
+    }
+  },
+  "test_protocol": {
+    "businesses": 120,
+    "future_months_per_business": 12,
+    "business_disjoint": true,
+    "test_used_for_selection": false,
+    "future_actual_sha256": "d29ff7963b2260bed4079cbeea8e1028b3f0c3eb123b14ae03167fa6c9481ab8",
+    "capacity_and_schedule_population": "Only positive-principal businesses; zero-loan cohorts reported separately",
+    "overload_definition": "payment > actual future net surplus; a zero payment in a negative-surplus month also counts",
+    "annuity_comparator": "Same indexed principal, 12-month term and explicitly 0% APR; equal installments",
+    "mape_policy": "Exclude abs(actual)<1 index. Negative actuals use absolute denominator. MAPE remains unstable near zero and is not the selection metric."
+  },
+  "forecast_candidates": {
+    "seasonal_naive": {
+      "mae_index": 100.42641835388224,
+      "mape_abs_actual_ge_1_pct": 62.52668822452928,
+      "mape_excluded_months": 0,
+      "wape_pct": 38.083056617397595,
+      "months": 1440
+    },
+    "gradient_boosting": {
+      "mae_index": 88.22710229441822,
+      "mape_abs_actual_ge_1_pct": 52.659587798217345,
+      "mape_excluded_months": 0,
+      "wape_pct": 33.45691090991069,
+      "months": 1440
+    },
+    "blend_50": {
+      "mae_index": 90.28330663395458,
+      "mape_abs_actual_ge_1_pct": 53.6034116660749,
+      "mape_excluded_months": 0,
+      "wape_pct": 34.23665141607478,
+      "months": 1440
+    }
+  },
+  "selected_forecast": {
+    "mae_index": 88.22710229441822,
+    "mape_abs_actual_ge_1_pct": 52.659587798217345,
+    "mape_excluded_months": 0,
+    "wape_pct": 33.45691090991069,
+    "months": 1440
+  },
+  "partial_assessment_month_selected_forecast": {
+    "mae_index": 91.72082862744044,
+    "mape_abs_actual_ge_1_pct": 55.63461342495458,
+    "mape_excluded_months": 0,
+    "wape_pct": 34.78177920579407,
+    "months": 1440
+  },
+  "capacity_schedule": {
+    "businesses": 120,
+    "mae_index": 88.22710229441822,
+    "positive_loan_businesses": 96,
+    "zero_loan_businesses": 24,
+    "mean_confidence": 0.6031786058314741,
+    "adaptive_capacity_coverage_pct": 96.78819444444444,
+    "equal_reference_capacity_coverage_pct": 96.44097222222223,
+    "adaptive_overload_months": 37,
+    "annuity_overload_months": 38,
+    "adaptive_fewer_overloads_businesses_pct": 5.208333333333334,
+    "adaptive_same_overloads_businesses_pct": 91.66666666666666,
+    "adaptive_more_overloads_businesses_pct": 3.125
+  },
+  "seasonality": {
+    "weak_month_precision_pct": 43.01675977653631,
+    "strong_month_precision_pct": 36.49025069637883,
+    "ground_truth": "Future realised net-flow bottom/top quartiles, not generator seasonal parameters"
+  },
+  "cohorts": {
+    "cold_start": {
+      "businesses": 13,
+      "mae_index": 67.47828827862878,
+      "positive_loan_businesses": 2,
+      "zero_loan_businesses": 11,
+      "mean_confidence": 0.09593683806959838,
+      "adaptive_capacity_coverage_pct": 100.0,
+      "equal_reference_capacity_coverage_pct": 100.0,
+      "adaptive_overload_months": 0,
+      "annuity_overload_months": 0,
+      "adaptive_fewer_overloads_businesses_pct": 0.0,
+      "adaptive_same_overloads_businesses_pct": 100.0,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    },
+    "declining": {
+      "businesses": 13,
+      "mae_index": 28.3914117641977,
+      "positive_loan_businesses": 13,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.7032796088095955,
+      "adaptive_capacity_coverage_pct": 99.35897435897435,
+      "equal_reference_capacity_coverage_pct": 98.71794871794872,
+      "adaptive_overload_months": 1,
+      "annuity_overload_months": 2,
+      "adaptive_fewer_overloads_businesses_pct": 7.6923076923076925,
+      "adaptive_same_overloads_businesses_pct": 92.3076923076923,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    },
+    "growing": {
+      "businesses": 14,
+      "mae_index": 107.45497014242713,
+      "positive_loan_businesses": 14,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.7177936311904978,
+      "adaptive_capacity_coverage_pct": 100.0,
+      "equal_reference_capacity_coverage_pct": 100.0,
+      "adaptive_overload_months": 0,
+      "annuity_overload_months": 0,
+      "adaptive_fewer_overloads_businesses_pct": 0.0,
+      "adaptive_same_overloads_businesses_pct": 100.0,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    },
+    "negative_surplus": {
+      "businesses": 13,
+      "mae_index": 54.54241047682338,
+      "positive_loan_businesses": 0,
+      "zero_loan_businesses": 13,
+      "mean_confidence": 0.6682297279003951,
+      "adaptive_capacity_coverage_pct": null,
+      "equal_reference_capacity_coverage_pct": null,
+      "adaptive_overload_months": 0,
+      "annuity_overload_months": 0,
+      "adaptive_fewer_overloads_businesses_pct": null,
+      "adaptive_same_overloads_businesses_pct": null,
+      "adaptive_more_overloads_businesses_pct": null
+    },
+    "pattern_break": {
+      "businesses": 13,
+      "mae_index": 82.08887601243292,
+      "positive_loan_businesses": 13,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.61981088706402,
+      "adaptive_capacity_coverage_pct": 83.97435897435898,
+      "equal_reference_capacity_coverage_pct": 83.33333333333333,
+      "adaptive_overload_months": 25,
+      "annuity_overload_months": 24,
+      "adaptive_fewer_overloads_businesses_pct": 23.076923076923077,
+      "adaptive_same_overloads_businesses_pct": 53.84615384615385,
+      "adaptive_more_overloads_businesses_pct": 23.076923076923077
+    },
+    "seasonal": {
+      "businesses": 14,
+      "mae_index": 36.13089074423304,
+      "positive_loan_businesses": 14,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.7138813811597577,
+      "adaptive_capacity_coverage_pct": 100.0,
+      "equal_reference_capacity_coverage_pct": 100.0,
+      "adaptive_overload_months": 0,
+      "annuity_overload_months": 0,
+      "adaptive_fewer_overloads_businesses_pct": 0.0,
+      "adaptive_same_overloads_businesses_pct": 100.0,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    },
+    "stable": {
+      "businesses": 14,
+      "mae_index": 47.92756063434556,
+      "positive_loan_businesses": 14,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.8547088992044621,
+      "adaptive_capacity_coverage_pct": 100.0,
+      "equal_reference_capacity_coverage_pct": 100.0,
+      "adaptive_overload_months": 0,
+      "annuity_overload_months": 0,
+      "adaptive_fewer_overloads_businesses_pct": 0.0,
+      "adaptive_same_overloads_businesses_pct": 100.0,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    },
+    "unseen_seasonality": {
+      "businesses": 13,
+      "mae_index": 81.5909352182867,
+      "positive_loan_businesses": 13,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.5025497486312663,
+      "adaptive_capacity_coverage_pct": 98.71794871794872,
+      "equal_reference_capacity_coverage_pct": 97.43589743589745,
+      "adaptive_overload_months": 2,
+      "annuity_overload_months": 3,
+      "adaptive_fewer_overloads_businesses_pct": 7.6923076923076925,
+      "adaptive_same_overloads_businesses_pct": 92.3076923076923,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    },
+    "volatile_growth": {
+      "businesses": 13,
+      "mae_index": 294.0668762524079,
+      "positive_loan_businesses": 13,
+      "zero_loan_businesses": 0,
+      "mean_confidence": 0.5157361078336514,
+      "adaptive_capacity_coverage_pct": 94.23076923076925,
+      "equal_reference_capacity_coverage_pct": 94.23076923076925,
+      "adaptive_overload_months": 9,
+      "annuity_overload_months": 9,
+      "adaptive_fewer_overloads_businesses_pct": 0.0,
+      "adaptive_same_overloads_businesses_pct": 100.0,
+      "adaptive_more_overloads_businesses_pct": 0.0
+    }
+  },
+  "latency": {
+    "hardware": {
+      "platform": "macOS-26.5.1-arm64-arm-64bit",
+      "machine": "arm64",
+      "logical_cpus": 12
+    },
+    "samples": 120,
+    "inference_median_ms": 1.7830420001700986,
+    "inference_p95_ms": 2.263097950208248,
+    "local_testclient_with_validation_and_fsync_median_ms": 5.54427099973509,
+    "local_testclient_with_validation_and_fsync_p95_ms": 7.51143894974575,
+    "http_status_counts": {
+      "200": 120
+    },
+    "audit_events": 252,
+    "max_20000_transaction_request": {
+      "samples": 5,
+      "request_body_bytes": 2152323,
+      "median_ms": 48.5489590000725,
+      "p95_ms": 103.7160006000704,
+      "http_status_counts": {
+        "200": 5
+      },
+      "construction": "Repeated generated synthetic transaction events; latency-only, not a capacity accuracy test"
+    },
+    "scope": "Single process, warm model, sequential local TestClient. Includes JSON validation, response serialization and durable audit; excludes network/load and train/startup."
+  }
+}

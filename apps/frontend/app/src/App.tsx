@@ -133,6 +133,9 @@ function WorkspaceApp() {
   const [route, setRoute] = useState<WorkspaceRoute>(readRoute);
   const { page, businessId, assessmentId: initialAssessmentId } = route;
   useEffect(() => {
+    document.getElementById('main-content')?.focus({ preventScroll: true });
+  }, [page, businessId]);
+  useEffect(() => {
     const onHashChange = () => {
       setRoute(readRoute());
       setOpenMobile(false);
