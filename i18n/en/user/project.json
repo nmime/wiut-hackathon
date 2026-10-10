@@ -1,0 +1,19 @@
+{
+  "name": "@app/i18n-en-user",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "i18n/en/user",
+  "projectType": "library",
+  "tags": ["platform:frontend", "type:asset", "scope:user", "boundary:i18n-assets"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "i18n/en/user",
+        "command": "node -e \"void 0\""
+      },
+      "inputs": ["default"],
+      "outputs": []
+    }
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Update Boilerplate Base'
+  short_description: 'Rebase products onto a newer boilerplate'
+  default_prompt: 'Use $update-boilerplate-base to update this product onto a newer boilerplate release safely.'

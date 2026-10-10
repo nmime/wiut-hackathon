@@ -1,0 +1,119 @@
+#!/usr/bin/env node
+// Evidence for: REQ-API-COMPAT-002
+// Property evidence for REQ-API-COMPAT-002.
+import { existsSync, readFileSync } from "node:fs";
+import { findOperation, loadOpenApiContracts, matchPathTemplate, parseArgs, readJson, resolveJsonPointer, schemaExample, validateSchema, writeJson } from "./runtime-utils.ts";
+
+import { boundedInteger } from "./world-class-policy.ts";
+
+const args = parseArgs();
+const iterations = boundedInteger({ fallback: 100, label: "PROPERTY_ITERATIONS", max: 1000, value: args.options.get("iterations") ?? process.env.PROPERTY_ITERATIONS });
+const reportPath = args.options.get("report") ?? "test-results/property/report.json";
+const errors: string[] = [];
+
+interface PropertyCheck {
+  name: string;
+  ok: boolean;
+  details?: Record<string, unknown>;
+  engine?: string;
+  note?: string;
+}
+const checks: PropertyCheck[] = [];
+
+function assert(name: string, predicate: () => boolean, details: Record<string, unknown> = {}): void {
+  try {
+    const ok = predicate();
+    if (!ok) errors.push(`${name}: failed ${JSON.stringify(details)}`);
+    checks.push({ name, ok, details });
+  } catch (error) {
+    errors.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+    checks.push({ name, ok: false, details });
+  }
+}
+
+function random(seed: number): () => number {
+  let state = seed + 0x6d2b79f5;
+  return () => {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value ^= value + Math.imul(value ^ (value >>> 7), 61 | value);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const contracts = loadOpenApiContracts();
+for (const contract of contracts) {
+  for (const [route, item] of Object.entries(contract.doc.paths ?? {})) {
+    assert(`${contract.file} path matcher round-trips ${route}`, () => {
+      const concrete = route.replaceAll(/\{([^}]+)\}/g, (_, name) => encodeURIComponent(`${name}-value`));
+      const method = Object.keys(item).find((candidate) => ["get", "put", "post", "delete", "patch", "options", "head"].includes(candidate)) ?? "get";
+      return Boolean(matchPathTemplate(route, concrete)) && findOperation(contract, method, concrete) !== null;
+    });
+    for (const [method, operation] of Object.entries(item ?? {})) {
+      if (!["get", "put", "post", "delete", "patch", "options", "head"].includes(method)) continue;
+      for (const media of Object.values(operation.requestBody?.content ?? {})) if (media?.schema) assert(`${contract.file} ${operation.operationId} request example validates`, () => validateSchema(schemaExample(media.schema, contract.doc), media.schema, contract.doc).length === 0);
+      for (const response of Object.values(operation.responses ?? {})) for (const media of Object.values(response.content ?? {})) if (media?.schema) assert(`${contract.file} ${operation.operationId} response example validates`, () => validateSchema(schemaExample(media.schema, contract.doc), media.schema, contract.doc).length === 0);
+    }
+  }
+}
+
+const pkg = readJson<{ scripts?: Record<string, string> }>("package.json");
+for (const [name, script] of Object.entries(pkg.scripts ?? {})) {
+  for (const match of String(script).matchAll(/(?:node|tsx|ts-node)\s+([^\s&|;]+\.(?:mjs|mts|js|ts))/g)) {
+    if (match[1].startsWith("packages/") || match[1].startsWith("tools/")) assert(`script ${name} points to existing file`, () => existsSync(match[1]), { file: match[1] });
+  }
+}
+
+const workspace = readFileSync("pnpm-workspace.yaml", "utf8");
+assert("workspace includes packages/tooling", () => workspace.includes("packages/tooling"));
+assert("tooling package exists", () => existsSync("packages/tooling/package.json"));
+
+for (let seed = 0; seed < iterations; seed += 1) {
+  const rnd = random(seed);
+  const contract = contracts[Math.floor(rnd() * contracts.length)];
+  if (!contract) continue;
+  const paths = Object.keys(contract.doc.paths ?? {});
+  const route = paths[Math.floor(rnd() * paths.length)];
+  assert(`random path template remains matchable seed=${seed}`, () => {
+    const concrete = route.replaceAll(/\{([^}]+)\}/g, () => String(Math.floor(rnd() * 1000) + 1));
+    return matchPathTemplate(route, concrete) !== null;
+  }, { contract: contract.file, route });
+}
+
+// A bare catch that records ok:true converts any real counterexample into a pass, and
+// `typeof x.replaceAll(...) === "string"` cannot fail for any string input. Assert a property
+// that can actually be falsified — RFC 6901 escaping must round-trip — and report failures.
+try {
+  const fastCheck = await import("fast-check");
+  const escapePointerToken = (token: string): string => token.replaceAll("~", "~0").replaceAll("/", "~1");
+
+  await fastCheck.assert(
+    fastCheck.property(fastCheck.string(), (value: string) => {
+      const target = {type: "string"};
+      const document = {components: {schemas: {[value]: target}}};
+      return resolveJsonPointer(document, `#/components/schemas/${escapePointerToken(value)}`) === target;
+    }),
+    { numRuns: Math.min(iterations, 1000) },
+  );
+  checks.push({ name: "fast-check exported JSON-pointer resolver selects exact schema", ok: true, engine: "fast-check" });
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const missingEngine = /Cannot find (?:module|package)|ERR_MODULE_NOT_FOUND/u.test(message);
+
+  if (missingEngine) {
+    // Absence of the optional engine is not a property failure, but it must be visible.
+    checks.push({ name: "fast-check optional engine unavailable", ok: true, engine: "native", note: message });
+  } else {
+    errors.push(`fast-check exported JSON-pointer resolver selects exact schema: ${message}`);
+    checks.push({ name: "fast-check exported JSON-pointer resolver selects exact schema", ok: false, engine: "fast-check", note: message });
+  }
+}
+
+writeJson(reportPath, { status: errors.length ? "failed" : "ok", iterations, checks, errors });
+if (errors.length) {
+  console.error("Property checks failed:");
+  for (const error of errors) console.error(`- ${error}`);
+  process.exit(1);
+}
+console.log(JSON.stringify({ status: "ok", iterations, checks: checks.length, report: reportPath }));

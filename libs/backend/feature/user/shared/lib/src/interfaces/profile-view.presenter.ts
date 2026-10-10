@@ -1,0 +1,41 @@
+import { normalizeLocale, type Locale } from '@app/backend-common-i18n';
+import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { GetCurrentUserProfileUseCase } from '../application';
+import type { UserProfile } from '../domain';
+
+export interface UserProfileView extends Omit<UserProfile, 'locale'> {
+  locale?: Locale;
+}
+
+export interface UserProfilePayload {
+  principal: AuthenticatedPrincipal;
+  profile: UserProfileView;
+}
+
+export function toUserProfileView(
+  principal: AuthenticatedPrincipal,
+  useCase = new GetCurrentUserProfileUseCase(),
+): UserProfileView {
+  return toUserProfilePayload(principal, useCase).profile;
+}
+
+export function toUserProfilePayload(
+  principal: AuthenticatedPrincipal,
+  useCase = new GetCurrentUserProfileUseCase(),
+): UserProfilePayload {
+  const currentProfile = useCase.execute(principal);
+
+  return {
+    principal,
+    profile: presentUserProfile(currentProfile.profile),
+  };
+}
+
+export function presentUserProfile(profile: UserProfile): UserProfileView {
+  return {
+    ...profile,
+    locale: normalizeLocale(profile.locale),
+  };
+}
+
+export * from '../application/get-current-user-profile.use-case';

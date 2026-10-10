@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "@repo/tooling/library",
+  "title": "Library",
+  "description": "Generate a new library following repository conventions",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Library name (kebab-case)",
+      "x-prompt": "What name would you like to give your library?",
+      "x-priority": "important"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Library kind determines boundary and default tags",
+      "enum": ["backend", "frontend", "common"],
+      "x-prompt": "What kind of library?",
+      "x-priority": "important"
+    },
+    "type": {
+      "type": "string",
+      "description": "Semantic library role used for layout and Nx boundaries",
+      "enum": [
+        "common",
+        "util",
+        "ui",
+        "sdk",
+        "feature-main",
+        "feature-admin",
+        "feature-shared",
+        "data-access",
+        "test-util",
+        "asset"
+      ],
+      "default": "common",
+      "x-priority": "important"
+    },
+    "scope": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Owning product/domain scope; defaults to the first name segment",
+      "x-priority": "optional"
+    },
+    "database": {
+      "type": "string",
+      "description": "Database provider for backend data-access libraries; derived from setup when available",
+      "enum": ["postgres", "mongodb"],
+      "x-priority": "optional"
+    },
+    "description": {
+      "type": "string",
+      "description": "Concrete responsibility, public API, or intended consumers for the local README",
+      "minLength": 40,
+      "x-prompt": "What concrete responsibility does this library own?",
+      "x-priority": "important"
+    },
+    "fsdLayer": {
+      "type": "string",
+      "description": "Feature-Sliced Design layer for frontend libraries",
+      "enum": ["shared", "entities", "features", "widgets", "pages"],
+      "default": "shared",
+      "x-priority": "optional"
+    },
+    "skipFormat": {
+      "type": "boolean",
+      "description": "Skip formatting the changed files",
+      "default": false,
+      "x-priority": "optional"
+    }
+  },
+  "required": ["name", "kind", "type", "description"]
+}

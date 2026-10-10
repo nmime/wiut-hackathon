@@ -1,0 +1,16 @@
+(common_server) {
+	encode zstd gzip
+	header {
+		-Server
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+	}
+}
+
+(core_same_origin_api_routes) {
+	import /etc/caddy/routes/core/auth.caddy
+	import /etc/caddy/routes/core/user.caddy
+	import /etc/caddy/routes/core/admin.caddy
+}

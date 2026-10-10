@@ -1,0 +1,126 @@
+import type { ReactNode } from 'react';
+import { observer, useI18n, useOptionalRootStore } from '@app/frontend-runtime';
+import { UiButton } from '../component/button';
+import { LanguageSwitcher, ThemeSwitcher } from '../component/switchers';
+import { UiStatusPill } from '../component/status-pill';
+
+export interface ProductShellAction {
+  label: string;
+  href: string;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive' | 'link';
+  isCurrent?: boolean;
+}
+
+export interface ProductShellProps {
+  appName: string;
+  brandMark?: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+  status?: string;
+  statusTone?: 'success' | 'info' | 'warning';
+  homeHref?: string;
+  actionsLabel?: string;
+  skipLinkLabel?: string;
+  actions: ProductShellAction[];
+  children: ReactNode;
+  headerLeading?: ReactNode;
+  headerTrailing?: ReactNode;
+}
+
+export const ProductShell = observer(function ProductShell({
+  appName,
+  brandMark,
+  eyebrow,
+  title,
+  description,
+  status,
+  statusTone = 'info',
+  homeHref = '/',
+  actionsLabel,
+  skipLinkLabel,
+  actions,
+  children,
+  headerLeading,
+  headerTrailing,
+}: Readonly<ProductShellProps>) {
+  const { locale, t } = useI18n();
+  const uiStore = useOptionalRootStore()?.ui;
+  const defaultLabels = {
+    actionsLabel: t('common.navigation.label', { appName }),
+    homeLinkLabel: t('common.navigation.home', { appName }),
+    skipLinkLabel: t('common.navigation.skip'),
+  };
+  const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
+  const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
+  const resolvedHomeLinkLabel = defaultLabels.homeLinkLabel;
+  const resolvedBrandMark =
+    brandMark ??
+    appName
+      .trim()
+      .split(/\s+/u)
+      .slice(0, 2)
+      .map((part) => part.slice(0, 1))
+      .join('')
+      .toLocaleUpperCase(locale);
+
+  return (
+    <>
+      <a className="xr-skip-link" href="#xr-content">
+        {resolvedSkipLinkLabel}
+      </a>
+      <main
+        className="xr-shell"
+        data-sidebar-open={uiStore?.sidebarOpen ?? false}
+        data-theme={uiStore?.resolvedTheme ?? 'light'}
+        data-theme-preference={uiStore?.theme ?? 'system'}
+      >
+        <header className="xr-header">
+          <div className="xr-header__brand-group">
+            {headerLeading}
+            <a aria-label={resolvedHomeLinkLabel} className="xr-brand" href={homeHref}>
+              <span aria-hidden="true" className="xr-brand__mark">
+                {resolvedBrandMark || 'A'}
+              </span>
+              <span>{appName}</span>
+            </a>
+          </div>
+          <div className="xr-header__controls">
+            <div className="xr-header__primary-controls">
+              <LanguageSwitcher />
+              <ThemeSwitcher />
+              {status ? <UiStatusPill label={status} tone={statusTone} /> : null}
+            </div>
+            {headerTrailing}
+          </div>
+        </header>
+
+        <section className="xr-hero">
+          <div className="xr-hero__copy">
+            <p className="xr-eyebrow">{eyebrow}</p>
+            <h1>{title}</h1>
+            <p className="xr-hero__description">{description}</p>
+            {actions.length > 0 ? (
+              <nav aria-label={resolvedActionsLabel} className="xr-actions">
+                {actions.map((action) => (
+                  <UiButton
+                    aria-current={action.isCurrent ? 'page' : undefined}
+                    href={action.href}
+                    key={action.label}
+                    variant={action.variant}
+                  >
+                    {action.label}
+                  </UiButton>
+                ))}
+              </nav>
+            ) : null}
+          </div>
+        </section>
+
+        <div className="xr-content" id="xr-content" tabIndex={-1}>
+          {children}
+        </div>
+      </main>
+    </>
+  );
+});

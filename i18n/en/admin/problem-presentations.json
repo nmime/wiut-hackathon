@@ -1,0 +1,9 @@
+{
+  "admin.apiResponseStudio.eyebrow": "API operations",
+  "admin.apiResponseStudio.title": "API Response Studio",
+  "admin.apiResponseStudio.description": "Review API response coverage, synchronize OpenAPI sources, and control how each response is presented across supported clients.",
+  "admin.apiResponseStudio.readOnly": "Read-only access",
+  "admin.apiResponseStudio.history.details": "Revision data",
+  "admin.apiResponseStudio.history.empty": "No studio changes have been recorded.",
+  "admin.apiResponseStudio.history.pagination": "History pages"
+}

@@ -1,0 +1,105 @@
+{
+  "name": "site-app",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/frontend/site/pages",
+  "projectType": "application",
+  "tags": ["platform:frontend", "type:frontend-app", "scope:user", "fsd:layer:app"],
+  "// targets": "to see all targets run: nx show project site-app --web",
+  "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" vike dev --host localhost --port 4203"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "NODE_ENV=production node scripts/build.mjs && NODE_ENV=production tsc --project tsconfig.server-build.json && node scripts/link-server-node-modules.mjs"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": [
+            "@fastify/static",
+            "@tanstack/react-query",
+            "@vitejs/plugin-react",
+            "fastify",
+            "mobx",
+            "mobx-react-lite",
+            "react",
+            "react-dom",
+            "typescript",
+            "vike",
+            "vike-react",
+            "vite"
+          ]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/site"]
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "VITE_CONFIG=\"{configFile:'./site.vite.config.mts'}\" vike preview --host localhost --port 4203"
+      }
+    },
+    "start": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "NODE_ENV=production SITE_APP_PORT=4203 node --experimental-strip-types server/index.ts"
+      }
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["build"],
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "node scripts/smoke-vike-build.mjs"
+      },
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/site"]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "tsc --noEmit --project tsconfig.app.json"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["typescript"]
+        }
+      ]
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/site",
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/frontend/site"]
+    }
+  }
+}

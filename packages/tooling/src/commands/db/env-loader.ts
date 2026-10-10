@@ -1,0 +1,3 @@
+import { existsSync, readFileSync } from "node:fs";
+export function loadDotEnv(file = ".env") { if (!existsSync(file)) return; for (const rawLine of readFileSync(file, "utf8").split(/\r?\n/u)) { const line = rawLine.trim(); if (!line || line.startsWith("#")) continue; const match = /^(?<key>[A-Za-z_][A-Za-z0-9_]*)=(?<value>.*)$/u.exec(line); if (!match?.groups) continue; const { key } = match.groups; let { value } = match.groups; if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) value = value.slice(1, -1); process.env[key] ??= value; } }
+export function isTruthyEnv(value: unknown) { return ["1", "true", "yes", "on"].includes(String(value ?? "").trim().toLowerCase()); }

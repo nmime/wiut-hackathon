@@ -1,0 +1,59 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "boilerplate.fullname" . }}
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  tls:
+    {{- $tlsGroups := .Values.ingress.tls }}
+    {{- if and (empty $tlsGroups) .Values.ingress.tlsSecretName }}
+    {{- /*
+      No explicit grouping: one certificate covers whatever hosts are enabled. This is what a
+      setup-generated host table relies on, because it cannot know the release's secret name.
+    */}}
+    {{- $derivedHosts := list }}
+    {{- range $host := .Values.ingress.hosts }}
+    {{- $derivedHosts = append $derivedHosts (toString $host.host) }}
+    {{- end }}
+    {{- $tlsGroups = list (dict "secretName" .Values.ingress.tlsSecretName "hosts" (uniq $derivedHosts)) }}
+    {{- end }}
+    {{- range $tls := $tlsGroups }}
+    {{- $enabledHosts := list }}
+    {{- range $hostname := $tls.hosts }}
+    {{- range $host := $.Values.ingress.hosts }}
+    {{- if and (eq $host.host $hostname) (or (not (hasKey $host "enabled")) $host.enabled) (eq (include "boilerplate.appEnabled" (dict "root" $ "appId" $host.service)) "true") }}
+    {{- $enabledHosts = append $enabledHosts $hostname }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
+    {{- if gt (len $enabledHosts) 0 }}
+    - secretName: {{ $tls.secretName }}
+      hosts:
+        {{- range $hostname := $enabledHosts }}
+        - {{ $hostname | quote }}
+        {{- end }}
+    {{- end }}
+    {{- end }}
+  rules:
+    {{- range $host := .Values.ingress.hosts }}
+    {{- if and (or (not (hasKey $host "enabled")) $host.enabled) (eq (include "boilerplate.appEnabled" (dict "root" $ "appId" $host.service)) "true") }}
+    - host: {{ $host.host | quote }}
+      http:
+        paths:
+          {{- range $path := $host.paths }}
+          - path: {{ $path | quote }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "boilerplate.fullname" $ }}-{{ $host.service }}
+                port:
+                  name: http
+          {{- end }}
+    {{- end }}
+    {{- end }}
+{{- end }}

@@ -1,0 +1,142 @@
+// @requirements REQ-AUTH-TENANT-004
+import { describe, expect, it } from 'vitest';
+import type {
+  AdminAuditLogRecord,
+  AuthPermissionRecord,
+  AuthRoleWithPermissions,
+  AuthUserPersistenceRecord,
+} from '@app/backend-feature-auth-shared';
+import { AdminUsersReadPermission, UserProfileReadPermission } from '@app/common-authz';
+import { toAdminAuditLogView, toAdminRoleView, toAdminUserView, toPermissionView } from './index';
+
+const baseUser = (partial: Partial<AuthUserPersistenceRecord> = {}): AuthUserPersistenceRecord => ({
+  id: 'user-id',
+  tenantId: 'tenant-1',
+  email: 'user@example.com',
+  displayName: 'User',
+  passwordHash: 'redacted',
+  status: 'active',
+  roles: ['user'],
+  permissions: [UserProfileReadPermission],
+  locale: 'en',
+  theme: 'system',
+  lastLoginAt: new Date('2026-01-04T00:00:00.000Z'),
+  avatarUrl: '',
+  avatarHash: '',
+  avatarStatus: 'none',
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+  ...partial,
+});
+
+describe('toAdminUserView', () => {
+  it('includes displayName and a real lastLoginAt timestamp', () => {
+    expect(toAdminUserView(baseUser())).toMatchObject({
+      displayName: 'User',
+      lastLoginAt: '2026-01-04T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+    });
+  });
+
+  it('omits displayName and lastLoginAt when absent or at the epoch', () => {
+    const view = toAdminUserView(baseUser({ displayName: undefined, lastLoginAt: new Date(0) }));
+
+    expect(view).not.toHaveProperty('displayName');
+    expect(view).not.toHaveProperty('lastLoginAt');
+  });
+
+  it('omits lastLoginAt when the source date is null', () => {
+    const user = baseUser();
+    Reflect.set(user, 'lastLoginAt', null);
+    const view = toAdminUserView(user);
+
+    expect(view).not.toHaveProperty('lastLoginAt');
+  });
+});
+
+const baseAudit = (partial: Partial<AdminAuditLogRecord> = {}): AdminAuditLogRecord => ({
+  id: 'audit-id',
+  tenantId: 'tenant-1',
+  actorUserId: 'actor-id',
+  action: 'admin.user.status.update',
+  resource: 'admin.users',
+  targetUserId: 'user-id',
+  before: { status: 'active' },
+  after: { status: 'disabled' },
+  metadata: { requestId: 'req-1' },
+  createdAt: new Date('2026-01-03T00:00:00.000Z'),
+  ...partial,
+});
+
+describe('toAdminAuditLogView', () => {
+  it('includes actorUserId and targetUserId when present', () => {
+    expect(toAdminAuditLogView(baseAudit())).toMatchObject({
+      actorUserId: 'actor-id',
+      targetUserId: 'user-id',
+    });
+  });
+
+  it('omits actorUserId and targetUserId when absent', () => {
+    const view = toAdminAuditLogView(baseAudit({ actorUserId: undefined, targetUserId: undefined }));
+
+    expect(view).not.toHaveProperty('actorUserId');
+    expect(view).not.toHaveProperty('targetUserId');
+  });
+});
+
+describe('toAdminRoleView', () => {
+  it('maps a role aggregate and orders its permission keys', () => {
+    const entry: AuthRoleWithPermissions = {
+      role: {
+        id: 'role-admin',
+        tenantId: 'tenant-1',
+        key: 'admin',
+        label: 'Administrator',
+        description: '',
+        isSystem: true,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      },
+      permissionKeys: [AdminUsersReadPermission, UserProfileReadPermission],
+    };
+
+    expect(toAdminRoleView(entry)).toEqual({
+      id: 'role-admin',
+      role: 'admin',
+      label: 'Administrator',
+      description: '',
+      isSystem: true,
+      permissions: [UserProfileReadPermission, AdminUsersReadPermission],
+    });
+  });
+});
+
+describe('toPermissionView', () => {
+  it('projects the catalog fields of a permission entity', () => {
+    const entity: AuthPermissionRecord = {
+      id: 'permission-id',
+      key: AdminUsersReadPermission,
+      resource: 'admin.users',
+      action: 'read',
+      description: 'Read admin users',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    };
+
+    expect(toPermissionView(entity)).toEqual({
+      permission: AdminUsersReadPermission,
+      resource: 'admin.users',
+      action: 'read',
+      description: 'Read admin users',
+    });
+  });
+});
+
+it('renders avatar metadata while safely handling an identity without email', () => {
+  const user = baseUser({ avatarUrl: 'https://example.test/avatar.png', avatarStatus: 'provider' });
+  Reflect.set(user, 'email', undefined);
+  expect(toAdminUserView(user)).toMatchObject({
+    email: '',
+    avatarUrl: 'https://example.test/avatar.png',
+    avatarStatus: 'provider',
+  });
+});

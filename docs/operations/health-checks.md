@@ -1,0 +1,78 @@
+# Health, readiness, and liveness runbook
+
+Endpoints are provided by the shared `BaseHealthController` (`libs/backend/common/health/lib`).
+See [architecture docs](../architecture.md) for module boundaries and [API conventions](../api-conventions.md) for response envelope shapes.
+
+## Endpoints
+
+| Endpoint              | Method | Auth       | Purpose                                                                                      |
+| --------------------- | ------ | ---------- | -------------------------------------------------------------------------------------------- |
+| `GET /live`           | GET    | None       | Process liveness — always returns 200 if the process is running.                             |
+| `GET /health`         | GET    | None       | General health with indicator details (safe subset).                                         |
+| `GET /ready`          | GET    | None       | Dependency readiness — returns 503 when required dependencies are down.                      |
+| `GET /health/private` | GET    | Private IP | Full health envelope guarded by the private-network IP allow-list. Details remain sanitized. |
+
+## Expected response shapes
+
+`/live`, `/ready`, and `/health/private` return the shared envelope:
+
+```json
+{
+  "data": {
+    "app": "<app-name>",
+    "status": "ok" | "degraded" | "error",
+    "uptime": 12345.67,
+    "timestamp": "2025-01-01T00:00:00.000Z",
+    "dependencies": [
+      { "name": "database", "status": "ok", "required": true, "detail": "..." }
+    ],
+    "checks": [
+      {
+        "name": "database",
+        "status": "ok",
+        "required": true,
+        "durationMs": 2,
+        "details": { "reachable": true }
+      }
+    ]
+  }
+}
+```
+
+`GET /health` returns the flat shape (no `data` wrapper) with only `status`, `uptime`, `timestamp`, and `checks` — it omits the `app` and `dependencies` fields present in the envelope.
+
+## Status resolution
+
+| Condition                                       | Status     | HTTP                              |
+| ----------------------------------------------- | ---------- | --------------------------------- |
+| All checks `ok`                                 | `ok`       | 200                               |
+| Any check `degraded`, or optional check `error` | `degraded` | 200                               |
+| Required check `error`                          | `error`    | 200 (`/health`) or 503 (`/ready`) |
+
+Sensitive detail keys (e.g. `password`, `token`, `secret`, `private_key`) are always redacted to `[redacted]` in public endpoints.
+
+An `ok` response from a Map-backed in-memory fixture proves that process's
+configured checks only. `AUTH_PERSISTENCE=memory` skips durable database checks
+and loses accounts, sessions, and link state on restart; auth composition refuses
+that mode in production. Runtime acceptance must identify the configured
+PostgreSQL or MongoDB provider and its required indicators separately.
+
+## `/ready` — orchestrator probe
+
+Kubernetes `readinessProbe`, Compose health-check, and load-balancer probes should target `/ready`.
+When any required indicator fails, `/ready` returns **HTTP 503** with the failure details so orchestrators remove the pod from the pool.
+
+## Triage: `/ready` returning 503
+
+1. **Check which indicator failed** — inspect the `checks` array for `status: "error"` with `required: true`.
+2. **Common indicators and fixes:**
+   - `database` — the selected PostgreSQL or MongoDB provider is unreachable. Check `DATABASE_URL`, or `MONGODB_URI`/`MONGODB_DATABASE`, network, and provider logs. See [dependency readiness triage](dependency-triage.md).
+   - `database-transactions` — MongoDB is reachable but its topology is not transaction-capable. Standalone, session-less, non-primary, replica-set-mismatched, and unsupported wire-version deployments fail this required check.
+   - `database-migrations` — optional PostgreSQL migration-drift detail. For MongoDB this is a required readiness check: the adapter verifies the shared native migration ledger and expected collection validators/indexes on each probe. The migration job separately applies and verifies selected feature migrations; this shared indicator does not certify every feature migration or provider delivery.
+   - `redis` — Redis connection refused. Check `REDIS_URL` or `REDIS_HOSTS`. See [dependency readiness triage](dependency-triage.md).
+   - `nats` — NATS connection refused. Check `NATS_SERVERS`. See [dependency readiness triage](dependency-triage.md).
+3. **Verify from inside the container** (if accessible):
+   ```bash
+   curl -s "http://localhost:${PORT:-80}/ready" | jq .
+   ```
+4. **Check logs** for connection errors at startup. Logs include `requestId` for correlation; see [structured logging](logging.md).

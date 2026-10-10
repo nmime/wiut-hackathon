@@ -1,0 +1,296 @@
+# Architecture
+
+This repository is an Nx monorepo with flat deployable applications and small shared libraries. PostgreSQL and MongoDB are mutually exclusive durable-provider choices behind provider-neutral feature ports; existing presets select PostgreSQL unless explicitly swapped.
+
+## Frontend apps
+
+No deployable is the monorepo default. Every frontend has a distinct product
+or runtime role, and the fullstack core profile selects them together.
+Use the generated [Project Catalog](project-catalog.md) for exact application
+IDs, Nx roots, runtimes, dependencies, and template hostnames.
+The frontend runtime is split by deployment shape. `landing-app` is the
+Astro + React islands marketing surface, `site-app` is the Vike + React SSR
+product/user site scaffold, `admin-app` remains a Vite React SPA, and
+`user-app` is the Vite user SPA. `mobile-app` is the Expo/React Native app and consumes the
+Tamagui native facade from `@app/frontend-ui-native`. Web apps consume
+shadcn-style React DOM primitives from
+`@app/frontend-ui-web`, non-visual i18n/query/state helpers from
+`@app/frontend-runtime`, typed backend wrappers from `libs/frontend/api-client`,
+and browser-safe request primitives from `libs/frontend/api-support`
+(`@app/frontend-api-support`). Keep this API-support alias canonical; do not add
+secondary TS path aliases that point at the same source root.
+
+## Backend apps
+
+Each API imports app-specific health configuration from its local `health.config.ts` and uses shared health primitives from `@app/backend-common-health`. The shared `BaseHealthController` exposes `GET /health`, `GET /health/private`, `GET /live`, and `GET /ready`; app e2e tests exercise the HTTP endpoints with Nest testing utilities and `supertest`.
+
+### Request context (CLS)
+
+Every HTTP request runs inside a **Continuation Local Storage** context via Node's built-in `AsyncLocalStorage`, with zero new dependencies.
+
+**Pipeline:**
+
+```
+Request → ClsInterceptor (enters CLS, generates requestId from x-request-id or UUID)
+         → ValidationPipe
+         → Controller (requestContext.getRequestId())
+         → Service (requestContext.getRequestId())
+         → Repository
+         ← ExceptionsFilter (requestContext.getRequestId(), sets x-request-id header)
+```
+
+**API:**
+
+```typescript
+import { requestContext } from '@app/backend-common-bootstrap';
+
+const requestId = requestContext.getRequestId(); // string | undefined
+requestContext.set('userId', 'abc-123'); // attach to context
+const userId = requestContext.get('userId'); // read from context
+```
+
+**Why CLS over middleware headers:** async/await, promises, and NestJS interceptors naturally cross async boundaries. `AsyncLocalStorage` follows the execution context automatically — no manual passing, guaranteed same ID across the entire pipeline.
+
+### Error handling (RFC 9457)
+
+All HTTP errors are **RFC 9457 Problem Details** with `Content-Type: application/problem+json`.
+
+**Exception factory** — registered definitions resolved at class creation time:
+
+```typescript
+const NotFoundException = Exception({
+  name: 'NotFoundException',
+  kind: ExceptionKind.Client,
+  problemType: 'resource-not-found',
+});
+```
+
+- **Custom type registry**: `@app/common-problem-details` owns URI, title, status, safe default detail, resolution guidance, and extension documentation. The `landing-app` (Astro) and `site-app` (Vike) frontends serve the registry documentation at `/problems`.
+- **Generic HTTP errors**: omit `problemType`; they serialize with `type: "about:blank"` and status-defined semantics.
+- **Runtime context** only accepts `{ extensions? (explicitly public), meta? (private diagnostics), cause? }`.
+- **Occurrence identity**: the HTTP boundary derives an absolute opaque `instance` URI from a validated request ID; request paths are never used as occurrence identifiers.
+- **Domain exceptions:** `ResourceNotFoundException`, `UnauthorizedException`, `ForbiddenException`, `ConflictException`, `BadRequestException`, `InternalException`, `ClientDataValidationException`
+- **Security and correctness:** `HttpException.message` and arbitrary response bodies are never serialized, unknown errors map to a generic 500, and body/HTTP status cannot diverge.
+
+## Shared libraries
+
+The `libs/common` namespace is intentionally small after the frontend/backend split. It is reserved for code that is platform-neutral or contractual enough to be consumed by both sides, plus a few implementation-neutral contracts that must stay stable while backend or frontend adapters change.
+
+Current `libs/common` placement decisions:
+
+| Project                                                       | Decision    | Why it remains or moves                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `libs/common/api-contracts` (`@app/common-api-contracts`)     | Keep common | Generated OpenAPI/contract review types describe the API boundary between backend producers and frontend/generated clients. It must stay independent of either runtime even when direct frontend app imports are discouraged in favor of `@app/frontend-api-client`. |
+| `libs/common/config` (`@app/common-config`)                   | Keep common | The Joi-backed `createConfig` helper is a tiny platform-neutral configuration accessor used by backend config modules today and safe for other Node/shared packages without pulling Nest app concerns into common.                                                   |
+| `libs/common/i18n/{runtime,keys}`                             | Keep common | Platform-neutral locale parsing, merge/fallback/interpolation mechanics and generated translation-key types. Backend/frontend/bot catalogs live under their owning runtime scopes.                                                                                   |
+| `libs/common/notifications` (`@app/common-notifications`)     | Keep common | Framework-neutral notification event, template, delivery, channel-content, provider, and error contracts. Database and transport implementations stay backend-owned.                                                                                                 |
+| `libs/common/problem-details` (`@app/common-problem-details`) | Keep common | Framework-neutral custom problem type identities and documentation metadata consumed by backend producers and both apex-capable documentation pages.                                                                                                                 |
+| `libs/common/websocket` (`@app/common-websocket`)             | Keep common | Provider-neutral websocket/broadcast contracts with no browser, Nest, or backend-only dependency; the project is tagged `platform:shared`.                                                                                                                           |
+| `libs/common/feature-flags` (`@app/common-feature-flags`)     | Keep common | The flag key/value/context/provider contract plus static/environment implementations are shared by backend providers and future frontend/client gates; durable adapters live under the selected PostgreSQL or MongoDB infrastructure tree.                           |
+
+- `libs/backend/common/bootstrap/lib` creates Nest apps with the common backend foundation: CLS request context (`ClsInterceptor`), raw-body capture, cookie parsing, Helmet, deny-all robots, extended query parsing, request logging, CORS, rate limiting, validation, response mapping, exception filtering, and Swagger setup.
+- `libs/backend/common/exception/lib` provides RFC 9457 Problem Details exceptions with the `Exception` factory, domain exception classes, localization, safe conversion, and OpenAPI schemas. Custom metadata comes from `@app/common-problem-details`; runtime context is limited to `{ extensions?, meta?, cause? }`. The public alias is singular: `@app/backend-common-exception` -> `libs/backend/common/exception/lib`.
+- `libs/backend/common/health/lib` provides the shared `BaseHealthController`, `HealthService`, health decorators/guards/interceptors, and indicator contract. Apps contribute app-specific health providers/config, while the shared controller owns `/health`, `/health/private`, `/live`, and `/ready`.
+- `libs/backend/common/response/lib` is the response mapper layer. It standardizes `{ data }` success responses, maps `neverthrow` results, and exposes `ExceptionsResponseTransformer`/`ExceptionsFilter`.
+- `libs/backend/common/swagger/lib` centralizes OpenAPI/Swagger setup with session-cookie security and problem response schemas.
+- `libs/common/feature-flags` defines the cross-platform feature flag provider contract plus static/environment implementations; PostgreSQL and MongoDB provide mutually exclusive durable adapters.
+- `libs/common/notifications` defines framework-neutral notification domain contracts. Application ports are notification-feature-owned, both durable providers implement them, and transport strategies currently cover Telegram Bot, Discord Bot, Resend, MailPace, FCM, and APNs behind the provider resolver.
+- `libs/backend/common/validation/lib` creates `createValidationPipe` validation exceptions backed by RFC 9457 Problem Details. Validation failures use the `errors[]` extension with field `detail` and JSON Pointer `pointer` entries.
+- `libs/backend/feature/auth/shared/lib` contains auth roles, permissions, user/session contracts, default access-policy helpers, reusable session guards/RBAC decorators, and a disabled-by-default OAuth/OIDC foundation.
+- `libs/backend/feature/auth/main/lib` contains register/login/me/logout controllers, password authentication, provider projection, and server-session orchestration.
+- `libs/backend/feature/user/shared/lib` and `libs/backend/feature/user/main/lib` contain the protected user profile feature.
+- Admin shared code is split by runtime: `libs/frontend/feature/admin/shared/lib` (`@app/frontend-feature-admin-shared`) contains frontend-safe admin contracts, while `libs/backend/feature/admin/shared/lib` (`@app/backend-feature-admin-shared`) contains backend admin RBAC, permission logic, and the reusable admin guard. `libs/backend/feature/admin/main/lib` owns only cross-cutting admin profile, dashboard, role, user, and settings orchestration.
+- Domain administration belongs to `libs/backend/feature/<domain>/admin/lib`, tagged `type:feature-admin`. `@app/backend-feature-notification-admin` owns notification templates, segments, and broadcast HTTP; `@app/backend-feature-audit-log-admin` owns read-only audit inspection and its admin-facing writer. `admin-app-api` is a thin composition root that imports these domain modules instead of owning or reaching through their controllers.
+- Bot behavior is feature code: Discord logic lives in `@app/backend-feature-discord-bot`, Telegram runtime logic in `@app/backend-feature-telegram-bot`, and the narrow sibling transport contract in `@app/backend-feature-telegram-shared`. Deployable bot APIs stay under `apps/backend/<scope>/<app>`.
+- `libs/frontend/api-support` is the frontend-safe non-UI utility boundary for API request state: locale getters, `apiFetch`/`apiRequest`, header construction, URL resolution, and fallback API error copy. It is the only non-test frontend source that may call raw `fetch`.
+- `libs/frontend/api-client` is the generated/typed SDK layer. It wraps backend OpenAPI clients and may depend on API support, shared contracts, and common utilities, but not on React UI.
+- `libs/common/design-tokens` is the renderer-neutral design-token package for web CSS variables and native Tamagui theme values.
+- `libs/frontend/runtime` contains non-visual frontend runtime helpers such as i18n, query providers, shell state, locale, theme, and guarded platform utilities.
+- `libs/frontend/ui-web` contains the shadcn-style React DOM UI facade for Astro islands, Vike SSR pages, and the admin SPA.
+- `libs/frontend/ui-native` contains the Tamagui native UI facade for `mobile-app` and future Expo/React Native surfaces.
+- `libs/frontend/ui-web` and `libs/frontend/ui-native` are the explicit renderer owners; non-visual concerns live in `libs/frontend/runtime`.
+
+## Nx architecture tags
+
+Projects use multiple tag dimensions so module-boundary rules can describe architecture without relying on folder names alone.
+
+- `platform:backend`, `platform:frontend`, `platform:shared` describe runtime surface.
+- `type:backend-app` and `type:frontend-app` mark deployable applications and keep app-specific constraints explicit; apps should not also carry a generic `type:app` tag.
+- `type:feature-main` is reserved for backend feature modules that own controllers, use cases, and application-facing orchestration.
+- `type:feature-admin` is reserved for backend domain administration modules. These libraries own privileged controllers, admin DTOs, and admin-only orchestration while deployable admin APIs remain thin composition roots.
+- `type:feature-shared` is for feature-level contracts/services shared by multiple apps or feature-main libs within the same runtime platform. Admin uses both frontend and backend feature-shared libraries; keep their `platform:*` tags separate.
+- `type:data-access` is reserved for database modules with entities, repositories, and persistence adapters.
+- `type:test-util` is reserved for test factories, Testcontainers setup, and component-test harnesses; test utilities should not also carry `type:common`.
+- `type:asset` is for source-controlled static inputs such as scoped i18n catalog projects; common catalog adapters may depend on these assets, but assets should not import application code.
+- `type:common`, `type:ui`, `type:util`, and `type:sdk` describe shared building blocks. Frontend apps may consume SDKs directly, SDKs may consume non-UI utilities, and UI should stay on UI/common/util dependencies rather than importing SDKs.
+- `scope:<domain>` identifies a single ownership boundary such as `scope:auth`, `scope:admin`, `scope:user`, `scope:landing`, `scope:feature-flags`, or `scope:shared`. Feature-owned database libraries live under the selected provider, use `type:data-access`, and keep the same `scope:<domain>` tag instead of replacing domain ownership with a database scope.
+- `boundary:backend-kernel`, `boundary:infrastructure-adapter`, `boundary:interface-helper`, and `boundary:test-util` describe Clean Architecture layer boundaries for backend libraries and constrain which layers may depend on which; `fsd:layer:*` (e.g. `fsd:layer:shared`, `fsd:layer:app`) describes frontend Feature-Sliced Design layers; and `framework:neutral` marks libraries that may only depend on other `framework:neutral` libraries or `type:asset`. These additional dimensions are defined and enforced in `eslint.config.js`.
+
+New libraries should use the taxonomy above and, where practical, keep feature, data-access, and test-util responsibilities split.
+
+Platform boundaries are enforced by tags as well as paths: frontend projects must not import `platform:backend` libraries, backend projects must not import `platform:frontend` libraries, and admin shared code must stay on the correct side of the frontend/backend split.
+
+## Library naming conventions
+
+Backend feature libraries use `libs/backend/feature/<scope>/<layer>/lib/...` paths and flattened `@app/backend-feature-<scope>-<layer>` aliases. Admin shared imports must use the explicit platform alias for their runtime:
+
+- Feature main: `@app/backend-feature-auth-main`, `@app/backend-feature-user-main`, `@app/backend-feature-admin-main`.
+- Feature shared: `@app/backend-feature-auth-shared`, `@app/backend-feature-user-shared`, `@app/frontend-feature-admin-shared` (frontend admin contracts), and `@app/backend-feature-admin-shared` (backend admin RBAC/permission logic).
+- Bot features: `@app/backend-feature-discord-bot`, `@app/backend-feature-telegram-bot`.
+- Data access: `@app/backend-postgres-main*` or `@app/backend-mongodb-main*`, never both in one configured runtime.
+- Test utilities: `@app/backend-common-component-test`.
+- Frontend API support: `@app/frontend-api-support`.
+- Frontend API SDK: `@app/frontend-api-client`.
+- Frontend runtime: `@app/frontend-runtime`.
+- Frontend web UI: `@app/frontend-ui-web`.
+- Frontend native UI: `@app/frontend-ui-native`.
+- Common design tokens: `@app/common-design-tokens`.
+- Backend exception foundation: `@app/backend-common-exception` only. Keep the path singular at `libs/backend/common/exception/lib` and Nx project name `@app/backend-common-exception`.
+- Backend health foundation: `@app/backend-common-health` at `libs/backend/common/health/lib`.
+
+Data-access libraries expose repositories and Nest modules through public barrels; provider-specific entities/documents remain private. Feature libraries consume neutral ports rather than importing app code or depending on both providers.
+
+## Durable data-access layers
+
+Shared infrastructure lives under `libs/backend/<provider>/main/shared/lib`; feature-owned data-access libraries live under the same provider and owning scope. Import them through their `@app/backend-<provider>-main-*` aliases instead of spelling source-file paths in application code.
+
+- `@app/backend-postgres-main` (`libs/backend/postgres/main/shared/lib`, source root `libs/backend/postgres/main/shared/lib/src`) owns shared Postgres/MikroORM configuration, the root module helper, and transaction helpers.
+- `@app/backend-postgres-main-auth` (`libs/backend/postgres/main/auth/lib`, source root `libs/backend/postgres/main/auth/lib/src`) owns auth persistence objects such as `entity/` and `repository/` exports.
+- `@app/backend-mongodb-main` owns validated native-driver configuration,
+  topology checks, health indicators, and snapshot/majority/primary transaction
+  helpers with bounded retries.
+- The provider-neutral OTel library owns only HTTP, Fastify, NestJS, Redis, and
+  Node-runtime instrumentation. PostgreSQL and MongoDB shared provider projects
+  own their respective database instrumentation factories behind the narrow
+  `@app/backend-postgres-main-otel` and `@app/backend-mongodb-main-otel`
+  entrypoints. Those entrypoints do not export or evaluate provider modules or
+  drivers. Setup-generated bootstrap composition imports one selected factory,
+  registers telemetry, and only then dynamically imports the Nest app module;
+  it never statically imports both providers.
+- `@app/backend-mongodb-main-auth`,
+  `@app/backend-mongodb-main-feature-flags`, and
+  `@app/backend-mongodb-main-notification` own private document models, strict
+  validators, deterministic indexes, and provider-neutral adapter outputs.
+
+Configuration is environment driven. PostgreSQL uses `DATABASE_URL` or the
+`POSTGRES_*` fields and explicit MikroORM migrations recorded in
+`mikro_orm_migrations`. MongoDB requires `MONGODB_URI` and
+`MONGODB_DATABASE`, normally pins `MONGODB_REPLICA_SET`, and records verified
+native collection/validator/index migrations in `mongo_migrations`.
+
+MongoDB preserves behavior, not PostgreSQL's physical mechanisms. It has no
+foreign keys, savepoints, or advisory locks; adapters use unique indexes,
+expected-revision CAS, per-tenant serialization documents, leases, and
+claim-token fencing. Related mutation/audit/outbox documents commit in one
+transaction, but NATS and email/provider delivery remain at-least-once outbox
+work outside that transaction. TTL cleanup and MongoDB DDL are asynchronous and
+non-transactional respectively. See [Database migration standards](database-migrations.md).
+
+Repository wrappers return `neverthrow` `ResultAsync` values so feature code can handle persistence failures explicitly. New data-access libraries should follow the same shape: `entity/`, `repository/`, a Nest module, and a public `index.ts` barrel. Testcontainers-backed component tests live beside repository code as `*.component-spec.ts` and run only through the `component-test` target.
+
+## API contracts and clients
+
+OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/contracts/openapi/*.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated`. Backend API surface changes must keep these artifacts in sync with the source controllers and DTOs.
+
+## i18n and Problem Details
+
+Supported locales are declared by the `supportedLocales` tuple in `@app/common-i18n-runtime` and are deliberately not restated here; root locale catalogs live under `i18n/<locale>/<scope>/<component>.json`, and fallback is `defaultLocale`. Frontend feature loaders own admin/user/landing catalogs, `@app/frontend-i18n-shared` owns shared frontend copy, `@app/backend-common-i18n` owns common/error backend copy, and each bot feature merges its own assets. Backend exception localization preserves stable, product-owned `https://<root-domain>/problems#<code>` identifiers and localizes the standard `title` and `detail` members. Clients use the problem `type` as the primary identifier, then status or the documented `code` alias; they never branch on localized text.
+
+## Testing layers
+
+- Unit tests stay under the `test` target and use the shared Vitest coverage
+  contract. New projects start at 100%; existing projects may carry explicit
+  negative uncovered-item budgets that must only move toward zero.
+- Component tests run under separate `component-test` targets and use Testcontainers for real service dependencies. They require Docker and are intentionally separate from unit tests so normal `test` targets do not start containers.
+- PostgreSQL component suites use the shared Postgres Testcontainers helpers;
+  MongoDB adapter suites use transaction-capable MongoDB Testcontainers and run
+  through each library's explicit `component-test` target.
+- Backend e2e tests should exercise Nest apps through HTTP with `supertest`; DB-backed e2e/component tests should use Testcontainers and isolated fixtures.
+- Frontend e2e runs instrumented Playwright browser coverage smokes for the two
+  Vite SPAs (`admin-app` and `user-app`). `landing-app`, `site-app`, and
+  `mobile-app` use renderer-specific Astro build, Vike SSR build, and Expo web
+  export smokes; those targets do not publish equivalent browser coverage.
+
+## E2E coverage
+
+Backend e2e tests run as explicit Nx `e2e` targets for the admin, user, and
+auth APIs. They use Nest testing modules plus `supertest` for real HTTP requests
+and write V8 coverage reports under `coverage/e2e/apps/backend/*`. The Discord
+and Telegram API projects currently have unit/test targets but no Nx `e2e`
+target. Unit coverage gates remain separate and enforce each project's
+configured percentage or uncovered-item budget.
+
+Frontend e2e tests cover the active frontend shapes: Vite SPA browser smokes
+for `admin-app` and `user-app`, an Astro static build smoke for `landing-app`,
+the Vike SSR build smoke for `site-app`, and an Expo web-export smoke for
+`mobile-app`. `VITE_E2E_COVERAGE=true` enables `vite-plugin-istanbul` only for
+the Vite browser smokes; the other renderer smokes prove their build/export
+contracts without claiming browser coverage.
+
+Use `pnpm run test:e2e:coverage` to run the selected API e2e suites, the two
+instrumented Vite browser suites, and the three renderer-specific smoke targets.
+Playwright Chromium must be installed first with
+`pnpm exec playwright install chromium` locally, or
+`pnpm exec playwright install --with-deps chromium` in CI.
+
+## Deployable outputs
+
+Nx builds backend apps into `dist/apps/backend/*` and frontend apps into
+`dist/apps/frontend/*`. The root Dockerfile can package backend apps as Node
+runtime images and static frontend apps as nginx static images. `site-app`
+requires a Node SSR runtime image because Vike renders through the Fastify
+server in `apps/frontend/site/server`.
+
+## Current Nx topology diagram
+
+```mermaid
+graph TD
+  AdminApp[admin-app] --> ApiClient[@app/frontend-api-client]
+  UserApp[user-app] --> ApiClient
+  SiteApp[site-app] --> ApiClient
+  LandingApp[landing-app] --> FrontendUiWeb[@app/frontend-ui-web]
+  AdminApp --> FrontendUiWeb
+  UserApp --> FrontendUiWeb
+  SiteApp --> FrontendUiWeb
+  LandingApp --> FrontendRuntime[@app/frontend-runtime]
+  UserApp --> FrontendRuntime
+  SiteApp --> FrontendRuntime
+  ApiClient --> ApiSupport[@app/frontend-api-support]
+  ApiClient --> GeneratedClients[libs/frontend/api-client/lib/src/generated/**]
+  GeneratedClients --> OpenApi[apps/backend/*/*-app-api/contracts/openapi/*.json]
+  OpenApi --> SharedTypes[libs/common/api-contracts/lib/src/generated/**]
+  UserApp --> ConsumerPact[apps/frontend/app/contracts/consumers/frontend-auth.pact.json]
+  ConsumerPact --> AuthApi[auth-app-api]
+  AdminApi[admin-app-api] --> Bootstrap[@app/backend-common-bootstrap]
+  AdminApi --> AdminMain[@app/backend-feature-admin-main]
+  AdminApi --> NotificationAdmin[@app/backend-feature-notification-admin]
+  AdminApi --> AuditAdmin[@app/backend-feature-audit-log-admin]
+  NotificationAdmin --> NotificationMain[@app/backend-feature-notification-main]
+  NotificationAdmin --> AuditAdmin
+  UserApi[user-app-api] --> Bootstrap
+  AuthApi --> Bootstrap
+  Bootstrap --> Exception[@app/backend-common-exception]
+  Bootstrap --> Response[@app/backend-common-response]
+  Bootstrap --> Validation[@app/backend-common-validation]
+  AuthApi --> PgAuth[@app/backend-postgres-main-auth]
+  AuthApi --> PgShared[@app/backend-postgres-main]
+  AdminApi --> PgFlags[@app/backend-postgres-main-feature-flags]
+  PgFlags --> PgShared
+  AuthApi -. "MongoDB selection" .-> MongoAuth[@app/backend-mongodb-main-auth]
+  AuthApi -. "MongoDB selection" .-> MongoShared[@app/backend-mongodb-main]
+  AdminApi -. "MongoDB selection" .-> MongoFlags[@app/backend-mongodb-main-feature-flags]
+  MongoFlags --> MongoShared
+```
+
+## Current contract and persistence layout
+
+OpenAPI producer output is committed as JSON under `apps/backend/*/*-app-api/contracts/openapi/*.json`. The committed consumer Pact is `apps/frontend/app/contracts/consumers/frontend-auth.pact.json`. Shared generated contract/review types live under `libs/common/api-contracts/lib/src/generated/**`, and generated frontend clients live under `libs/frontend/api-client/lib/src/generated/**`. The authoritative manifest, schema, and typed loader are tooling-owned at `packages/tooling/config/api-contracts.json`, `packages/tooling/config/api-contracts.schema.json`, and `packages/tooling/src/commands/api/contracts-manifest.ts`; there is intentionally no repository-root `config/` subtree for these contract artifacts (the root `config/` directory holds only vite/metro workspace tsconfig-alias helpers).
+
+There is intentionally no repository-root contract artifact directory and no `openapi` or `consumers` artifact subtree inside `libs/common/api-contracts`; that library owns generated source under `lib/src/generated/**` only.
+
+Canonical durable data access lives under
+`libs/backend/{postgres,mongodb}/main/shared/lib` for shared provider
+infrastructure and `libs/backend/{postgres,mongodb}/main/<scope>/lib` for
+feature-owned persistence. The setup selection composes one provider. API errors
+standardize on RFC 9457 Problem Details through the singular
+`@app/backend-common-exception` alias.

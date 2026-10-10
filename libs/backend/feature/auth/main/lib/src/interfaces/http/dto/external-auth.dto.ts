@@ -1,0 +1,120 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsIn, IsOptional, IsString, IsUrl, IsUUID } from 'class-validator';
+import {
+  ExternalAuthIntent,
+  externalAuthIntents,
+  externalAuthProviders,
+  type ExternalAuthProvider,
+} from '@app/backend-feature-auth-shared';
+
+const legacyTenantProperty = {
+  format: 'uuid',
+  deprecated: true,
+  description: 'Deprecated compatibility field. The server ignores this value and derives tenant ownership.',
+} as const;
+
+export class ExternalAuthIntentDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiPropertyOptional({ enum: externalAuthIntents })
+  @IsOptional()
+  @IsString()
+  @IsIn(externalAuthIntents)
+  intent?: ExternalAuthIntent;
+
+  @ApiPropertyOptional({ writeOnly: true })
+  @IsOptional()
+  @IsString()
+  linkToken?: string;
+
+  @ApiPropertyOptional({ description: 'Absolute allowlisted HTTP(S) post-authentication return URL.', format: 'uri' })
+  @IsOptional()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
+  returnUrl?: string;
+}
+
+export class TelegramTmaDto extends ExternalAuthIntentDto {
+  @ApiProperty({ writeOnly: true })
+  @IsString()
+  initData!: string;
+}
+
+export class TelegramOidcSessionDto extends ExternalAuthIntentDto {}
+
+export class TelegramBotLinkDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ writeOnly: true })
+  @IsString()
+  linkToken!: string;
+
+  @ApiProperty()
+  @IsString()
+  providerSubject!: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  displayName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  locale?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  avatarUrl?: string;
+}
+
+export class LinkTokenDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ enum: externalAuthProviders })
+  @IsString()
+  @IsIn(externalAuthProviders)
+  provider!: ExternalAuthProvider;
+
+  @ApiPropertyOptional({ enum: externalAuthIntents })
+  @IsOptional()
+  @IsString()
+  @IsIn(externalAuthIntents)
+  intent?: ExternalAuthIntent;
+
+  @ApiPropertyOptional({ description: 'Absolute allowlisted HTTP(S) post-authentication return URL.', format: 'uri' })
+  @IsOptional()
+  @IsUrl({ protocols: ['http', 'https'], require_protocol: true, require_tld: false })
+  returnUrl?: string;
+}
+
+export class DiscordAuthorizationRequestDto extends ExternalAuthIntentDto {}
+
+export class DiscordCallbackQueryDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty()
+  @IsString()
+  code!: string;
+
+  @ApiProperty()
+  @IsString()
+  state!: string;
+}

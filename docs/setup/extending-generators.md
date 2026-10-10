@@ -1,0 +1,251 @@
+# Extending Generators
+
+This page explains the internal architecture of the NRB setup and feature generators, and how to extend them with new catalog entries, planner operations, filesystem adapters, and templates.
+
+## Architecture overview
+
+The setup engine consists of five layers:
+
+```
+CLI (setup.ts, add.ts)
+  ↓
+Schema (schema.ts) — Zod validation
+  ↓
+Presets (presets.ts) — preset → apps + capabilities
+  ↓
+Catalog (catalog.ts) — app/capability metadata, dependency expansion, validation
+  ↓
+Planner (planner.ts) — pure function: config + state → sorted operations
+  ↓
+Apply (apply.ts) — execute operations through filesystem adapter
+  ↓
+State (state.ts) — track file hashes for idempotency
+```
+
+Application, library, and feature templates live under
+`packages/tooling/src/generators/**`. The unified `pnpm nrb add` command invokes
+those Nx generators; the deprecated vertical-slice command delegates to the
+same feature generator rather than maintaining a second template path.
+
+## Adding a new app to the catalog
+
+Edit `packages/tooling/src/setup/catalog.ts`:
+
+```typescript
+// In appCatalog:
+"my-new-app": {
+  id: "my-new-app",
+  label: "My New App",
+  platform: "backend",           // "frontend" | "backend" | "e2e"
+  classification: "reference",  // or "optional"
+  runtime: "NestJS + Fastify API",
+  // Public hostnames are derived, never written here: a deployable app is reachable at
+  // `<app-id>.<deployment.publicDomain>`, or at the bare domain when it owns the apex.
+  deployable: true,
+  requiresCapabilities: ["postgres"],
+  requiresApps: [],
+  conflictsWithCapabilities: [],
+},
+```
+
+Then add the ID to the appropriate ID tuple in `schema.ts`:
+
+```typescript
+export const backendAppIds = [
+  // ... existing ...
+  'my-new-app',
+] as const;
+```
+
+## Adding a capability of your own
+
+Register it in `packages/tooling/src/setup/product-capabilities.ts`. That file ships empty and stays
+product-owned, so a boilerplate upgrade never conflicts with it — do not add the entry to
+`baseCapabilityCatalog` or `baseCapabilityIds`, which are the shipped set:
+
+```typescript
+export const productCapabilities: readonly CapabilityEntry[] = [
+  {
+    id: 'my-capability',
+    label: 'My Capability',
+    activation: 'nest-module',
+    requiresCapabilities: ['authz'],
+    requiresApps: [],
+    conflictsWith: [],
+    ownedProjects: ['@product/backend-feature-my-capability'],
+    dockerServices: [],
+    environmentVariables: ['MY_CAPABILITY_ENABLED'],
+    backendWiring: [
+      {
+        hosts: 'selected-backend',
+        importName: 'MyCapabilityModule',
+        importPath: '@product/backend-feature-my-capability',
+        moduleExpression: 'MyCapabilityModule.forRoot()',
+      },
+    ],
+  },
+];
+```
+
+The id is selectable through `pnpm nrb setup` and through the `setup` generator immediately, and it
+seeds the same closure, Compose profile, env surface, and backend wiring a shipped capability does.
+Composition validates when the module loads: a lower-case kebab-case id, not one the boilerplate
+already ships, and every `requiresCapabilities`, `conflictsWith`, and `requiresApps` reference must
+resolve. A registration that fails leaves the catalog exactly as it was, so a partially applied
+extension cannot make some selections resolve and others not.
+
+Applications remain a closed axis. A product's own deployable app is generated with
+`pnpm nrb add app`, not registered here.
+
+## Adding a new preset
+
+Edit `packages/tooling/src/setup/presets.ts`:
+
+```typescript
+{
+  id: "my-preset",
+  description: "Short description of the preset",
+  apps: ["user-app", "user-app-api", "auth-app-api"],
+  capabilities: ["postgres", "i18n"],
+},
+```
+
+Then add the ID to `presetIds` in `schema.ts`:
+
+```typescript
+export const presetIds = [
+  // ... existing ...
+  'my-preset',
+] as const;
+```
+
+## Adding planner operations
+
+The planner produces three types of operations:
+
+| Operation                   | Description                                  |
+| --------------------------- | -------------------------------------------- |
+| `createFile(path, content)` | Create a new file with the given content.    |
+| `updateFile(path, content)` | Overwrite an existing file with new content. |
+| `deleteFile(path)`          | Remove a file (only when `prune: true`).     |
+
+To add new operations, edit `packages/tooling/src/setup/planner.ts`. The `plan()` function:
+
+1. Resolves the config (preset expansion + dependency resolution).
+2. Generates config/summary, workspace/capability/environment manifests, and canonical backend capability modules.
+3. Diffs desired state against current state.
+4. Returns sorted operations.
+
+To add custom file generation, follow the pattern of `generateConfigFile()` and `generateSummaryMd()`:
+
+```typescript
+export function generateCustomFile(config: NrbConfig): { path: string; content: string } {
+  return {
+    path: '.nrb/custom.json',
+    content: JSON.stringify(config, null, 2) + '\n',
+  };
+}
+```
+
+Then add it to the generated file list in `plan()`. Setup-owned backend modules must stay in `backendCapabilityModuleCatalog` so reruns also clear capability wiring from unselected applications. Extend Doctor drift checks and planner/setup tests for every new activation surface.
+
+## Adding a filesystem adapter
+
+The apply engine uses an adapter interface defined in `packages/tooling/src/setup/adapters/filesystem.ts`. The default implementation (`node-filesystem.ts`) uses Node.js `fs` module.
+
+To add a custom adapter (e.g., for testing or virtual filesystems):
+
+```typescript
+import type { FilesystemAdapter } from './filesystem.js';
+
+export const mockAdapter: FilesystemAdapter = {
+  async read(path) {
+    /* ... returns Promise<string | null> */
+  },
+  async write(path, content) {
+    /* ... returns Promise<void> */
+  },
+  async delete(path) {
+    /* ... returns Promise<void> */
+  },
+  async exists(path) {
+    /* ... returns Promise<boolean> */
+  },
+  async list(dir) {
+    /* ... returns Promise<string[]> */
+  },
+};
+```
+
+Pass the adapter to `apply(operations, adapter, options)`.
+
+## Extending the feature generator
+
+The feature generator lives in
+`packages/tooling/src/generators/feature/generator.ts`. It:
+
+1. Parses explicit owner args and rejects regeneration of existing features.
+2. Generates template files for backend DTOs, module, controller, service, PostgreSQL entity, and frontend client.
+3. Updates `tsconfig.base.json` path aliases.
+4. Outputs next steps.
+
+To add new template files, extend `createBackendTemplateFiles()` and keep its
+unit tests aligned:
+
+```typescript
+function createBackendTemplateFiles(names: Names, frontendRoot: string, migrationTimestamp: string): TemplateFile[] {
+  return [
+    // ... existing templates ...
+    {
+      path: `libs/backend/feature/${names.kebab}/main/lib/src/${names.kebab}.resolver.ts`,
+      contents: `// GraphQL resolver template for ${names.pascal}\n`,
+    },
+  ];
+}
+```
+
+To add support configs, edit the relevant helpers (`projectJson()`,
+`tsconfig()`, `projectGuides()`).
+
+## Adding a custom command
+
+Edit `packages/tooling/src/cli.ts`:
+
+```typescript
+register('my:command', 'Description of my command.', ({ argv, workspaceRoot }) => {
+  // Your implementation
+  return 0;
+});
+```
+
+For script-based commands (lives in `commands/`):
+
+```typescript
+registerScript('my:command', 'Description of my command.', 'my/command.ts');
+```
+
+Then create `packages/tooling/src/commands/my/command.ts`.
+
+## Testing generators
+
+- Schema tests: `packages/tooling/src/setup/schema.test.ts`
+- Planner tests: `packages/tooling/src/setup/planner.test.ts`
+- Apply tests: `packages/tooling/src/setup/apply.component.test.ts`
+- Setup command tests: `packages/tooling/src/commands/project/setup.test.ts`
+- Setup e2e tests: `packages/tooling/src/commands/project/setup.e2e.test.ts`
+- Application generator tests: `packages/tooling/src/generators/application/*.test.ts`
+- Library generator tests: `packages/tooling/src/generators/library/*.test.ts`
+- Feature generator tests: `packages/tooling/src/generators/feature/*.test.ts`
+- Compatibility adapter tests: `packages/tooling/src/commands/project/generate-vertical-slice.test.ts`
+
+Run with:
+
+```bash
+pnpm exec nx test @repo/tooling
+pnpm run scaffold:verify
+```
+
+## Next steps
+
+- [Migration Guide](migration.md) — migrate from legacy scripts to the setup engine.
+- [CLI Reference](cli-reference.md) — full command reference.

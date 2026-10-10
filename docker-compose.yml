@@ -1,0 +1,49 @@
+services:
+  postgres:
+    profiles: [postgres]
+    image: postgres:17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
+    ports:
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  mongodb:
+    profiles: [mongodb]
+    image: mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66
+    restart: unless-stopped
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '127.0.0.1:${MONGODB_PORT:-27017}:27017'
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ['CMD-SHELL', 'mongosh --quiet --host localhost --eval "quit(db.hello().isWritablePrimary ? 0 : 1)"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 5s
+
+  mongodb-init:
+    profiles: [mongodb]
+    image: mongo:8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66
+    restart: 'no'
+    depends_on:
+      mongodb:
+        condition: service_started
+    volumes:
+      - ./docker/mongodb:/opt/mongodb:ro
+    entrypoint: ['bash', '/opt/mongodb/prepare-replica-set.sh']
+
+volumes:
+  postgres-data:
+  mongodb-data:

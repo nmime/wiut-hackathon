@@ -1,0 +1,4986 @@
+{
+  "$schema": "https://nmime.dev/schemas/api-toast-rules-frontend.schema.json",
+  "version": 2,
+  "generatedBy": "@repo/tooling api toast-config generate",
+  "source": {
+    "openapi": "apps/backend/auth/auth-app-api/contracts/openapi/auth-app-api.json",
+    "app": "auth-app-api"
+  },
+  "defaults": {
+    "toast": {
+      "category": "error",
+      "messageSource": "problem",
+      "titleKey": "ui.runtime.requestFailed.title"
+    }
+  },
+  "rules": [
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/adyen:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/adyen",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_adyen",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks adyen could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/api/v1/webhooks/cloudpayments:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsGet",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Get could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cloudpayments:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cloudpayments",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cloudPaymentsPost",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks cloud Payments Post could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/cryptobot:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/cryptobot",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_cryptoBot",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks crypto Bot could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/heleket:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/heleket",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_heleket",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks heleket could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/nowpayments:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/nowpayments",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_nowPayments",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks now Payments could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/stripe:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/stripe",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_stripe",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks stripe could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/x-rocket:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/x-rocket",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_rocketPayment",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks rocket Payment could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:200",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:400:webhook-signature-invalid",
+      "match": {
+        "code": "webhook-signature-invalid",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook signature invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:400",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Signature Invalid."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:409:webhook-replayed",
+      "match": {
+        "code": "webhook-replayed",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:409",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Replayed."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:410:webhook-stale",
+      "match": {
+        "code": "webhook-stale",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:410",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 410
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Stale."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:502:webhook-processing-error",
+      "match": {
+        "code": "webhook-processing-error",
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook processing error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:502",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "status": 502
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed: Webhook Processing Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:ERR",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "status": "ERR",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/api/v1/webhooks/yookassa:NET",
+      "match": {
+        "endpoint": "/api/v1/webhooks/yookassa",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsWebhooksController_yooKassa",
+        "status": "NET",
+        "tags": ["PaymentsWebhooks"],
+        "defaultMessage": "Payments Webhooks yoo Kassa could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:200",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:400",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:401",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:403",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:409",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:429",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:500",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:ERR",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/discord/authorization-request:NET",
+      "match": {
+        "endpoint": "/auth/discord/authorization-request",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_discordAuthorizationRequest",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Authorization Request could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/discord/callback:200",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:400:client-data-validation",
+      "match": {
+        "code": "client-data-validation",
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Client data validation."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:400",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Invalid callback parameters or rejected authorization callback."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/discord/callback:401",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:403",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:409",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:429",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:500",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:ERR",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/discord/callback:NET",
+      "match": {
+        "endpoint": "/auth/discord/callback",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_discordCallback",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth discord Callback could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/email-verification-token:200",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:400",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/email-verification-token:401",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:403",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:409",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:429",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:500",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:ERR",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification-token:NET",
+      "match": {
+        "endpoint": "/auth/email-verification-token",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_requestEmailVerification",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Email Verification could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:200",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:400",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:401",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:403",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:409",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:429",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:500",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:ERR",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/email-verification/confirm:NET",
+      "match": {
+        "endpoint": "/auth/email-verification/confirm",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_confirmEmailVerification",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Email Verification could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/link-tokens:200",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:400",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/link-tokens:401",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:403",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:409",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:429",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:500",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:ERR",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/link-tokens:NET",
+      "match": {
+        "endpoint": "/auth/link-tokens",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_createLinkToken",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth create Link Token could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/locales:200",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:400",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/locales:401",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:403",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:409",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:429",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:500",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:ERR",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/locales:NET",
+      "match": {
+        "endpoint": "/auth/locales",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_locales",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth locales could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/login:200",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:400",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/login:401",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:403",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:409",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:429",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:500",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_login",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:ERR",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_login",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/login:NET",
+      "match": {
+        "endpoint": "/auth/login",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_login",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth login could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/logout:200",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:400",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/logout:401",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:403",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:409",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:429",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:500",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:ERR",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/logout:NET",
+      "match": {
+        "endpoint": "/auth/logout",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_logout",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth logout could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/me:200",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:400",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/me:401",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:403",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:409",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:429",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:500",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_me",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:ERR",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_me",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/me:NET",
+      "match": {
+        "endpoint": "/auth/me",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_me",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth me could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/auth/me/locale:200",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:400",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/auth/me/locale:401",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:403",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:409",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:429",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:500",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:ERR",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/locale:NET",
+      "match": {
+        "endpoint": "/auth/me/locale",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_updateLocale",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Locale could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:200",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:400",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:401",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:403",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:409",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:429",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:500",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:ERR",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:PATCH:/auth/me/preferences:NET",
+      "match": {
+        "endpoint": "/auth/me/preferences",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_updatePreferences",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth update Preferences could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/password-reset-token:200",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:400",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/password-reset-token:401",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:403",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:409",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:429",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:500",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:ERR",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset-token:NET",
+      "match": {
+        "endpoint": "/auth/password-reset-token",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_requestPasswordReset",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth request Password Reset could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:200",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:400",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:401",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:403",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:409",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:429",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:500",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:ERR",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/password-reset/confirm:NET",
+      "match": {
+        "endpoint": "/auth/password-reset/confirm",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_confirmPasswordReset",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth confirm Password Reset could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/problem-presentations:200",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"],
+        "defaultMessage": "Problem Presentations list completed successfully."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/problem-presentations:401",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"],
+        "defaultMessage": "Problem Presentations list failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:429",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"],
+        "defaultMessage": "Problem Presentations list failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:500",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "ProblemPresentationsController_list",
+        "tags": ["ProblemPresentations"],
+        "defaultMessage": "Problem Presentations list failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:ERR",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "ProblemPresentationsController_list",
+        "status": "ERR",
+        "tags": ["ProblemPresentations"],
+        "defaultMessage": "Problem Presentations list failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/problem-presentations:NET",
+      "match": {
+        "endpoint": "/auth/problem-presentations",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "ProblemPresentationsController_list",
+        "status": "NET",
+        "tags": ["ProblemPresentations"],
+        "defaultMessage": "Problem Presentations list could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/provider-identities:200",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:400",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/auth/provider-identities:401",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:403",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:409",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:429",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:500",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:ERR",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/auth/provider-identities:NET",
+      "match": {
+        "endpoint": "/auth/provider-identities",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_providerIdentities",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth provider Identities could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:200",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:400",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:401",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403:step-up-required",
+      "match": {
+        "code": "step-up-required",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Step up required."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:403",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Step up Authentication Required."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409:last-auth-method-unlink-forbidden",
+      "match": {
+        "code": "last-auth-method-unlink-forbidden",
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Last auth method unlink forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:409",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Last Authentication Method Cannot Be Unlinked."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:429",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:500",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:ERR",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:DELETE:/auth/provider-identities/{identityId}:NET",
+      "match": {
+        "endpoint": "/auth/provider-identities/{identityId}",
+        "method": "DELETE",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_unlinkProviderIdentity",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth unlink Provider Identity could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/register:200",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:400",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/register:401",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:403",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:409",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:429",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:500",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_register",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:ERR",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_register",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/register:NET",
+      "match": {
+        "endpoint": "/auth/register",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_register",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth register could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:200",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:400",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:401",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:403",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:409",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:429",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:500",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:ERR",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/bot-link:NET",
+      "match": {
+        "endpoint": "/auth/telegram/bot-link",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramBotLink",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Bot Link could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:200",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:400",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:401",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:403",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:409",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:429",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:500",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:ERR",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/oidc/session:NET",
+      "match": {
+        "endpoint": "/auth/telegram/oidc/session",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramOidcSession",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Oidc Session could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/tma:200",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:400",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/auth/telegram/tma:401",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:403",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:409",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed: Conflict."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:429",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:500",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:ERR",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "status": "ERR",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/auth/telegram/tma:NET",
+      "match": {
+        "endpoint": "/auth/telegram/tma",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "AuthController_telegramTma",
+        "status": "NET",
+        "tags": ["Auth"],
+        "defaultMessage": "Auth telegram Tma could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/health:200",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getHealth",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Health completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health:ERR",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "BaseHealthController_getHealth",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Health failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health:NET",
+      "match": {
+        "endpoint": "/health",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getHealth",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Health could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/health/private:200",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Private Health completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health/private:ERR",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Private Health failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/health/private:NET",
+      "match": {
+        "endpoint": "/health/private",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getPrivateHealth",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Private Health could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/live:200",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getLiveness",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Liveness completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/live:ERR",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "BaseHealthController_getLiveness",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Liveness failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/live:NET",
+      "match": {
+        "endpoint": "/live",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getLiveness",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Liveness could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/payments:200",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:400",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/payments:401",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:403",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:429",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:500",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:503",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "status": 503
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed: Service Unavailable."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:ERR",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "status": "ERR",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/payments:NET",
+      "match": {
+        "endpoint": "/payments",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_list",
+        "status": "NET",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments list could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/payments:200",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:400",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Bad Request."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:POST:/payments:401",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Unauthorized."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:403",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Forbidden."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:429",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 429
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Too Many Requests."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:500",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Internal Server Error."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:503",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "status": 503
+      },
+      "toast": {
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed: Service Unavailable."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:ERR",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "status": "ERR",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:POST:/payments:NET",
+      "match": {
+        "endpoint": "/payments",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "PaymentsController_create",
+        "status": "NET",
+        "tags": ["Payments"],
+        "defaultMessage": "Payments create could not reach the service."
+      }
+    },
+    {
+      "display": "silent",
+      "id": "auth-app-api:GET:/ready:200",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getReadiness",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Readiness completed successfully."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/ready:ERR",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {},
+      "catalog": {
+        "operationId": "BaseHealthController_getReadiness",
+        "status": "ERR",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Readiness failed before an HTTP response was available."
+      }
+    },
+    {
+      "display": "toast",
+      "id": "auth-app-api:GET:/ready:NET",
+      "match": {
+        "endpoint": "/ready",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning"
+      },
+      "catalog": {
+        "operationId": "BaseHealthController_getReadiness",
+        "status": "NET",
+        "tags": ["BaseHealth"],
+        "defaultMessage": "Base Health get Readiness could not reach the service."
+      }
+    }
+  ]
+}

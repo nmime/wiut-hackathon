@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "configHash": "5a2dd196b284c8045769eb207da4870fbe55e2c8bd2f6e3c00513c161ffb0036",
+  "files": {
+    ".nrb/capabilities.env": "90a0cfc749a9d700c5098ae1895307ba90278dbe72d0a13717467c85e6bcf6af",
+    ".nrb/capabilities.json": "10324d8e1aa0e5a41bf37f84707df04d0a691e8c4d3f43862d50f049ed9ef028",
+    ".nrb/summary.md": "15c5a6c36bdeb43e73ad3066e4824ee20757f9d96e573d6854a8f5a8cdc5d32a",
+    ".nrb/workspace.json": "90dde55d7139e41bc9e91e0ba7eb9eed26a22783e92c7b40d81091884c8ef7f1",
+    "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "584eb91d05e14897b43209dce43ce0ef40e1f5bd2594a0e4648c020441ad0dc3",
+    "apps/backend/auth/auth-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "2692130e4ef8bf553ce213cd06ea111741b46ec4eccb969dd6130da9d13fb92e",
+    "apps/backend/discord/discord-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "efcc34d3b96e54f72785d543291986a99ababc89d08837e48a1f2c144162815e",
+    "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "ee4377c30143ad95a2ea46314187b1d5c104a5f4a8786fc4e35a9eb081537c27",
+    "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "d6b3d83f75397ed25432a75b54752a89373dfc1bf0bd550f6aba9240b6f19501",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "e114c6ee25948d7ba246cabe7a81de6a6e74fa68aba52ad03c5315983337b69d",
+    "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
+    "apps/backend/user/user-app-api/src/capabilities.generated.ts": "e4a368f3bca434b72bc256a0dfd31b4ba99011a2d3975251b8c700a774a54259",
+    "nrb.config.json": "f7945ee8758ecd0b25da7046cb6f6972993ed93f0b71634b72afcc07fa6249d1",
+    "packages/tooling/src/commands/db/capability-migrations.generated.ts": "e1c5df42fb621f054b49f3bd9c4c42ec920ac3db91958281f9c77d00a6408513"
+  },
+  "digest": "e80926bee4dcac98fdc6514804ac567656411e2c93382dac8663782a60deda34"
+}

@@ -1,0 +1,20 @@
+{
+  "landing.appName": "Landing App",
+  "landing.eyebrow": "Connected product experiences",
+  "landing.title": "A focused foundation for your next product.",
+  "landing.description": "Start with a polished public site and connected account experience, then shape every app around your domain.",
+  "landing.action.user": "Preview user app",
+  "landing.action.admin": "Preview admin app",
+  "landing.action.docs": "Developer docs",
+  "landing.productName": "Nest React Boilerplate",
+  "landing.section.title": "Clear ownership from the first screen.",
+  "landing.section.eyebrow": "Public, account, and admin",
+  "landing.section.description": "Guide visitors from a clear public introduction into a consistent account and administration experience.",
+  "landing.surface.public.title": "Public presence",
+  "landing.surface.public.description": "A concise marketing surface with a replaceable identity, message, and primary actions.",
+  "landing.surface.account.title": "Customer account",
+  "landing.surface.account.description": "A working sign-in, profile, preferences, and connected-account flow ready for product features.",
+  "landing.surface.admin.title": "Admin workspace",
+  "landing.surface.admin.description": "A separate protected surface for operational workflows and role-aware access.",
+  "landing.statGrid.label": "Connected product experiences"
+}

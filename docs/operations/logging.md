@@ -1,0 +1,85 @@
+# Structured logging and request-id runbook
+
+The shared logger (`libs/backend/common/logger/lib`) produces structured JSON logs in production and pretty-printed logs in development.
+See [production hardening](../production-hardening.md) for security-related logging rules.
+
+## Log format
+
+| Environment | Format       | Controlled by                                |
+| ----------- | ------------ | -------------------------------------------- |
+| Development | Pretty-print | `NODE_ENV=development`                       |
+| Production  | JSON lines   | `NODE_ENV=production` (or `LOG_FORMAT=json`) |
+
+Override format explicitly with `LOG_FORMAT` or `LOGGER_FORMAT` (`json` or `pretty`).
+
+## Log level
+
+Set via `LOG_LEVEL`: `debug`, `info`, `warn`, `error`, `fatal`.
+
+- **Local development:** `LOG_LEVEL=debug`
+- **Production:** `LOG_LEVEL=info` (recommended minimum)
+
+## Request ID correlation (CLS)
+
+Every HTTP request receives or preserves an `x-request-id` header. The ID is generated **once per request** by `ClsInterceptor` (the first global interceptor) and stored in Node `AsyncLocalStorage`, with zero new dependencies.
+
+**How it works:**
+
+- If the client sends `x-request-id`, CLS uses that value
+- If not, `requestContext.run()` generates a UUID v4
+- All consumers read from CLS: `requestContext.getRequestId()`
+- Same `requestId` across **every** module: ExceptionsFilter, LoggerMiddleware, bootstrap logging, controllers, services
+
+**Components that use requestId:**
+
+| Component                          | Source                          |
+| ---------------------------------- | ------------------------------- |
+| ClsInterceptor                     | Generates + enters CLS context  |
+| Bootstrap logging middleware       | `requestContext.getRequestId()` |
+| Logger middleware (logger.factory) | `requestContext.getRequestId()` |
+| ExceptionsFilter                   | `requestContext.getRequestId()` |
+| Admin/feature controllers          | `requestContext.getRequestId()` |
+
+- Request start/completion logs (method, path, status, duration)
+- Application logs tied to the request context
+- OpenTelemetry trace IDs (when OTel is enabled)
+
+**See also:** [OpenTelemetry configuration](otel.md) for distributed tracing correlation.
+
+## Log content
+
+Completion logs include (in JSON mode):
+
+```json
+{
+  "appName": "api",
+  "level": "log",
+  "requestId": "550e8400-e29b-41d4-a716-446655440000",
+  "method": "GET",
+  "path": "/api/users",
+  "status": 200,
+  "durationMs": 42
+}
+```
+
+## Sensitive data redaction
+
+The logger automatically redacts:
+
+- Values for protected keys (matched case-insensitively by name; see `ProtectedLoggerFields` in `libs/backend/common/logger/lib`): `authorization`, `cookie`, `set-cookie`, `password`, `passwd`, `pwd`, `token` (plus `access-token`/`access_token`, `refresh-token`/`refresh_token`, `id-token`/`id_token`), `signature`, `x-signature`, `x-api-key`, `api-key`/`api_key`/`apikey`, `access_key`, `secret`, `client-secret`/`client_secret`, `private-key`/`private_key`, `session`, `sid`, `csrf`, `xsrf`
+- Bearer token patterns in headers
+- API keys in query strings for protected field names
+
+Protected keys are redacted to `[redacted]` in health endpoint details and log output.
+
+## Triage: finding errors by request
+
+1. **Capture the request ID** from the HTTP response header or the client's request:
+   ```bash
+   curl -s -D- "http://localhost:${PORT:-80}/api/users" | grep -i x-request-id
+   ```
+2. **Search centralized logs** by `requestId`:
+   - In Grafana/Loki: `{app="api"} | json | requestId="<id>"`
+   - In Datadog: `@requestId:"<id>"`
+   - Grep locally: `grep '"requestId":"<id>"' /var/log/app.log`
+3. **Correlate with traces** — if OTel is enabled, the trace ID appears in logs and can be looked up in Jaeger/Tempo.

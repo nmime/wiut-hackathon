@@ -1,0 +1,418 @@
+// @requirements REQ-AUTH-TENANT-004
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { errAsync, okAsync, type ResultAsync } from 'neverthrow';
+import { describe, expect, it, vi } from 'vitest';
+import type {
+  AdminAuditLogRecord,
+  AdminUserMutationResult,
+  AuthenticatedPrincipal,
+  AuthUserPersistenceRecord,
+  TransactionalOutboxRecord,
+} from '@app/backend-feature-auth-shared';
+import {
+  AdminAuditReadPermission,
+  AdminDashboardReadPermission,
+  AdminRole,
+  AdminRolesReadPermission,
+  AdminUsersAccessPolicyUpdatePermission,
+  AdminUsersReadPermission,
+  AdminUsersStatusUpdatePermission,
+  AdminUsersWritePermission,
+  UserProfileReadPermission,
+} from '@app/backend-feature-admin-shared';
+import { AdminUsersUseCase } from '../../application/admin-users.use-case';
+import { AdminUsersController } from './admin-users.controller';
+import { UpdateAdminUserAccessPolicyDto, UpdateAdminUserStatusDto } from './dto';
+
+const tenantId = '00000000-0000-0000-0000-000000000000';
+
+const principal: AuthenticatedPrincipal = {
+  subject: 'actor-id',
+  tenantId,
+  email: 'admin@example.com',
+  roles: [AdminRole],
+  permissions: [
+    AdminUsersReadPermission,
+    AdminUsersStatusUpdatePermission,
+    AdminUsersWritePermission,
+    AdminUsersAccessPolicyUpdatePermission,
+    AdminRolesReadPermission,
+    AdminAuditReadPermission,
+    AdminDashboardReadPermission,
+  ],
+};
+
+type TestAuthUser = Pick<
+  AuthUserPersistenceRecord,
+  | 'id'
+  | 'tenantId'
+  | 'email'
+  | 'displayName'
+  | 'passwordHash'
+  | 'status'
+  | 'roles'
+  | 'permissions'
+  | 'locale'
+  | 'theme'
+  | 'lastLoginAt'
+  | 'avatarUrl'
+  | 'avatarHash'
+  | 'avatarStatus'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
+type TestAdminAuditLog = Pick<
+  AdminAuditLogRecord,
+  | 'id'
+  | 'tenantId'
+  | 'actorUserId'
+  | 'action'
+  | 'resource'
+  | 'targetUserId'
+  | 'before'
+  | 'after'
+  | 'metadata'
+  | 'createdAt'
+>;
+
+type TestOutboxEvent = Pick<
+  TransactionalOutboxRecord,
+  | 'id'
+  | 'tenantId'
+  | 'aggregateType'
+  | 'aggregateId'
+  | 'eventType'
+  | 'payload'
+  | 'metadata'
+  | 'status'
+  | 'createdAt'
+  | 'publishedAt'
+>;
+
+const createUser = (partial: Partial<TestAuthUser> = {}): TestAuthUser => ({
+  id: 'user-id',
+  tenantId,
+  email: 'user@example.com',
+  displayName: 'User',
+  passwordHash: 'redacted-hash',
+  status: 'active',
+  roles: ['user'],
+  permissions: [UserProfileReadPermission],
+  locale: 'en',
+  theme: 'system',
+  lastLoginAt: new Date(0),
+  avatarUrl: '',
+  avatarHash: '',
+  avatarStatus: 'none',
+  createdAt: new Date('2026-01-01T00:00:00.000Z'),
+  updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+  ...partial,
+});
+
+const createAuditLog = (partial: Partial<TestAdminAuditLog> = {}): TestAdminAuditLog => ({
+  id: 'audit-id',
+  tenantId,
+  actorUserId: 'actor-id',
+  action: 'admin.user.status.update',
+  resource: 'admin.users',
+  targetUserId: 'user-id',
+  before: { status: 'active' },
+  after: { status: 'disabled' },
+  metadata: { requestId: 'req-1' },
+  createdAt: new Date('2026-01-03T00:00:00.000Z'),
+  ...partial,
+});
+
+const createOutboxEvent = (partial: Partial<TestOutboxEvent> = {}): TestOutboxEvent => ({
+  id: 'outbox-id',
+  tenantId,
+  aggregateType: 'admin.user',
+  aggregateId: 'user-id',
+  eventType: 'admin.user.status.update',
+  payload: {},
+  metadata: {},
+  status: 'pending',
+  createdAt: new Date('2026-01-03T00:00:00.000Z'),
+  publishedAt: null,
+  ...partial,
+});
+
+const createMutationResult = (
+  input: {
+    before?: Partial<TestAuthUser>;
+    after?: Partial<TestAuthUser>;
+    action?: 'admin.user.status.update' | 'admin.user.access_policy.update';
+  } = {},
+): AdminUserMutationResult => {
+  const before = createUser(input.before);
+  const after = createUser({
+    status: 'disabled',
+    ...input.after,
+  });
+  const auditLog = createAuditLog({
+    action: input.action ?? 'admin.user.status.update',
+    before: { status: before.status },
+    after: { status: after.status },
+  });
+  const outboxEvent = createOutboxEvent({
+    eventType: input.action ?? 'admin.user.status.update',
+  });
+
+  return { before, after, auditLog, outboxEvent };
+};
+
+type TestResult<T> = ResultAsync<T, { code: string; message: string }>;
+
+const createController = () => {
+  const users = {
+    listUsers: vi.fn((): TestResult<TestAuthUser[]> => okAsync([createUser()])),
+    countUsers: vi.fn(() => okAsync(1)),
+    findById: vi.fn((): TestResult<TestAuthUser | null> => okAsync(createUser())),
+  };
+  const auditLogs = {
+    record: vi.fn(() => okAsync(createAuditLog())),
+    list: vi.fn(() => okAsync([createAuditLog()])),
+    count: vi.fn(() => okAsync(1)),
+  };
+  const adminUserMutations = {
+    mutateAccessPolicyWithAudit: vi.fn<(input: unknown) => TestResult<AdminUserMutationResult | null>>(() =>
+      okAsync(createMutationResult()),
+    ),
+  };
+  const roles = {
+    findByKeys: vi.fn((keys: string[]) =>
+      okAsync(keys.filter((key) => key === 'user' || key === AdminRole).map((key) => ({ key }))),
+    ),
+    findPermissionsByKeys: vi.fn((keys: readonly string[]) => okAsync(keys.map((key) => ({ key })))),
+  };
+
+  return {
+    adminUserMutations,
+    auditLogs,
+    controller: new AdminUsersController(
+      new AdminUsersUseCase(users as never, auditLogs as never, adminUserMutations as never, roles as never),
+    ),
+    roles,
+    users,
+  };
+};
+
+describe('AdminUsersController', () => {
+  it('requires a bounded non-whitespace audit reason for sensitive mutations', async () => {
+    const statusInput = Object.assign(new UpdateAdminUserStatusDto(), {
+      status: 'disabled',
+      reason: '   ',
+    });
+    const accessInput = Object.assign(new UpdateAdminUserAccessPolicyDto(), {
+      roles: ['user'],
+      permissions: [UserProfileReadPermission],
+      reason: 'x'.repeat(501),
+    });
+
+    await expect(validate(statusInput)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: 'reason' })]),
+    );
+    await expect(validate(accessInput)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: 'reason' })]),
+    );
+  });
+
+  it('lists users with a defensive allowlisted filter', async () => {
+    const { controller, users } = createController();
+
+    await expect(
+      controller.listUsers(principal, {
+        limit: 10,
+        offset: 5,
+        search: ' user ',
+        status: 'active',
+        role: 'user',
+        permission: UserProfileReadPermission,
+      }),
+    ).resolves.toEqual({
+      data: {
+        items: [
+          {
+            id: 'user-id',
+            tenantId,
+            email: 'user@example.com',
+            displayName: 'User',
+            status: 'active',
+            roles: ['user'],
+            permissions: [UserProfileReadPermission],
+            locale: 'en',
+            theme: 'system',
+            createdAt: '2026-01-01T00:00:00.000Z',
+            updatedAt: '2026-01-02T00:00:00.000Z',
+          },
+        ],
+        total: 1,
+        limit: 10,
+        offset: 5,
+      },
+    });
+    expect(users.listUsers).toHaveBeenCalledWith({
+      tenantId,
+      limit: 10,
+      offset: 5,
+      search: 'user',
+      status: 'active',
+      role: 'user',
+      permission: UserProfileReadPermission,
+    });
+  });
+
+  it('updates status and emits a redacted audit event', async () => {
+    const { adminUserMutations, auditLogs, controller } = createController();
+
+    await expect(
+      controller.updateUserStatus(
+        principal,
+        'user-id',
+        { status: 'disabled', reason: ' Policy violation ' },
+        { headers: { 'x-request-id': 'req-1' } },
+      ),
+    ).resolves.toMatchObject({ data: { status: 'disabled' } });
+    expect(adminUserMutations.mutateAccessPolicyWithAudit).toHaveBeenCalledWith({
+      tenantId,
+      targetUserId: 'user-id',
+      actorUserId: 'actor-id',
+      action: 'admin.user.status.update',
+      policy: { status: 'disabled' },
+      audit: {
+        actorUserId: 'actor-id',
+        metadata: { requestId: 'req-1', reason: 'Policy violation' },
+      },
+    });
+    expect(auditLogs.record).not.toHaveBeenCalled();
+  });
+
+  it('updates access policy, rejects unknown grants, and never includes secrets in audit snapshots', async () => {
+    const { adminUserMutations, auditLogs, controller } = createController();
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
+      okAsync(
+        createMutationResult({
+          action: 'admin.user.access_policy.update',
+          before: {
+            roles: ['user'],
+            permissions: [UserProfileReadPermission],
+          },
+          after: {
+            roles: ['user', AdminRole],
+            permissions: [UserProfileReadPermission, AdminUsersReadPermission],
+          },
+        }),
+      ),
+    );
+
+    await expect(
+      controller.updateUserAccessPolicy(
+        principal,
+        'user-id',
+        {
+          roles: ['user', AdminRole],
+          permissions: [UserProfileReadPermission, AdminUsersReadPermission],
+          reason: 'Elevated support access',
+        },
+        { headers: {} },
+      ),
+    ).resolves.toMatchObject({ data: { roles: ['user', AdminRole] } });
+    expect(adminUserMutations.mutateAccessPolicyWithAudit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'admin.user.access_policy.update',
+        policy: {
+          roles: ['user', AdminRole],
+          permissions: [UserProfileReadPermission, AdminUsersReadPermission],
+        },
+        audit: {
+          actorUserId: 'actor-id',
+          metadata: { reason: 'Elevated support access' },
+        },
+      }),
+    );
+    expect(JSON.stringify(adminUserMutations.mutateAccessPolicyWithAudit.mock.calls[0]?.[0])).not.toContain(
+      'redacted-hash',
+    );
+    expect(auditLogs.record).not.toHaveBeenCalled();
+
+    await expect(
+      controller.updateUserAccessPolicy(
+        principal,
+        'user-id',
+        { roles: ['owner'], permissions: ['*'], reason: 'Invalid policy test' },
+        { headers: {} },
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('blocks self lockout and last-active-admin sensitive mutations', async () => {
+    const { adminUserMutations, controller, users } = createController();
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
+      errAsync({
+        code: 'repository_error',
+        message: 'Administrators cannot remove their own active admin write access.',
+      }),
+    );
+
+    await expect(
+      controller.updateUserStatus(
+        principal,
+        principal.subject,
+        { status: 'disabled', reason: 'Self lockout test' },
+        { headers: {} },
+      ),
+    ).rejects.toThrow('own active admin write access');
+
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(
+      errAsync({
+        code: 'repository_error',
+        message: 'At least one active administrator must retain admin write access.',
+      }),
+    );
+    await expect(
+      controller.updateUserStatus(
+        principal,
+        'other-admin',
+        { status: 'disabled', reason: 'Last admin test' },
+        { headers: {} },
+      ),
+    ).rejects.toThrow('At least one active administrator');
+
+    adminUserMutations.mutateAccessPolicyWithAudit.mockReturnValue(okAsync(createMutationResult()));
+    await expect(
+      controller.updateUserAccessPolicy(
+        principal,
+        'other-admin',
+        { roles: ['user'], permissions: [UserProfileReadPermission], reason: 'Reduce access' },
+        { headers: {} },
+      ),
+    ).resolves.toMatchObject({ data: { status: 'disabled' } });
+    expect(users.countUsers).not.toHaveBeenCalledWith(expect.objectContaining({ role: AdminRole, status: 'active' }));
+  });
+
+  it('returns dashboard metrics and 404 for missing users', async () => {
+    const { controller, users } = createController();
+
+    await expect(controller.dashboardSummary(principal)).resolves.toMatchObject({
+      data: {
+        totalUsers: 1,
+        activeUsers: 1,
+        disabledUsers: 1,
+        invitedUsers: 1,
+        recentAuditEvents: 1,
+      },
+    });
+
+    users.findById.mockReturnValue(okAsync(null));
+    await expect(controller.getUser(principal, 'missing-id')).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('surfaces repository failures to avoid silently succeeding', async () => {
+    const { controller, users } = createController();
+    users.listUsers.mockReturnValue(errAsync({ code: 'repository_error', message: 'database failed' }));
+
+    await expect(controller.listUsers(principal, {})).rejects.toThrow('database failed');
+  });
+});

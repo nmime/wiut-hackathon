@@ -1,0 +1,25 @@
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
+import { createOkResponse, type OkResponse } from '@app/backend-common-response';
+import { CurrentUser, type AuthenticatedPrincipal, RequirePermissions } from '@app/backend-feature-auth-shared';
+import { AdminProfileReadPermission, AdminRbacGuard } from '@app/backend-feature-admin-shared';
+import { GetAdminProfileUseCase, type AdminProfilePayload } from '../../application';
+import { AdminProfilePayloadDto, AdminProfileViewDto, AuthenticatedPrincipalDto } from './dto';
+
+export const getAuthenticatedPrincipalDtoType = () => AuthenticatedPrincipalDto;
+export const getAdminProfileViewDtoType = () => AdminProfileViewDto;
+
+@ApiExceptions(400, 401, 403, 429, 500)
+@Controller('admin/profile')
+@UseGuards(new AdminRbacGuard())
+export class AdminProfileController {
+  constructor(private readonly getProfile: GetAdminProfileUseCase) {}
+
+  @Get('me')
+  @ApiOkDataResponse(AdminProfilePayloadDto)
+  @ApiSessionCookieAuth()
+  @RequirePermissions(AdminProfileReadPermission)
+  me(@CurrentUser() principal: AuthenticatedPrincipal): OkResponse<AdminProfilePayload> {
+    return createOkResponse(this.getProfile.execute(principal));
+  }
+}

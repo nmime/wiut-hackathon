@@ -1,0 +1,682 @@
+nameOverride: ''
+fullnameOverride: ''
+
+imagePullSecrets: []
+
+# Setup generates .helm/values-selection.yaml with this explicit selection. The chart
+# intentionally has no all-application fallback.
+deployment:
+  selectedApps: []
+  provider: ''
+
+secrets:
+  # Production should create this Secret outside the chart, for example with
+  # External Secrets Operator, Vault, or the ansible-k8s-full-setup platform
+  # secret flow. Set existingSecret to use one. Set create=true only when
+  # supplying explicit non-placeholder values below.
+  existingSecret: ''
+  create: false
+  sessionSecret: ''
+  authLoginAnalyticsIpHashSecret: ''
+  betterAuthSecret: ''
+  databaseUrl: ''
+  mongodbUri: ''
+  mongodbMigrationUri: ''
+  mongodbBackupRestoreUri: ''
+  telegramBotToken: ''
+  telegramBotAuthSecret: ''
+  telegramOidcClientSecret: ''
+  notificationPayloadEncryptionKey: ''
+  resendApiKey: ''
+  mailpaceServerToken: ''
+  notificationFcmPrivateKey: ''
+  notificationApnsPrivateKey: ''
+
+config:
+  nodeEnv: production
+  corsOrigins: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
+  authGeoipDatabasePath: ''
+  authLoginNetworkRetentionDays: '30'
+  authLoginEventRetentionDays: '365'
+  betterAuthUrl: https://user-app.example.com
+  betterAuthTrustedOrigins: https://user-app.example.com,https://example.com
+  authAllowedReturnUrls: https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com
+  # Expired persisted refresh/action token cleanup. Intervals below 60000ms are
+  # clamped by the service to avoid tight cleanup loops from configuration typos.
+  authTokenCleanupEnabled: 'true'
+  authTokenCleanupIntervalMs: '3600000'
+  authTokenCleanupRunOnStart: 'true'
+  # Demo mode serves every unauthenticated request as one synthetic principal, so an MVP is
+  # reachable without accounts. `authDemoAllowProduction` is a deliberate second switch: the
+  # backend refuses to serve demo traffic with NODE_ENV=production until both are 'true'.
+  authDemoMode: 'false'
+  authDemoAllowProduction: 'false'
+  authDemoRoles: ''
+  authDemoSubject: ''
+  authDemoTenantId: ''
+  authDemoEmail: ''
+  authDemoDisplayName: ''
+  openApiEnabled: 'false'
+  logLevel: info
+  rateLimitEnabled: 'true'
+  rateLimitStore: auto
+  rateLimitWindowMs: '60000'
+  rateLimitMax: '100'
+  # Set redisUrl or redisHosts when using RATE_LIMIT_STORE=redis.
+  redisUrl: ''
+  redisHosts: ''
+  redisMode: single
+  redisKeyPrefix: 'nrb:'
+  redisDb: ''
+  authTelegramEnabled: 'false'
+  telegramTmaMaxAgeSeconds: '300'
+  telegramOidcEnabled: 'false'
+  telegramOidcClientId: ''
+  telegramOidcScopes: openid profile
+  telegramBotMode: webhook
+  telegramBotWebhookUrl: https://telegram-bot-api.example.com/telegram/webhook
+  telegramMiniAppUrl: https://user-app.example.com/telegram-mini-app
+  telegramBotMenuButtonEnabled: 'true'
+  authNotificationProvider: resend
+  notificationEmailProvider: resend
+  notificationEmailFrom: Example <no-reply@example.com>
+  notificationPayloadEncryptionKeyId: primary
+  notificationDeliveriesPerIteration: '50'
+  notificationRequestsPerSecond: '30'
+  notificationDeliveriesPartitionAheadMonths: '6'
+  notificationBroadcastRequireIndependentApproval: 'true'
+  notificationConsumerIntervalMs: '1000'
+  notificationMaterializationChunkSize: '500'
+  notificationCsvMaxBytes: '10485760'
+  notificationCsvMaxRows: '100000'
+  notificationFcmProjectId: ''
+  notificationFcmClientEmail: ''
+  notificationFcmTokenUri: https://oauth2.googleapis.com/token
+  notificationApnsTeamId: ''
+  notificationApnsKeyId: ''
+  notificationApnsBundleId: ''
+  notificationApnsSandbox: 'false'
+  # Backend configuration this product owns. Rendered into a separate
+  # `<fullname>-product-config` ConfigMap that every backend, background and migration workload
+  # reads *before* the chart's own one, so a key the boilerplate already sets keeps the value the
+  # rest of this block resolves - override those through the keys above, not from here. Keys are
+  # passed through verbatim as env vars. Never put secrets here; a ConfigMap is not encrypted at
+  # rest. Compose has the same seam in docker/backend.product.env.
+  extra: {}
+  # extra:
+  #   BILLING_LEDGER_URL: https://ledger.internal.example
+
+database:
+  # This application chart references an externally managed database. It does
+  # not provision PostgreSQL or MongoDB stateful workloads.
+  engine: ''
+  ownership: external-db
+  mongodb:
+    database: nest_react_boilerplate
+    replicaSet: ''
+    minPoolSize: '2'
+    maxPoolSize: '10'
+    serverSelectionTimeoutMs: '10000'
+
+postgresql:
+  host: postgresql
+  port: '5432'
+  database: nest_react_boilerplate
+  user: postgres
+  ssl: 'true'
+  sslRejectUnauthorized: 'true'
+
+migrations:
+  enabled: false
+  # MongoDB migrations must use a Secret separate from runtime application
+  # credentials. It must contain MONGODB_MIGRATION_URI.
+  mongodbExistingSecret: ''
+  image:
+    repository: ghcr.io/your-github-org/nest-react-boilerplate/migrator
+    # Prefer immutable tags (sha-<git-sha>) or digest (sha256:...) for releases.
+    tag: latest
+    digest: ''
+    pullPolicy: IfNotPresent
+  command: ['node', 'docker/migrator-run.mjs']
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 3600
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  podSecurityContext: {}
+  securityContext: {}
+
+# Frontend Pods use a chart-rendered nginx config so in-cluster upstreams point
+# at Helm Service DNS names instead of docker-compose service names baked into
+# the image.
+frontendNginx:
+  enabled: true
+  healthPath: /nginx-health
+  listenPort: 8080
+  cspConnectSrc: "'self'"
+  # Exact immediate TLS terminator addresses/subnets. Empty rejects incoming
+  # forwarded-protocol claims; never trust every client with a /0 network.
+  trustedProxyCidrs: []
+  # The route table lives in .helm/frontend-routes.json so the Compose edge can be generated from
+  # the same rows. Set this only to override the shipped table for one release; a permanent route
+  # belongs in that file, where both edges see it.
+  routes: {}
+
+# The chart deploys Nest API services and the selected frontend renderers.
+# API probes should keep /live and /ready; nginx probes use
+# frontendNginx.healthPath when nginxConfig=true. Per-app autoscalingEnabled
+# defaults to true when global autoscaling is enabled; set it false for
+# workloads that keep replica-local runtime state.
+apps:
+  authAppApi:
+    appId: auth-app-api
+    kind: backend
+    enabled: false
+    replicas: 2
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/auth-app-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  userAppApi:
+    appId: user-app-api
+    kind: backend
+    enabled: false
+    replicas: 2
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  adminAppApi:
+    appId: admin-app-api
+    kind: backend
+    enabled: false
+    replicas: 2
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  discordAppApi:
+    appId: discord-app-api
+    kind: backend
+    enabled: false
+    autoscalingEnabled: false
+    replicas: 1
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/discord-app-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  telegramBotApi:
+    appId: telegram-bot-api
+    kind: backend
+    enabled: false
+    autoscalingEnabled: false
+    replicas: 1
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/telegram-bot-api
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 250m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  notificationScheduler:
+    appId: notification-scheduler
+    kind: background
+    enabled: false
+    replicas: 1
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/notification-scheduler
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  notificationConsumer:
+    appId: notification-consumer
+    kind: background
+    enabled: false
+    replicas: 1
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/notification-consumer
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  # telegramBotWorker is not deployed in Helm. It uses long-polling (local dev only).
+  # In production, use telegramBotApi (webhook mode). Run the worker locally with:
+  #   pnpm exec nx run telegram-bot-worker:start
+  landingApp:
+    appId: landing-app
+    kind: frontend
+    enabled: false
+    replicas: 2
+    port: 8080
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/landing-app
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  siteApp:
+    appId: site-app
+    kind: frontend
+    enabled: false
+    replicas: 2
+    port: 80
+    servicePort: 80
+    livenessPath: /live
+    readinessPath: /ready
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/site-app
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 300m, memory: 256Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  mobileApp:
+    appId: mobile-app
+    kind: frontend
+    enabled: false
+    replicas: 2
+    port: 8080
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/mobile-app
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  userApp:
+    appId: user-app
+    kind: frontend
+    enabled: false
+    replicas: 2
+    port: 8080
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/user-app
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+  adminApp:
+    appId: admin-app
+    kind: frontend
+    enabled: false
+    replicas: 2
+    port: 8080
+    servicePort: 80
+    nginxConfig: true
+    livenessPath: /nginx-health
+    readinessPath: /nginx-health
+    image:
+      repository: ghcr.io/your-github-org/nest-react-boilerplate/admin-app
+      tag: latest
+      digest: ''
+      pullPolicy: IfNotPresent
+    resources:
+      requests: { cpu: 25m, memory: 64Mi }
+      limits: { cpu: 200m, memory: 128Mi }
+    podSecurityContext: {}
+    securityContext: {}
+
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+  # Defaults model split-host frontend/API origins. For same-origin/path-based
+  # routing, keep API prefixes (/auth, /profile, /admin) and SPA service paths
+  # explicit in an environment values file and verify asset routing before
+  # traffic cutover; see docs/frontend-deployment-topology.md.
+  hosts:
+    - host: example.com
+      service: landing-app
+      paths: ['/']
+    - host: site-app.example.com
+      service: site-app
+      paths: ['/']
+    - host: user-app.example.com
+      service: user-app
+      paths: ['/']
+    - host: mobile-app.example.com
+      service: mobile-app
+      paths: ['/']
+    - host: admin-app.example.com
+      service: admin-app
+      paths: ['/']
+    - host: auth-app-api.example.com
+      service: auth-app-api
+      paths: ['/']
+    - host: user-app-api.example.com
+      service: user-app-api
+      paths: ['/']
+    - host: admin-app-api.example.com
+      service: admin-app-api
+      paths: ['/']
+    # Bot webhook APIs are deployable but opt-in because they require provider
+    # credentials and callback registration. Enable the matching app and route
+    # together, then add the host to ingress.tls and provision DNS.
+    - host: discord-app-api.example.com
+      service: discord-app-api
+      paths: ['/']
+      enabled: false
+    - host: telegram-bot-api.example.com
+      service: telegram-bot-api
+      paths: ['/']
+      enabled: false
+  # Used when `tls` is empty — one certificate covering every enabled host. `nrb setup`
+  # regenerates `hosts` for the product's own domain and clears `tls`, and it cannot know this
+  # release's secret name, so the chart derives the certificate from the hosts it serves.
+  tlsSecretName: nest-react-boilerplate-tls
+  tls:
+    - secretName: nest-react-boilerplate-tls
+      hosts:
+        - example.com
+        - site-app.example.com
+        - user-app.example.com
+        - mobile-app.example.com
+        - admin-app.example.com
+        - auth-app-api.example.com
+        - user-app-api.example.com
+        - admin-app-api.example.com
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilization: 70
+  scaleDownStabilizationWindow: 300
+  scaleUpStabilizationWindow: 0
+
+podDisruptionBudget:
+  enabled: false
+  maxUnavailable: 1
+
+monitoring:
+  enabled: false
+  otel:
+    # Enables the app's OpenTelemetry SDK. If endpoint is empty and the in-cluster
+    # collector is enabled, pods export to that collector over OTLP/HTTP.
+    enabled: false
+    endpoint: ''
+    headers: ''
+    metricExportInterval: '60000'
+    serviceVersion: ''
+  otelCollector:
+    enabled: false
+    image:
+      repository: otel/opentelemetry-collector-contrib
+      tag: 0.161.0@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1
+      pullPolicy: IfNotPresent
+    replicas: 1
+    resources:
+      requests: { cpu: 100m, memory: 128Mi }
+      limits: { cpu: 500m, memory: 512Mi }
+    podSecurityContext:
+      runAsNonRoot: true
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
+    config: |
+      receivers:
+        otlp:
+          protocols:
+            grpc:
+              endpoint: 0.0.0.0:4317
+            http:
+              endpoint: 0.0.0.0:4318
+      processors:
+        memory_limiter:
+          check_interval: 1s
+          limit_mib: 384
+        batch: {}
+      exporters:
+        prometheus:
+          endpoint: 0.0.0.0:9464
+          resource_to_telemetry_conversion:
+            enabled: true
+        otlp:
+          endpoint: tempo.observability.svc.cluster.local:4317
+          tls:
+            insecure: true
+        debug:
+          verbosity: basic
+      extensions:
+        health_check:
+          endpoint: 0.0.0.0:13133
+      service:
+        extensions: [health_check]
+        pipelines:
+          metrics:
+            receivers: [otlp]
+            processors: [memory_limiter, batch]
+            exporters: [prometheus]
+          traces:
+            receivers: [otlp]
+            processors: [memory_limiter, batch]
+            exporters: [otlp, debug]
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    labels: {}
+  prometheusRule:
+    enabled: false
+    labels: {}
+    # SLOs used by the default alert rules. Tune per environment.
+    availabilityTarget: '99.9'
+    p95LatencySeconds: 1
+    errorRateRatio: 0.05
+  grafanaDashboard:
+    enabled: false
+    labels:
+      grafana_dashboard: '1'
+
+backups:
+  enabled: false
+  schedule: '17 * * * *'
+  timeZone: 'Etc/UTC'
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 900
+  activeDeadlineSeconds: 1800
+  ttlSecondsAfterFinished: 86400
+  image:
+    repository: postgres
+    tag: '17.11-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24'
+    pullPolicy: IfNotPresent
+  mongodbImage:
+    repository: mongo
+    tag: '8.0.32-noble@sha256:0393ab544cbbe92b2dd64719205ecb14a8b3824b17ea75051e2f22482c3e4e66'
+    pullPolicy: IfNotPresent
+  mongodb:
+    # Must contain a deployment-wide MONGODB_BACKUP_RESTORE_URI with
+    # authSource=admin and no database path.
+    existingSecret: ''
+  destination:
+    path: /backups
+    pvc:
+      enabled: false
+      claimName: ''
+    objectStore:
+      enabled: false
+      existingSecret: ''
+      bucket: ''
+      prefix: ''
+  encryption:
+    enabled: false
+    # Provide a command such as: age -r "$AGE_RECIPIENT" -o "$BACKUP_FILE.age" "$BACKUP_FILE" && shred -u "$BACKUP_FILE" && BACKUP_FILE="$BACKUP_FILE.age"
+    command: ''
+    existingSecret: ''
+  retention:
+    keepLast: 168
+    command: ''
+  hooks:
+    preBackup: ''
+    upload: ''
+    postBackup: ''
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 1000m, memory: 1Gi }
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+    fsGroupChangePolicy: OnRootMismatch
+    seccompProfile: { type: RuntimeDefault }
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities: { drop: ['ALL'] }
+
+# Browser-safe runtime flags injected into the SPA containers at start and
+# rendered into /runtime-config.js. Because these are runtime (not Vite
+# build-time) values, one immutable image serves every environment. The landing
+# app's user/admin destinations are derived separately from ingress.hosts as
+# same-origin paths or HTTPS URLs. Never put secrets here - the file is public.
+# Keys are passed through verbatim as env vars; see
+# docker/frontend-runtime-config.sh for the supported set.
+frontendRuntimeConfig: {}
+# frontendRuntimeConfig:
+#   TELEGRAM_AUTH_ENABLED: 'true'
+#   DISCORD_AUTH_ENABLED: 'false'
+
+networkPolicy:
+  enabled: false
+  otelCollector:
+    # Namespace labels use Kubernetes' immutable namespace-name label. Adjust
+    # these when the selected Tempo/Prometheus owners use different namespaces.
+    exporterNamespace: observability
+    exporterPorts: [4317]
+    prometheusNamespace: monitoring
+  # Allow egress to external HTTPS endpoints (transactional email, push/FCM/APNs,
+  # Discord/Telegram, hosted OTLP). A default-deny egress policy that only permits
+  # in-cluster namespaceSelectors silently blocks all off-cluster traffic, so this
+  # is enabled by default. Set enabled=false to enforce a strict, tuned egress and
+  # add your own ipBlock rules downstream.
+  externalEgress:
+    enabled: true
+    ports: [443]
+    cidr: 0.0.0.0/0
+    # Keep intra-cluster/link-local traffic out of the public-internet rule; the
+    # in-cluster egress rules above already cover Postgres/Redis/DNS.
+    except:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+      - 169.254.0.0/16
+
+terminationGracePeriodSeconds: 60
+
+# Coroot — auto-discovering application observability.
+# Point at VictoriaMetrics or Prometheus; Coroot auto-detects K8s apps,
+# builds topological maps, and shows real-time errors/SLOs.
+coroot:
+  enabled: false
+  replicas: 1
+  image:
+    repository: ghcr.io/coroot/coroot
+    tag: 1.27.0@sha256:f63750085f6b3adc62e0441a56807a75cf81ad8ec5df8c3517c357116ea1babb
+    pullPolicy: IfNotPresent
+  prometheusUrl: 'http://vmcluster-vmsingle.monitoring.svc.cluster.local:8429'
+  service:
+    type: ClusterIP
+  rbac:
+    # Coroot does not need Secret payloads for workload discovery. Enable only
+    # after a product-specific review of the additional cluster-wide exposure.
+    readSecrets: false
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile: { type: RuntimeDefault }
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities: { drop: ['ALL'] }

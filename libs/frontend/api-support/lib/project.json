@@ -1,0 +1,34 @@
+{
+  "name": "@app/frontend-api-support",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/api-support/lib/src",
+  "projectType": "library",
+  "tags": ["platform:frontend", "type:util", "scope:shared", "fsd:layer:shared"],
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/api-support/lib",
+        "command": "node ../../../../node_modules/typescript/bin/tsc --noEmit --project tsconfig.lib.json"
+      },
+      "outputs": []
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "libs/frontend/api-support/lib",
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/frontend/api-support"]
+    }
+  }
+}

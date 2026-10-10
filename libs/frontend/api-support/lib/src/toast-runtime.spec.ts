@@ -1,0 +1,505 @@
+// @requirements REQ-API-RESPONSE-STUDIO-001 REQ-FRONTEND-ERROR-005
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { configureApiLocale } from './api-locale';
+import {
+  ApiToastRuntime,
+  applyProblemPresentationOverrides,
+  configureProblemPresentationOverrides,
+  createDefaultApiToastRules,
+  parseApiToastRules,
+  resolveApiProblemPresentation,
+  resolveApiToastRule,
+  resolveApiToastRules,
+  type ApiToastRule,
+} from './toast-runtime';
+
+describe('parseApiToastRules', () => {
+  it('returns nothing for non-array input', () => {
+    expect(parseApiToastRules('not an array')).toEqual([]);
+    expect(parseApiToastRules(undefined)).toEqual([]);
+  });
+
+  it('drops malformed rule entries', () => {
+    expect(
+      parseApiToastRules([
+        42,
+        { match: 'nope', toast: { category: 'error', title: 'T' } },
+        { match: {}, toast: 5 },
+        { match: {}, toast: { category: 'error', title: 'T' } },
+        { id: 'no-title', match: {}, toast: { category: 'error' } },
+        {
+          id: 'bad-category',
+          match: {},
+          toast: { category: 'nope', title: 'T' },
+        },
+        {
+          id: 'bad-title-key',
+          match: {},
+          toast: { category: 'error', titleKey: 'not.a.translation.key' },
+        },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('normalizes match criteria and only keeps recognized display values', () => {
+    const rules = parseApiToastRules([
+      {
+        display: 'modal',
+        id: 'billing',
+        match: {
+          code: 'billing.declined',
+          kind: 'network',
+          statusRange: [500, 599],
+          type: 'https://example.com/problems#resource-conflict',
+        },
+        toast: { category: 'error', message: 'Declined', title: 'Payment' },
+      },
+      {
+        display: 'not-a-display',
+        id: 'min-not-number',
+        match: { endpoint: '/x', method: 'post', statusRange: ['x', 5] },
+        toast: { category: 'info', title: 'Info' },
+      },
+      {
+        id: 'max-not-number',
+        match: { status: 404, statusRange: [400, 'y'] },
+        toast: { category: 'warning', title: 'Warn' },
+      },
+      {
+        id: 'range-not-array',
+        match: { statusRange: '500-599' },
+        toast: { category: 'success', title: 'Ok' },
+      },
+    ]);
+
+    expect(rules[0]).toMatchObject({
+      display: 'modal',
+      id: 'billing',
+      match: {
+        code: 'billing.declined',
+        kind: 'network',
+        statusRange: [500, 599],
+        type: 'https://example.com/problems#resource-conflict',
+      },
+      toast: { category: 'error', message: 'Declined', title: 'Payment' },
+    });
+    // Unrecognized display falls back to undefined.
+    expect(rules[1]?.display).toBeUndefined();
+    expect(rules[1]?.match).toEqual({ endpoint: '/x', method: 'post' });
+    // statusRange entries that are not both numbers are discarded.
+    expect(rules[2]?.match).toEqual({ status: 404 });
+    expect(rules[3]?.match).toEqual({});
+  });
+
+  it('resolves generated translation keys and normalized problem messages at display time', () => {
+    const runtime = new ApiToastRuntime({ clock: () => 1 });
+    const rules = parseApiToastRules([
+      {
+        display: 'toast',
+        id: 'generated-error',
+        match: { status: 409 },
+        toast: {
+          category: 'error',
+          messageSource: 'problem',
+          titleKey: 'ui.runtime.requestFailed.title',
+        },
+      },
+    ]);
+
+    configureApiLocale({ locale: 'ru' });
+    expect(runtime.showForApiResult({ message: 'Локализованная причина', status: 409 }, rules)).toMatchObject({
+      message: 'Локализованная причина',
+      title: 'Запрос не выполнен',
+    });
+  });
+});
+
+describe('resolveApiToastRule', () => {
+  const rules = parseApiToastRules([
+    {
+      id: 'method-rule',
+      match: { method: 'POST' },
+      toast: { category: 'info', title: 'Method' },
+    },
+    {
+      id: 'endpoint-rule',
+      match: { endpoint: '/profiles/{profileId}' },
+      toast: { category: 'info', title: 'Endpoint' },
+    },
+    {
+      id: 'code-rule',
+      match: { code: 'billing.declined' },
+      toast: { category: 'error', title: 'Code' },
+    },
+    {
+      id: 'type-rule',
+      match: { type: 'https://example.com/problems#resource-conflict' },
+      toast: { category: 'error', title: 'Type' },
+    },
+    {
+      id: 'status-rule',
+      match: { status: 404 },
+      toast: { category: 'warning', title: 'Status' },
+    },
+    {
+      id: 'range-rule',
+      match: { statusRange: [500, 599] },
+      toast: { category: 'error', title: 'Range' },
+    },
+  ]);
+
+  it('returns null when no rule matches the context', () => {
+    expect(resolveApiToastRule({ method: 'GET' }, rules)).toBeNull();
+  });
+
+  it('skips rules whose method, endpoint, code, or status differ', () => {
+    const statusRule = rules[4];
+    if (!statusRule) {
+      throw new Error('Expected status rule fixture.');
+    }
+
+    expect(resolveApiToastRule({ method: 'GET', endpoint: '/other' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ code: 'other.code' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ type: 'https://example.com/problems#other' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ status: 500 }, [statusRule])).toBeNull();
+  });
+
+  it('matches on each individual criterion', () => {
+    expect(resolveApiToastRule({ method: 'post' }, rules)).toMatchObject({
+      id: 'method-rule',
+    });
+    expect(resolveApiToastRule({ endpoint: '/profiles/profile-1' }, rules)).toMatchObject({
+      id: 'endpoint-rule',
+    });
+    expect(resolveApiToastRule({ endpoint: '/profiles' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ endpoint: '/profiles/' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ code: 'billing.declined' }, rules)).toMatchObject({ id: 'code-rule' });
+    expect(resolveApiToastRule({ type: 'https://example.com/problems#resource-conflict' }, rules)).toMatchObject({
+      id: 'type-rule',
+    });
+    expect(resolveApiToastRule({ status: 404 }, rules)).toMatchObject({
+      id: 'status-rule',
+    });
+    expect(resolveApiToastRule({ status: 503 }, rules)).toMatchObject({
+      id: 'range-rule',
+    });
+  });
+
+  it('rejects a status-range rule when the status is missing or out of range', () => {
+    const rangeRule = rules[5];
+    if (!rangeRule) {
+      throw new Error('Expected range rule fixture.');
+    }
+    const rangeOnly = [rangeRule];
+    expect(resolveApiToastRule({}, rangeOnly)).toBeNull();
+    expect(resolveApiToastRule({ status: 404 }, rangeOnly)).toBeNull();
+    expect(resolveApiToastRule({ status: 600 }, rangeOnly)).toBeNull();
+  });
+});
+
+describe('resolveApiToastRules', () => {
+  afterEach(() => {
+    configureProblemPresentationOverrides([]);
+  });
+
+  it('resolves lazy rule sources', () => {
+    const rules = createDefaultApiToastRules();
+    expect(resolveApiToastRules(() => rules)).toEqual(rules);
+  });
+
+  it('applies validated endpoint-response overrides and localized copy', () => {
+    configureApiLocale({ locale: 'ru' });
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'user-app-api:PATCH:/profile:409:resource-conflict',
+        display: 'silent',
+        messageEn: 'Conflict',
+        messageRu: 'Конфликт',
+        revision: 4,
+        severity: 'info',
+        updatedAt: '2026-07-19T12:00:00.000Z',
+      },
+      { ruleId: 'bad-display', display: 'modal', revision: 2, severity: 'error' },
+    ]);
+
+    const source = [
+      {
+        display: 'toast',
+        id: 'user-app-api:PATCH:/profile:409:resource-conflict',
+        match: { code: 'resource-conflict', endpoint: '/profile', method: 'PATCH', status: 409 },
+        toast: { category: 'warning', messageSource: 'problem', title: 'Request failed' },
+      },
+    ] satisfies ApiToastRule[];
+    const [overridden] = applyProblemPresentationOverrides(source);
+
+    expect(overridden).toMatchObject({
+      display: 'silent',
+      id: 'user-app-api:PATCH:/profile:409:resource-conflict:override:4',
+      toast: { category: 'info', message: 'Конфликт' },
+    });
+    expect(
+      resolveApiToastRule({ code: 'resource-conflict', endpoint: '/profile', method: 'PATCH', status: 409 }, [
+        overridden!,
+      ]),
+    ).toBe(overridden);
+  });
+
+  it('ignores malformed overrides and uses safe locale and revision fallbacks', () => {
+    const source = [
+      {
+        display: 'toast',
+        id: 'fallback-copy',
+        match: { status: 409 },
+        toast: { category: 'warning', messageSource: 'problem', title: 'Request failed' },
+      },
+    ] satisfies ApiToastRule[];
+
+    configureProblemPresentationOverrides(undefined);
+    expect(applyProblemPresentationOverrides(source)).toEqual(source);
+
+    configureProblemPresentationOverrides([
+      null,
+      {},
+      { ruleId: 'missing-display' },
+      { ruleId: 'missing-severity', display: 'toast' },
+      { ruleId: 'bad-display', display: 'unknown', severity: 'error' },
+      { ruleId: 'bad-severity', display: 'toast', severity: 'unknown' },
+      {
+        ruleId: 'fallback-copy',
+        display: 'toast',
+        severity: 'info',
+        revision: -1,
+        messageEn: 'English fallback',
+      },
+    ]);
+
+    configureApiLocale({ locale: 'ru' });
+    expect(applyProblemPresentationOverrides(source)[0]).toMatchObject({
+      id: 'fallback-copy:override:0',
+      toast: { category: 'info', message: 'English fallback' },
+    });
+
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'fallback-copy',
+        display: 'toast',
+        severity: 'warning',
+      },
+    ]);
+    configureApiLocale({ locale: 'en' });
+    expect(applyProblemPresentationOverrides(source)[0]).toMatchObject({
+      id: 'fallback-copy:override:0',
+      toast: { category: 'warning', messageSource: 'problem' },
+    });
+  });
+});
+
+describe('problem presentation payload compatibility', () => {
+  afterEach(() => {
+    configureProblemPresentationOverrides([]);
+  });
+
+  const rules = [
+    { id: 'payload', display: 'modal', match: { status: 500 }, toast: { category: 'error', title: 'Failed' } },
+  ] satisfies ApiToastRule[];
+
+  it('keeps legacy locale arrays and discards blank or non-string lines', () => {
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'payload',
+        display: 'modal',
+        severity: 'warning',
+        textsEn: [null, '', 'English'],
+        textsRu: ['Русский'],
+        textsZh: ['中文'],
+        updatedByUserId: 'operator-123',
+        updatedAt: '2026-09-30T00:00:00Z',
+        revision: 2,
+      },
+    ]);
+    for (const [locale, text] of [
+      ['en', 'English'],
+      ['ru', 'Русский'],
+      ['zh', '中文'],
+    ] as const) {
+      configureApiLocale({ locale });
+      expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))).toMatchObject({
+        lines: [text],
+        severity: 'warning',
+      });
+    }
+  });
+
+  it('uses scalar translations when locale arrays are empty and accepts a presentation with no copy', () => {
+    configureProblemPresentationOverrides([
+      {
+        ruleId: 'payload',
+        display: 'modal',
+        severity: 'error',
+        texts: { en: [], ru: [false, ' '], zh: null },
+        messageEn: 'English',
+        messageRu: 'Русский',
+        messageZh: '中文',
+      },
+    ]);
+    for (const [locale, text] of [
+      ['en', 'English'],
+      ['ru', 'Русский'],
+      ['zh', '中文'],
+    ] as const) {
+      configureApiLocale({ locale });
+      expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))?.lines).toEqual([
+        text,
+      ]);
+    }
+    configureProblemPresentationOverrides([{ ruleId: 'payload', display: 'modal', severity: 'error' }]);
+    expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))?.lines).toEqual([]);
+    configureProblemPresentationOverrides([]);
+    expect(resolveApiProblemPresentation({ status: 500 }, rules)).toMatchObject({
+      lines: [],
+      support: false,
+      figmaOnly: false,
+    });
+    expect(new ApiToastRuntime().showForApiResult({ status: 500 }, rules)).toBeNull();
+  });
+
+  it.each(['en', 'ru', 'zh'] as const)('accepts a partial %s translation payload', (locale) => {
+    configureProblemPresentationOverrides([
+      { ruleId: 'payload', display: 'modal', severity: 'error', texts: { [locale]: ['Localized'] } },
+    ]);
+    configureApiLocale({ locale });
+    expect(resolveApiProblemPresentation({ status: 500 }, applyProblemPresentationOverrides(rules))?.lines).toEqual([
+      'Localized',
+    ]);
+  });
+});
+
+describe('ApiToastRuntime defaults', () => {
+  it('resolves default toast copy from the current frontend locale', () => {
+    configureApiLocale({ locale: 'ru' });
+
+    expect(createDefaultApiToastRules()[0]?.toast).toEqual({
+      category: 'warning',
+      message:
+        'Подключитесь к сети, чтобы продолжить. Экран остаётся на текущем маршруте и безопасно повторяет запрос.',
+      title: 'Нет подключения',
+    });
+  });
+
+  it('uses a monotonic default id generator and dismisses by id', () => {
+    const runtime = new ApiToastRuntime();
+
+    const first = runtime.show({ category: 'info', title: 'One' });
+    const second = runtime.show({ category: 'success', title: 'Two' });
+
+    expect(first?.id).toBe('toast-1');
+    expect(second?.id).toBe('toast-2');
+    expect(runtime.visible.map((toast) => toast.id)).toEqual(['toast-1', 'toast-2']);
+
+    runtime.dismiss('toast-1');
+    expect(runtime.visible.map((toast) => toast.id)).toEqual(['toast-2']);
+
+    runtime.dismiss('missing');
+    expect(runtime.visible.map((toast) => toast.id)).toEqual(['toast-2']);
+  });
+
+  it.each(['modal', 'custom'] as const)('returns typed %s presentation data without emitting a toast', (display) => {
+    configureApiLocale({ locale: 'zh' });
+    configureProblemPresentationOverrides([
+      {
+        ruleId: `${display}-rule`,
+        display,
+        severity: 'warning',
+        support: true,
+        figmaOnly: display === 'custom',
+        customDescription: display === 'custom' ? 'https://www.figma.com/file/design' : '',
+        texts: {
+          en: ['English line one', 'English line two'],
+          ru: ['Русская строка один', 'Русская строка два'],
+          zh: ['中文第一行', '中文第二行'],
+        },
+        revision: 7,
+      },
+    ]);
+    const rules = resolveApiToastRules([
+      {
+        display: 'toast',
+        id: `${display}-rule`,
+        match: { status: 500 },
+        toast: { category: 'error', messageSource: 'problem', title: 'Request failed' },
+      },
+    ]);
+    const emitted: unknown[] = [];
+    const runtime = new ApiToastRuntime({
+      eventHub: {
+        clearAuthRequired: () => undefined,
+        clearPresentation: () => undefined,
+        emit: (event) => emitted.push(event),
+        getState: () => ({
+          authRequired: false,
+          lastError: null,
+          presentation: null,
+          redirectTo: null,
+          status: 'online',
+        }),
+        reset: () => undefined,
+        subscribe: () => () => undefined,
+      },
+    });
+
+    expect(runtime.showForApiResult({ status: 500 }, rules)).toBeNull();
+    expect(runtime.visible).toHaveLength(0);
+    expect(emitted).toEqual([
+      {
+        type: 'presentation',
+        presentation: {
+          display,
+          ruleId: `${display}-rule`,
+          severity: 'warning',
+          support: true,
+          figmaOnly: display === 'custom',
+          ...(display === 'custom' ? { customDescription: 'https://www.figma.com/file/design' } : {}),
+          lines: ['中文第一行', '中文第二行'],
+        },
+      },
+    ]);
+    expect(resolveApiProblemPresentation({ status: 500 }, rules)).toEqual({
+      display,
+      ruleId: `${display}-rule`,
+      severity: 'warning',
+      support: true,
+      figmaOnly: display === 'custom',
+      ...(display === 'custom' ? { customDescription: 'https://www.figma.com/file/design' } : {}),
+      lines: ['中文第一行', '中文第二行'],
+    });
+  });
+
+  it('preserves silent no-toast behavior and does not expose silent rules as capable presentations', () => {
+    const runtime = new ApiToastRuntime();
+    const rules = parseApiToastRules([
+      {
+        display: 'silent',
+        id: 'silent-rule',
+        match: { status: 401 },
+        toast: { category: 'info', title: 'Silent' },
+      },
+    ]);
+
+    expect(runtime.showForApiResult({ status: 401 }, rules)).toBeNull();
+    expect(resolveApiProblemPresentation({ status: 401 }, rules)).toBeNull();
+    expect(runtime.visible).toHaveLength(0);
+  });
+
+  it('fails closed when a manually supplied rule has no title source', () => {
+    const runtime = new ApiToastRuntime();
+    const rule = {
+      display: 'toast',
+      id: 'missing-title',
+      match: { status: 500 },
+      toast: { category: 'error' },
+    } as ApiToastRule;
+
+    expect(runtime.showForApiResult({ status: 500 }, [rule])).toBeNull();
+  });
+});

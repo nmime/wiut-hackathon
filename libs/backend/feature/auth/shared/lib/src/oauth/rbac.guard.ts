@@ -1,0 +1,105 @@
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
+import {
+  PublicAuthMetadataKey,
+  RequiredPermissionsMetadataKey,
+  RequiredRolesMetadataKey,
+} from './access-control.decorators';
+import type { AuthenticatedPrincipal, AuthenticatedRequest } from './access-control.types';
+
+export interface PermissionEvaluationContext {
+  permission: string;
+  principal: AuthenticatedPrincipal;
+  request: AuthenticatedRequest;
+  requiredRoles: readonly string[];
+}
+
+export type PermissionEvaluationResult = boolean | undefined;
+
+/* v8 ignore start -- Nest @Injectable() emits a decorator-helper branch that is unreachable for a class-only decorator. */
+@Injectable()
+/* v8 ignore stop */
+export class RbacGuard implements CanActivate {
+  constructor(private readonly reflector: Reflector = new Reflector()) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    if (this.isPublicRoute(context)) {
+      return true;
+    }
+
+    const requiredRoles = this.getMetadata(RequiredRolesMetadataKey, context);
+    const requiredPermissions = this.getMetadata(RequiredPermissionsMetadataKey, context);
+    const principal = this.getPrincipal(context);
+
+    if (this.requiresPermissionMetadata(context) && requiredPermissions.length === 0) {
+      throw new ForbiddenException('Access permission metadata is missing.');
+    }
+
+    if (requiredRoles.length > 0 && !hasAnyRole(principal, requiredRoles)) {
+      throw new ForbiddenException('Required role is missing.');
+    }
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    if (!this.hasAllPermissions(principal, request, requiredPermissions, requiredRoles)) {
+      throw new ForbiddenException('Required permission is missing.');
+    }
+
+    return true;
+  }
+
+  private isPublicRoute(context: ExecutionContext): boolean {
+    return (
+      this.reflector.getAllAndOverride<boolean | undefined>(PublicAuthMetadataKey, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? false
+    );
+  }
+
+  private getMetadata(key: string, context: ExecutionContext): string[] {
+    return (
+      this.reflector.getAllAndOverride<string[] | undefined>(key, [context.getHandler(), context.getClass()]) ?? []
+    );
+  }
+
+  private getPrincipal(context: ExecutionContext): AuthenticatedPrincipal {
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const principal = request.user ?? request.auth;
+    if (!principal) {
+      throw new UnauthorizedException('Authenticated principal is missing.');
+    }
+
+    return principal;
+  }
+
+  protected requiresPermissionMetadata(context: ExecutionContext): boolean;
+  protected requiresPermissionMetadata(): boolean {
+    return false;
+  }
+
+  protected evaluateDomainPermission(context: PermissionEvaluationContext): PermissionEvaluationResult;
+  protected evaluateDomainPermission(): PermissionEvaluationResult {
+    return undefined;
+  }
+
+  private hasAllPermissions(
+    principal: AuthenticatedPrincipal,
+    request: AuthenticatedRequest,
+    permissions: string[],
+    requiredRoles: string[],
+  ): boolean {
+    return permissions.every((permission) => {
+      const domainResult = this.evaluateDomainPermission({
+        permission,
+        principal,
+        request,
+        requiredRoles,
+      });
+
+      return domainResult ?? principal.permissions.includes(permission);
+    });
+  }
+}
+
+function hasAnyRole(principal: AuthenticatedPrincipal, roles: string[]): boolean {
+  return roles.some((role) => principal.roles.includes(role));
+}

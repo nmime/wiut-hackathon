@@ -1,0 +1,20 @@
+{
+  "landing.appName": "Начальное приложение",
+  "landing.eyebrow": "Связанные продуктовые интерфейсы",
+  "landing.title": "Сфокусированная основа для вашего следующего продукта.",
+  "landing.description": "Начните с аккуратного публичного сайта и связанного личного кабинета, а затем развивайте каждое приложение под свою предметную область.",
+  "landing.action.user": "Открыть пример кабинета",
+  "landing.action.admin": "Открыть пример админки",
+  "landing.action.docs": "Документация разработчика",
+  "landing.productName": "Nest React Boilerplate",
+  "landing.section.title": "Понятные границы с первого экрана.",
+  "landing.section.eyebrow": "Публичный сайт, кабинет и админка",
+  "landing.section.description": "Ведите посетителей от понятного знакомства с продуктом к согласованному личному кабинету и администрированию.",
+  "landing.surface.public.title": "Публичный сайт",
+  "landing.surface.public.description": "Лаконичный маркетинговый интерфейс с заменяемыми названием, сообщением и основными действиями.",
+  "landing.surface.account.title": "Личный кабинет",
+  "landing.surface.account.description": "Рабочие сценарии входа, профиля, настроек и подключенных аккаунтов готовы для продуктовых функций.",
+  "landing.surface.admin.title": "Админ-панель",
+  "landing.surface.admin.description": "Отдельный защищенный интерфейс для операционных сценариев и ролевого доступа.",
+  "landing.statGrid.label": "Связанные продуктовые интерфейсы"
+}

@@ -1,0 +1,99 @@
+export const DefaultAdminEmail = "admin@example.com";
+export const DefaultAdminPassword = "ChangeMe123!";
+
+export interface SeedSafetyArgs {
+  email: string;
+  password: string;
+  force?: boolean;
+}
+
+export interface SeedSafetyOptions {
+  env?: NodeJS.ProcessEnv;
+  assertLocalDevelopmentDatabase?: (connectionString: string) => void;
+  isLocalDevelopmentDatabase?: (connectionString: string, env: NodeJS.ProcessEnv) => boolean;
+}
+
+function isTruthy(value: unknown): boolean {
+  return ["1", "true", "yes", "on"].includes(
+    String(value ?? "").trim().toLowerCase(),
+  );
+}
+
+export function isLocalDevelopmentDatabase(
+  connectionString: string,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  // Fail closed: in production the host/name heuristic is not trustworthy because
+  // the default prod deployment also uses host "postgres" and db
+  // "nest_react_boilerplate" (matches the /_boilerplate/ heuristic). NODE_ENV is
+  // the primary signal (set to "production" in docker-compose.prod.yml); the
+  // host/name heuristic remains the secondary check for local/dev/test runs.
+  if (env.NODE_ENV === "production") return false;
+  const url = new URL(connectionString);
+  const hosts = [url.host].map((host) =>
+    host.startsWith("[") ? host.slice(1, host.indexOf("]")).toLowerCase() : host.replace(/:\d+$/u, "").toLowerCase(),
+  );
+  const database = decodeURIComponent(url.pathname.replace(/^\//u, ""));
+  const localHosts = new Set(["localhost", "127.0.0.1", "::1", "postgres"]);
+  const looksLikeDevDb = /(^|_)(dev|test|boilerplate)($|_)/u.test(database);
+  return hosts.every((host) => localHosts.has(host)) && looksLikeDevDb;
+}
+
+export function resolvePassword(
+  args: { passwordEnv?: string; password?: string },
+  env: NodeJS.ProcessEnv = process.env,
+): string | undefined {
+  if (!args.passwordEnv) return args.password;
+  const password = env[args.passwordEnv];
+  if (!password) {
+    throw new Error(`${args.passwordEnv} must contain the seed password.`);
+  }
+  return password;
+}
+
+export function assertSeedSafety(
+  args: SeedSafetyArgs,
+  connectionString: string,
+  {
+    env = process.env,
+    assertLocalDevelopmentDatabase,
+    isLocalDevelopmentDatabase: inspectLocalDatabase = isLocalDevelopmentDatabase,
+  }: SeedSafetyOptions = {},
+): { localDevelopmentDatabase: boolean } {
+  const localDevelopmentDatabase = inspectLocalDatabase(connectionString, env);
+  const productionRuntime = env.NODE_ENV === "production";
+  const defaultSeedCredentials = [DefaultAdminPassword, 'Admin@Secure1!'].includes(args.password);
+
+  if (!args.force) {
+    assertLocalDevelopmentDatabase?.(connectionString);
+  }
+
+  if (args.force && !localDevelopmentDatabase) {
+    if (!isTruthy(env.DB_SEED_ALLOW_NON_LOCAL)) {
+      throw new Error(
+        "Refusing --force seed against a non-local/dev database. Set DB_SEED_ALLOW_NON_LOCAL=true only for an intentional, controlled seed operation.",
+      );
+    }
+    if (productionRuntime && !isTruthy(env.DB_SEED_ALLOW_PRODUCTION)) {
+      throw new Error(
+        "Refusing --force seed in production. Set DB_SEED_ALLOW_PRODUCTION=true only for an intentional, controlled production seed operation.",
+      );
+    }
+  }
+
+  if ((productionRuntime || !localDevelopmentDatabase) && defaultSeedCredentials) {
+    throw new Error(
+      "Default seed admin credentials are not allowed for production or non-local databases. Pass --email and a strong --password or --password-env value.",
+    );
+  }
+  if ((productionRuntime || !localDevelopmentDatabase) && args.password.length < 16) {
+    throw new Error('Non-local seed passwords must contain at least 16 characters.');
+  }
+  if (!args.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(args.email.trim())) {
+    throw new Error('A valid administrator seed email is required.');
+  }
+  if (!localDevelopmentDatabase && !args.force) {
+    throw new Error('Refusing seed against a non-local/dev database without the explicit --force seed guards.');
+  }
+  return { localDevelopmentDatabase };
+}

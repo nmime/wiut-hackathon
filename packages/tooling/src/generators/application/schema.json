@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "cli": "nx",
+  "$id": "@repo/tooling/application",
+  "title": "Application",
+  "description": "Generate a new application following repository conventions",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Application name (kebab-case)",
+      "x-prompt": "What name would you like to give your application?",
+      "x-priority": "important"
+    },
+    "kind": {
+      "type": "string",
+      "description": "Application kind",
+      "enum": ["frontend", "backend", "e2e"],
+      "x-prompt": "What kind of application?",
+      "x-priority": "important"
+    },
+    "renderer": {
+      "type": "string",
+      "description": "Runtime template. Frontend: vite, astro, vike, expo. Backend: nest-api, consumer, scheduler. E2E: cucumber.",
+      "enum": ["vite", "astro", "vike", "expo", "nest-api", "consumer", "scheduler", "cucumber"],
+      "x-priority": "important"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Explicit free local port; omitted selects the first free canonical port",
+      "x-priority": "optional"
+    },
+    "skipFormat": {
+      "type": "boolean",
+      "description": "Skip formatting the changed files",
+      "default": false,
+      "x-priority": "optional"
+    }
+  },
+  "required": ["name", "kind", "renderer"]
+}

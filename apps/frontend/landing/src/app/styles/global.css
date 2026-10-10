@@ -1,0 +1,135 @@
+/* Landing composition. Product identity and copy are replaced during project setup. */
+
+.xr-shell {
+  background:
+    radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--xr-color-primary) 17%, transparent), transparent 28rem),
+    radial-gradient(circle at 88% 18%, color-mix(in srgb, var(--xr-color-success) 12%, transparent), transparent 25rem),
+    var(--xr-body-gradient);
+}
+
+.xr-header {
+  backdrop-filter: blur(18px) saturate(150%);
+  background: color-mix(in srgb, var(--xr-card-background) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--xr-color-border) 82%, transparent);
+  border-radius: var(--xr-radius-lg);
+  box-shadow: var(--xr-shadow-sm);
+  margin: 1rem auto 0;
+  max-width: min(calc(100% - 2rem), 1200px);
+  position: relative;
+}
+
+.xr-hero {
+  align-items: center;
+  display: grid;
+  min-height: clamp(28rem, 58vw, 40rem);
+  text-align: center;
+}
+
+.xr-hero__copy {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  margin-inline: auto;
+  max-width: 64rem;
+}
+
+.xr-hero h1 {
+  font-size: clamp(2.8rem, 7vw, 5.8rem);
+  letter-spacing: -0.07em;
+  line-height: 0.94;
+  max-width: 13ch;
+  text-wrap: balance;
+}
+
+.xr-hero__description {
+  font-size: clamp(1.05rem, 2vw, 1.3rem);
+  max-width: 44rem;
+}
+
+.xr-actions {
+  justify-content: center;
+}
+
+.landing-reference {
+  background: color-mix(in srgb, var(--xr-card-background) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--xr-color-border) 82%, transparent);
+  border-radius: calc(var(--xr-radius-lg) + 0.5rem);
+  box-shadow: var(--xr-shadow-md);
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+.landing-reference h2 {
+  font-size: clamp(1.9rem, 4vw, 3.2rem);
+  letter-spacing: -0.05em;
+  max-width: 16ch;
+  text-wrap: balance;
+}
+
+.landing-reference__intro {
+  color: var(--xr-color-muted);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.75;
+  margin: 0;
+  max-width: 50rem;
+}
+
+.landing-reference__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.landing-reference__card {
+  min-height: 16rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.landing-reference__card .xr-card__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.landing-reference__index {
+  align-items: center;
+  background: color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
+  border-radius: 999px;
+  color: var(--xr-color-primary);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 900;
+  height: 2.5rem;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  width: 2.5rem;
+}
+
+.landing-reference__card p {
+  color: var(--xr-color-muted);
+  line-height: 1.75;
+  margin: 0;
+}
+
+@media (max-width: 56rem) {
+  .landing-reference__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-reference__card {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 40rem) {
+  .xr-header {
+    align-items: stretch;
+  }
+
+  .xr-hero {
+    min-height: 27rem;
+  }
+
+  .xr-hero h1 {
+    font-size: clamp(2.5rem, 14vw, 3.7rem);
+  }
+}

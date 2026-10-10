@@ -1,0 +1,65 @@
+{{- $databaseEngine := include "boilerplate.databaseEngine" . }}
+{{- if .Values.migrations.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "boilerplate.fullname" . }}-migrate
+  labels:
+    {{- include "boilerplate.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+    app.kubernetes.io/database-engine: {{ $databaseEngine }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ default 2 .Values.migrations.backoffLimit }}
+  activeDeadlineSeconds: {{ default 600 .Values.migrations.activeDeadlineSeconds }}
+  ttlSecondsAfterFinished: {{ default 3600 .Values.migrations.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "boilerplate.labels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: Never
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.migrations.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: migrate
+          image: {{ include "boilerplate.image" (dict "name" "migrations" "image" .Values.migrations.image) | quote }}
+          imagePullPolicy: {{ default "IfNotPresent" .Values.migrations.image.pullPolicy }}
+          {{- with .Values.migrations.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command: {{ toJson .Values.migrations.command }}
+          envFrom:
+            {{- if .Values.config.extra }}
+            {{- /* First, so the chart's own ConfigMap below wins on a duplicate key. */}}
+            - configMapRef:
+                name: {{ include "boilerplate.fullname" . }}-product-config
+            {{- end }}
+            - configMapRef:
+                name: {{ include "boilerplate.fullname" . }}-config
+            {{- if eq $databaseEngine "postgres" }}
+            - secretRef:
+                name: {{ include "boilerplate.secretName" . }}
+            {{- end }}
+          {{- if eq $databaseEngine "mongodb" }}
+          env:
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "boilerplate.mongodbMigrationSecretName" . }}
+                  key: MONGODB_MIGRATION_URI
+          {{- end }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+{{- end }}

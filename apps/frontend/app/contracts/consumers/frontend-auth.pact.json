@@ -1,0 +1,87 @@
+{
+  "consumer": {
+    "name": "frontend-auth-client"
+  },
+  "provider": {
+    "name": "auth-app-api"
+  },
+  "interactions": [
+    {
+      "description": "login returns an authenticated session envelope",
+      "request": {
+        "method": "POST",
+        "path": "/auth/login",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "email": "contract@example.com",
+          "password": "correct-horse-battery-staple"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "data": {
+            "user": {
+              "id": "user-1",
+              "email": "contract@example.com",
+              "theme": "system",
+              "roles": ["user"],
+              "permissions": [],
+              "tenantId": "00000000-0000-0000-0000-000000000000"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "current user endpoint accepts the session cookie issued by login",
+      "request": {
+        "method": "GET",
+        "path": "/auth/me",
+        "headers": {
+          "Cookie": "nrb.sid=contract-session-id"
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "data": {
+            "principal": {
+              "subject": "user-1",
+              "email": "contract@example.com",
+              "displayName": "Contract User",
+              "locale": "en",
+              "theme": "system",
+              "roles": ["user"],
+              "permissions": [],
+              "tenantId": "00000000-0000-0000-0000-000000000000"
+            },
+            "user": {
+              "id": "user-1",
+              "email": "contract@example.com",
+              "displayName": "Contract User",
+              "locale": "en",
+              "theme": "system",
+              "roles": ["user"],
+              "permissions": [],
+              "tenantId": "00000000-0000-0000-0000-000000000000"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "3.0.0"
+    }
+  }
+}

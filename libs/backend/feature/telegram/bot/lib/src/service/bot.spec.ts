@@ -1,0 +1,1206 @@
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-SOCIAL-CONFIG-004 REQ-AUTH-IDENTITY-005
+import { describe, expect, it, vi } from 'vitest';
+import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
+import { createTelegramAuthBridge } from './auth-bridge';
+import { goBack, goHome, navigateTo, replaceCurrentRoute } from '../navigation';
+import { defaultLocale, supportedLocales, translate, type Locale } from '../i18n';
+import { initialTelegramBotSession } from './session';
+import type { TelegramBotAuthPort, TelegramBotConfig, TelegramBotSession } from '../type';
+
+const telegramUiRegistrations: ReadonlyArray<{ locale: Locale; languageCode?: Locale }> = [
+  { locale: defaultLocale },
+  ...supportedLocales.map((locale) => ({ locale, languageCode: locale })),
+];
+
+const telegramUiRegistrationLabels = ['default', ...supportedLocales] as const;
+
+const botInfo = {
+  id: 42,
+  is_bot: true,
+  first_name: 'Test Bot',
+  username: 'test_bot',
+  can_join_groups: true,
+  can_read_all_group_messages: false,
+  supports_inline_queries: false,
+  can_connect_to_business: false,
+  has_main_web_app: false,
+  has_topics_enabled: false,
+  allows_users_to_create_topics: false,
+  can_manage_bots: false,
+  supports_join_request_queries: false,
+} as const;
+
+function config(overrides: Partial<TelegramBotConfig> = {}): TelegramBotConfig {
+  return {
+    token: '123:test',
+    appUrl: 'https://app.example.test/tma',
+    setupMenuButton: false,
+    webhookSecret: 'secret',
+    mode: 'webhook',
+    environment: 'test',
+    sessionTtlSeconds: 60,
+    rateLimit: { timeFrameMs: 10, limit: 20 },
+    botInfo,
+    ...overrides,
+  };
+}
+
+function configuredWebAppButtons(
+  calls: Array<{ method: string; payload: Record<string, unknown> }>,
+): Array<{ text?: string; web_app?: { url?: string } }> {
+  return calls.flatMap((call) => flattenButtons(call.payload).filter((button) => Boolean(button.web_app)));
+}
+
+function visibleTelegramText(calls: Array<{ method: string; payload: Record<string, unknown> }>): string[] {
+  return calls.flatMap((call) => [
+    typeof call.payload.text === 'string' ? call.payload.text : '',
+    ...flattenButtons(call.payload).flatMap((button) => [
+      button.text ?? '',
+      button.url ?? '',
+      button.web_app?.url ?? '',
+    ]),
+  ]);
+}
+
+let updateSequence = 1;
+
+function nextId(): number {
+  updateSequence += 1;
+  return updateSequence;
+}
+
+function messageUpdate(text: string, languageCode = 'en') {
+  return {
+    update_id: nextId(),
+    message: {
+      message_id: nextId(),
+      date: 1,
+      chat: { id: 100, type: 'private', first_name: 'Ada' },
+      from: {
+        id: 100,
+        is_bot: false,
+        first_name: 'Ada',
+        username: 'ada',
+        language_code: languageCode,
+      },
+      text,
+      entities: text.startsWith('/')
+        ? [
+            {
+              type: 'bot_command',
+              offset: 0,
+              length: text.split(' ')[0]?.length ?? 0,
+            },
+          ]
+        : undefined,
+    },
+  };
+}
+
+function callbackUpdate(data: string) {
+  return {
+    update_id: nextId(),
+    callback_query: {
+      id: String(nextId()),
+      from: {
+        id: 100,
+        is_bot: false,
+        first_name: 'Ada',
+        username: 'ada',
+        language_code: 'en',
+      },
+      message: {
+        message_id: 10,
+        date: 1,
+        chat: { id: 100, type: 'private', first_name: 'Ada' },
+        text: 'menu',
+      },
+      chat_instance: 'instance',
+      data,
+    },
+  };
+}
+
+function texts(calls: Array<{ method: string; payload: Record<string, unknown> }>) {
+  return calls.filter((call) => call.method === 'sendMessage').map((call) => call.payload.text);
+}
+
+function flattenButtons(payload: Record<string, unknown>) {
+  const markup = payload.reply_markup as
+    | {
+        inline_keyboard?: Array<
+          Array<{
+            callback_data?: string;
+            text?: string;
+            url?: string;
+            web_app?: { url?: string };
+          }>
+        >;
+      }
+    | undefined;
+  return markup?.inline_keyboard?.flat() ?? [];
+}
+
+function apiMock(
+  options: {
+    failAnswerCallbackQuery?: boolean;
+    failEditMessageText?: boolean;
+    failSendMessageText?: string;
+  } = {},
+) {
+  const calls: Array<{ method: string; payload: Record<string, unknown> }> = [];
+  const fetchMock = vi.fn(async (input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+    const url = resolveRequestUrl(input);
+    const method = url.split('/').at(-1) ?? 'unknown';
+    const body = init?.body ?? (input instanceof Request ? input.body : undefined);
+    const payload = await parsePayload(body);
+    calls.push({ method, payload });
+    if (options.failAnswerCallbackQuery && method === 'answerCallbackQuery') {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error_code: 400,
+          description: 'Bad Request: callback query is too old',
+        }),
+        { status: 400, headers: { 'content-type': 'application/json' } },
+      );
+    }
+    if (options.failSendMessageText && method === 'sendMessage' && payload.text === options.failSendMessageText) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error_code: 429,
+          description: 'Too Many Requests',
+        }),
+        { status: 429, headers: { 'content-type': 'application/json' } },
+      );
+    }
+    if (options.failEditMessageText && method === 'editMessageText') {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error_code: 400,
+          description: 'Bad Request: message is not modified',
+        }),
+        { status: 400, headers: { 'content-type': 'application/json' } },
+      );
+    }
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        result: telegramResult(method, payload, calls.length),
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    );
+  });
+  return { calls, fetchMock };
+}
+
+function latestPayload(
+  calls: Array<{ method: string; payload: Record<string, unknown> }>,
+  method: string,
+): Record<string, unknown> {
+  return [...calls].reverse().find((call) => call.method === method)?.payload ?? {};
+}
+
+function buttonByText(
+  payload: Record<string, unknown>,
+  text: string,
+): {
+  callback_data?: string;
+  text?: string;
+  url?: string;
+  web_app?: { url?: string };
+} {
+  const button = flattenButtons(payload).find((candidate) => candidate.text?.includes(text));
+
+  if (!button) {
+    throw new Error(`Button containing "${text}" was not rendered.`);
+  }
+
+  return button;
+}
+
+function callbackDataFor(payload: Record<string, unknown>, text: string): string {
+  const callbackData = buttonByText(payload, text).callback_data;
+
+  if (!callbackData) {
+    throw new Error(`Button containing "${text}" did not have callback data.`);
+  }
+
+  return callbackData;
+}
+
+function resolveRequestUrl(input: Parameters<typeof fetch>[0]): string {
+  if (typeof input === 'string') {
+    return input;
+  }
+
+  if (input instanceof URL) {
+    return input.href;
+  }
+
+  return input.url;
+}
+
+function telegramResult(method: string, payload: Record<string, unknown>, sequence: number): Record<string, unknown> {
+  if (method === 'answerCallbackQuery') {
+    return { ok: true };
+  }
+
+  if (method !== 'sendMessage' && method !== 'editMessageText') {
+    return { ok: true };
+  }
+
+  return {
+    message_id: sequence,
+    date: 1,
+    chat: { id: Number(payload.chat_id), type: 'private' },
+    text: payload.text,
+  };
+}
+
+async function parsePayload(
+  body: NonNullable<RequestInit['body']> | ReadableStream<Uint8Array> | null | undefined,
+): Promise<Record<string, unknown>> {
+  if (!body) {
+    return {};
+  }
+
+  if (typeof body === 'string') {
+    return JSON.parse(body) as Record<string, unknown>;
+  }
+
+  if (body instanceof URLSearchParams) {
+    return Object.fromEntries(body.entries());
+  }
+
+  if (body instanceof FormData) {
+    return Object.fromEntries(body.entries());
+  }
+  if (body instanceof ReadableStream) {
+    const text = await new Response(body).text();
+    try {
+      return JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      return Object.fromEntries(new URLSearchParams(text).entries());
+    }
+  }
+  return {};
+}
+
+async function waitForTelegramText(
+  calls: Array<{ method: string; payload: Record<string, unknown> }>,
+  text: string,
+): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (calls.some((call) => call.payload.text === text)) {
+      return;
+    }
+    // eslint-disable-next-line no-await-in-loop -- polling wait is sequential by design
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+}
+
+describe('createTelegramBot', () => {
+  it('refreshes the canonical account through the stateless host bridge in actual grammY updates', async () => {
+    const { calls, fetchMock } = apiMock();
+    const sessions = new Map<string, TelegramBotSession>();
+    const profile = {
+      userId: '9c720a13-80c9-473a-aa70-e6f9e2d35455',
+      tenantId: '00000000-0000-0000-0000-000000000000',
+      locale: 'zh',
+    };
+    let linked = false;
+    const auth = createTelegramAuthBridge(
+      {
+        url: 'https://auth.example.test/api/v1/auth/internal/telegram-bot',
+        secret: 'owned-bridge-fixture-credential-32-characters',
+      },
+      {
+        fetch: async (input, init) => {
+          if (typeof init?.body !== 'string' || typeof input !== 'string') {
+            throw new Error('Expected a JSON bridge request with a string endpoint.');
+          }
+          expect(JSON.parse(init.body).providerSubject).toBe('100');
+          if (input.endsWith('/link')) {
+            linked = true;
+          }
+          return new Response(JSON.stringify(linked ? profile : null), {
+            headers: { 'content-type': 'application/json' },
+          });
+        },
+      },
+    );
+    const { bot } = createTelegramBot(config(), {
+      auth,
+      fetch: fetchMock,
+      sessionStorage: {
+        read: (key) => sessions.get(key),
+        write: (key, value) => {
+          sessions.set(key, value);
+        },
+        delete: (key) => {
+          sessions.delete(key);
+        },
+      },
+    });
+    await bot.handleUpdate(messageUpdate(`/start link_${'a'.repeat(43)}`) as never);
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(sessions.get('telegram-bot:100')?.auth).toMatchObject({
+      linked: true,
+      userId: profile.userId,
+      tenantId: profile.tenantId,
+      linkedLocale: 'zh',
+    });
+    expect(latestPayload(calls, 'sendMessage').text).toBe(translate('bot.message.profileLinked', { locale: 'zh' }));
+    linked = false;
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(sessions.get('telegram-bot:100')?.auth).toEqual({ linked: false });
+  });
+  it('uses the normalized API root for Telegram requests', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ apiRoot: 'http://127.0.0.1:9099' }), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+
+    expect(fetchMock).toHaveBeenCalled();
+    expect(resolveRequestUrl(fetchMock.mock.calls[0]?.[0] as Parameters<typeof fetch>[0])).toMatch(
+      /^http:\/\/127\.0\.0\.1:9099\/bot123:test\//u,
+    );
+    expect(calls.some((call) => call.method === 'sendMessage')).toBe(true);
+  });
+
+  it('handles /start with a localized public menu', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start', 'ru') as never);
+
+    expect(calls.map((call) => call.payload.text)).toContain(
+      '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.',
+    );
+    expect(calls.at(-1)?.payload.reply_markup).toBeDefined();
+
+    const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
+    expect(buttons.map((button) => button.text)).toEqual([
+      '🚀 Открыть приложение',
+      '👤 Мой аккаунт',
+      '🌐 Язык',
+      '💬 Помощь',
+    ]);
+    expect(visibleTelegramText(calls).join('\n')).not.toContain('Everything you need is one tap away.');
+  });
+
+  it('renders stable short main-menu callback data', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+
+    const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
+    const callbackData = buttons.flatMap((button) => (button.callback_data ? [button.callback_data] : []));
+    expect(buttons.map((button) => button.text)).toEqual(['🚀 Open app', '👤 My account', '🌐 Language', '💬 Help']);
+    expect(callbackData).toHaveLength(3);
+    expect(new Set(callbackData).size).toBe(callbackData.length);
+    expect(callbackData.every((data) => data.length <= 64)).toBe(true);
+    expect(visibleTelegramText(calls).join('\n')).not.toMatch(/\{\{|\}\}/u);
+  });
+
+  it('hides Open App when no safe frontend or TMA URL is configured', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ appUrl: 'https://telegram-bot.example.test/' }), {
+      fetch: fetchMock,
+    });
+
+    await bot.handleUpdate(messageUpdate('/start', 'ru') as never);
+
+    expect(configuredWebAppButtons(calls)).toEqual([]);
+    expect(flattenButtons(calls.at(-1)?.payload ?? {}).map((button) => button.text)).toEqual([
+      '👤 Мой аккаунт',
+      '🌐 Язык',
+      '💬 Помощь',
+    ]);
+  });
+
+  it('uses only a safe configured frontend Mini App URL for Open App', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ appUrl: 'https://frontend.example.test/telegram-mini-app' }), {
+      fetch: fetchMock,
+    });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+
+    expect(configuredWebAppButtons(calls)).toEqual([
+      {
+        text: '🚀 Open app',
+        web_app: { url: 'https://frontend.example.test/telegram-mini-app' },
+      },
+    ]);
+    expect(
+      configuredWebAppButtons(calls)
+        .map((button) => button.web_app?.url)
+        .join('\n'),
+    ).not.toMatch(/telegram-bot\.n0xeid\.xyz\/?$|\/telegram\/webhook$/u);
+  });
+
+  it('handles every private-chat user menu command and provides a dedicated Mini App launch button', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    for (const command of ['/profile', '/language', '/support', '/link']) {
+      // Each update mutates one bot session, so exercising the menu sequentially
+      // mirrors Telegram delivery and avoids testing impossible concurrent navigation.
+      // eslint-disable-next-line no-await-in-loop -- session-backed updates must remain ordered
+      await bot.handleUpdate(messageUpdate(command) as never);
+      expect(latestPayload(calls, 'sendMessage').reply_markup).toBeDefined();
+    }
+
+    await bot.handleUpdate(messageUpdate('/app') as never);
+    expect(
+      configuredWebAppButtons([
+        {
+          method: 'sendMessage',
+          payload: latestPayload(calls, 'sendMessage'),
+        },
+      ]),
+    ).toEqual([
+      {
+        text: '🚀 Open app',
+        web_app: { url: 'https://app.example.test/tma' },
+      },
+    ]);
+  });
+
+  it('explains that the Mini App is unavailable when no safe URL is configured', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ appUrl: 'https://telegram-bot.example.test/' }), {
+      fetch: fetchMock,
+    });
+
+    await bot.handleUpdate(messageUpdate('/app') as never);
+
+    expect(latestPayload(calls, 'sendMessage').text).toBe('Bot service is temporarily unavailable.');
+    expect(configuredWebAppButtons(calls)).toEqual([]);
+  });
+
+  it('builds localized command menus and only advertises /app when a safe Mini App URL exists', () => {
+    expect(telegramBotCommands('en', true).map(({ command }) => command)).toEqual([
+      'start',
+      'app',
+      'profile',
+      'language',
+      'support',
+      'link',
+    ]);
+    expect(telegramBotCommands('ru', true).find(({ command }) => command === 'app')?.description).toBe(
+      'Открыть приложение',
+    );
+    expect(telegramBotCommands('en', false).map(({ command }) => command)).not.toContain('app');
+  });
+
+  it('publishes localized private-chat commands and the persistent app menu button when setup is enabled', async () => {
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn<
+        (commands: ReturnType<typeof telegramBotCommands>, options?: Record<string, unknown>) => Promise<true>
+      >(() => Promise.resolve(true)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(
+      config({
+        appUrl: 'https://frontend.example.test/telegram-mini-app',
+        setupMenuButton: true,
+      }),
+      { api: api as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(api.setMyCommands).toHaveBeenCalledTimes(telegramUiRegistrations.length);
+    expect(api.setMyCommands.mock.calls[0]?.[0].map(({ command }) => command)).toContain('app');
+    telegramUiRegistrations.forEach(({ locale, languageCode }, index) => {
+      const languageOptions = languageCode ? { language_code: languageCode } : undefined;
+      expect(api.setMyCommands.mock.calls[index]?.[1]).toEqual({
+        scope: { type: 'all_private_chats' },
+        ...(languageOptions ?? {}),
+      });
+      expect(api.setMyDescription.mock.calls[index]).toEqual([
+        translate('bot.profile.description', { locale }),
+        languageOptions,
+      ]);
+      expect(api.setMyShortDescription.mock.calls[index]).toEqual([
+        translate('bot.profile.shortDescription', { locale }),
+        languageOptions,
+      ]);
+    });
+    expect(api.deleteMyCommands.mock.calls).toEqual(
+      telegramUiRegistrations.flatMap(({ languageCode }) => {
+        const languageOptions = languageCode ? { language_code: languageCode } : {};
+        return [
+          [{ scope: { type: 'default' }, ...languageOptions }],
+          [{ scope: { type: 'all_group_chats' }, ...languageOptions }],
+        ];
+      }),
+    );
+    expect(api.setChatMenuButton).toHaveBeenCalledWith({
+      menu_button: {
+        type: 'web_app',
+        text: '🚀 Open app',
+        web_app: { url: 'https://frontend.example.test/telegram-mini-app' },
+      },
+    });
+
+    const unsafeApi = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn<
+        (commands: ReturnType<typeof telegramBotCommands>, options?: Record<string, unknown>) => Promise<true>
+      >(() => Promise.resolve(true)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+    createTelegramBot(
+      config({
+        appUrl: 'https://api.example.test/telegram/webhook',
+        setupMenuButton: true,
+      }),
+      { api: unsafeApi as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(unsafeApi.setChatMenuButton).not.toHaveBeenCalled();
+    expect(unsafeApi.setMyCommands).toHaveBeenCalledTimes(telegramUiRegistrations.length);
+    expect(unsafeApi.setMyCommands.mock.calls[0]?.[0].map(({ command }) => command)).not.toContain('app');
+  });
+
+  it('does not fail startup when persistent chat menu button setup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setChatMenuButton: vi.fn(() => Promise.reject(new Error('Telegram API unavailable'))),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    expect(() =>
+      createTelegramBot(
+        config({
+          appUrl: 'https://frontend.example.test/telegram-mini-app',
+          setupMenuButton: true,
+        }),
+        { api: api as never },
+      ),
+    ).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(stderrWrite).toHaveBeenCalledWith('Telegram bot menu button setup failed Error: Telegram API unavailable\n');
+    stderrWrite.mockRestore();
+  });
+
+  it('does not fail startup when localized command menu setup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.reject(new Error('command menu unavailable'))),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(
+      config({
+        appUrl: 'https://frontend.example.test/telegram-mini-app',
+        setupMenuButton: true,
+      }),
+      { api: api as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    for (const languageCode of telegramUiRegistrationLabels) {
+      expect(stderrWrite).toHaveBeenCalledWith(
+        `Telegram bot command menu setup failed (${languageCode}) Error: command menu unavailable\n`,
+      );
+    }
+    stderrWrite.mockRestore();
+  });
+
+  it('keeps private command setup running when stale public-scope cleanup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.reject(new Error('command cleanup unavailable'))),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(config({ setupMenuButton: true }), { api: api as never });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(api.setMyCommands).toHaveBeenCalledTimes(telegramUiRegistrations.length);
+    for (const languageCode of telegramUiRegistrationLabels) {
+      expect(stderrWrite).toHaveBeenCalledWith(
+        `Telegram bot public command cleanup failed (${languageCode}) Error: command cleanup unavailable\n`,
+      );
+    }
+    stderrWrite.mockRestore();
+  });
+
+  it('does not fail startup when localized bot profile setup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyDescription: vi.fn(() => Promise.reject(new Error('bot profile unavailable'))),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(
+      config({
+        appUrl: 'https://frontend.example.test/telegram-mini-app',
+        setupMenuButton: true,
+      }),
+      { api: api as never },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    for (const languageCode of telegramUiRegistrationLabels) {
+      expect(stderrWrite).toHaveBeenCalledWith(
+        `Telegram bot profile setup failed (${languageCode}) Error: bot profile unavailable\n`,
+      );
+    }
+    stderrWrite.mockRestore();
+  });
+
+  it('consumes a valid start payload and reports expired payloads', async () => {
+    const { calls, fetchMock } = apiMock();
+    const consumeLinkPayload = vi.fn((payload: string) => {
+      if (payload === 'valid') {
+        return Promise.resolve({
+          kind: 'route' as const,
+          route: 'settings.language' as const,
+          locale: 'ru' as const,
+        });
+      }
+
+      if (payload === 'plain') {
+        return Promise.resolve({
+          kind: 'route' as const,
+          route: 'settings' as const,
+        });
+      }
+
+      return Promise.resolve(null);
+    });
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload,
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser: vi.fn(() => Promise.resolve(null)),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start valid') as never);
+    await bot.handleUpdate(messageUpdate('/start plain') as never);
+    await bot.handleUpdate(messageUpdate('/start expired') as never);
+
+    expect(consumeLinkPayload).toHaveBeenCalledWith(
+      'valid',
+      expect.objectContaining({
+        provider: 'telegram',
+        channel: 'telegram_bot',
+      }),
+    );
+    expect(calls.map((call) => call.payload.text)).toContain('Действие бота истекло. Начните заново.');
+    expect(consumeLinkPayload).toHaveBeenCalledWith('plain', expect.objectContaining({ channel: 'telegram_bot' }));
+  });
+
+  it('applies link start payloads and keeps unknown payloads on the fallback path', async () => {
+    const { calls, fetchMock } = apiMock();
+    const consumeLinkPayload = vi.fn((payload: string) =>
+      Promise.resolve(
+        payload === 'link-ok'
+          ? {
+              kind: 'link' as const,
+              token: 'opaque-link-token',
+              locale: 'ru' as const,
+            }
+          : null,
+      ),
+    );
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload,
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser: vi.fn(() => Promise.resolve(null)),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start link-ok') as never);
+    await bot.handleUpdate(messageUpdate('/start unknown') as never);
+
+    expect(texts(calls)).toEqual(
+      expect.arrayContaining([
+        'Ваш аккаунт привязан.',
+        '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.',
+        'Действие бота истекло. Начните заново.',
+      ]),
+    );
+    expect(consumeLinkPayload).toHaveBeenCalledWith('unknown', expect.objectContaining({ channel: 'telegram_bot' }));
+  });
+
+  it('falls back when a start payload cannot be consumed without an auth port', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start route:settings') as never);
+
+    expect(texts(calls)).toEqual(
+      expect.arrayContaining([
+        'This bot action expired. Please start again.',
+        '👋 Welcome!\n\nEverything you need is one tap away.',
+      ]),
+    );
+  });
+
+  it('uses linked user locale before Telegram language code', async () => {
+    const { calls, fetchMock } = apiMock();
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser: vi.fn(() =>
+        Promise.resolve({
+          userId: 'user-1',
+          tenantId: 'tenant-1',
+          locale: 'ru' as const,
+        }),
+      ),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start', 'en-US') as never);
+
+    expect(texts(calls)).toContain('👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.');
+  });
+
+  it('clears sticky link-state when the backend reports the identity is no longer linked', async () => {
+    const { calls, fetchMock } = apiMock();
+    const findLinkedUser = vi
+      .fn<TelegramBotAuthPort['findLinkedUser']>()
+      .mockResolvedValueOnce({ userId: 'user-1', tenantId: 'tenant-1', locale: 'en' })
+      .mockResolvedValue(null);
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser,
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    // First update: the identity is linked, so the profile reports the linked status.
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(latestPayload(calls, 'sendMessage').text).toBe('👤 My account\n\n✅ Telegram is linked to your account.');
+
+    // Identity is unlinked out-of-band; the next update must clear the sticky flag.
+    await bot.handleUpdate(messageUpdate('/profile') as never);
+    expect(latestPayload(calls, 'sendMessage').text).toBe(
+      '👤 My account\n\nTelegram is not linked yet. Connect it to keep your account in sync.',
+    );
+  });
+
+  it('creates link instructions from Telegram identity instead of frontend trust', async () => {
+    const { calls, fetchMock } = apiMock();
+    const createLinkInstructions = vi.fn(() => Promise.resolve('Open the account-link page from this Telegram chat.'));
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions,
+      findLinkedUser: vi.fn(() => Promise.resolve(null)),
+      updateLinkedUserLocale: vi.fn(() => Promise.resolve(undefined)),
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/link', 'ru-RU') as never);
+
+    expect(createLinkInstructions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'telegram',
+        channel: 'telegram_bot',
+        providerSubject: '100',
+        username: 'ada',
+        displayName: 'Ada',
+        locale: 'ru',
+      }),
+    );
+    expect(texts(calls)).toContain('Open the account-link page from this Telegram chat.');
+  });
+
+  it('uses localized link instructions when auth is unavailable', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ appUrl: undefined }), {
+      fetch: fetchMock,
+    });
+
+    await bot.handleUpdate(messageUpdate('/link', 'ru') as never);
+
+    expect(texts(calls)).toContain(
+      '🔗 Привязка аккаунта\n\nПодключите Telegram к аккаунту, чтобы всё оставалось синхронизировано.',
+    );
+    expect(configuredWebAppButtons(calls)).toEqual([]);
+  });
+
+  it('renders the main menu for regular text messages', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('hello') as never);
+
+    expect(texts(calls)).toContain('👋 Welcome!\n\nEverything you need is one tap away.');
+  });
+
+  it.each(supportedLocales)('renders and dispatches the owned account-link label in %s', async (locale) => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+    await bot.handleUpdate(messageUpdate('/start', locale) as never);
+    const label = (key: Parameters<typeof translate>[0]) => translate(key, { locale });
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), label('bot.menu.profile'))) as never,
+    );
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), label('bot.menu.link'))) as never,
+    );
+    const menu = latestPayload(calls, 'editMessageText');
+    expect(JSON.stringify(menu)).not.toContain('auth.social.button.linkTelegram');
+    const callback = callbackDataFor(menu, label('bot.menu.link'));
+    await bot.handleUpdate(callbackUpdate(callback) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(label('bot.route.link'));
+  });
+
+  it('falls back to localized link text when instructions are unavailable from a menu callback', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Link')) as never);
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), translate('bot.menu.link'))) as never,
+    );
+
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🔗 Link your account\n\nConnect Telegram to your account to keep everything in sync.',
+    );
+  });
+
+  it('covers exported start and link handlers with default dependency resolution', async () => {
+    const replies: Array<{ text: unknown; extra?: unknown }> = [];
+    const ctx = {
+      identity: null,
+      match: ' payload ',
+      session: initialTelegramBotSession(),
+      t: (key: string) => `t:${key}`,
+      reply: vi.fn((text: unknown, extra?: unknown) => {
+        replies.push({ text, extra });
+        return Promise.resolve();
+      }),
+    };
+
+    await handleStart(ctx as never);
+    await handleLink(ctx as never);
+
+    expect(replies.map((reply) => reply.text)).toEqual([
+      't:bot.error.expired',
+      't:bot.message.welcome',
+      't:bot.route.link',
+    ]);
+    expect(ctx.session.currentRoute).toBe('link');
+    expect(ctx.reply).toHaveBeenCalledTimes(3);
+  });
+
+  it('edits existing messages and returns from a secondary screen with one Back action', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    const language = callbackDataFor(latestPayload(calls, 'sendMessage'), 'Language');
+    await bot.handleUpdate(callbackUpdate(language) as never);
+
+    expect(calls.map((call) => call.method)).toContain('editMessageText');
+    expect(calls.filter((call) => call.method === 'sendMessage')).toHaveLength(1);
+    expect(calls.map((call) => call.method)).toContain('answerCallbackQuery');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🌐 Language\n\nChoose the language I’ll use for messages and menus.',
+    );
+
+    const back = callbackDataFor(latestPayload(calls, 'editMessageText'), 'Back');
+    await bot.handleUpdate(callbackUpdate(back) as never);
+
+    expect(latestPayload(calls, 'editMessageText').text).toBe('👋 Welcome!\n\nEverything you need is one tap away.');
+    expect(calls.filter((call) => call.method === 'sendMessage')).toHaveLength(1);
+  }, 10_000);
+
+  it('updates language in session and calls linked-user preference update', async () => {
+    const { calls, fetchMock } = apiMock();
+    const updateLinkedUserLocale = vi.fn(() => Promise.resolve(undefined));
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions: vi.fn(() => Promise.resolve(null)),
+      findLinkedUser: vi.fn(() =>
+        Promise.resolve({
+          userId: 'user-1',
+          tenantId: 'tenant-1',
+          locale: 'en' as const,
+        }),
+      ),
+      updateLinkedUserLocale,
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/language') as never);
+    const markup = calls.at(-1)?.payload.reply_markup as {
+      inline_keyboard: Array<Array<{ callback_data: string; text: string }>>;
+    };
+    const russian = markup.inline_keyboard.flat().find((button) => button.text.includes('Russian'));
+    expect(russian).toBeDefined();
+
+    if (!russian) {
+      throw new Error('Russian language button was not rendered.');
+    }
+
+    await bot.handleUpdate(callbackUpdate(russian.callback_data) as never);
+
+    expect(updateLinkedUserLocale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        locale: 'ru',
+        userId: 'user-1',
+        tenantId: 'tenant-1',
+      }),
+    );
+  });
+
+  it('traverses the simplified account, language, and help flows', async () => {
+    const { calls, fetchMock } = apiMock();
+    const createLinkInstructions = vi.fn(() => Promise.resolve('Open this Telegram-only link from your account page.'));
+    let linkedLocale: Locale = 'en';
+    const updateLinkedUserLocale = vi.fn((input: { locale: Locale }) => {
+      linkedLocale = input.locale;
+      return Promise.resolve(undefined);
+    });
+    const auth: TelegramBotAuthPort = {
+      consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
+      createLinkInstructions,
+      findLinkedUser: vi.fn(() =>
+        Promise.resolve({
+          userId: 'user-1',
+          tenantId: 'tenant-1',
+          locale: linkedLocale,
+        }),
+      ),
+      updateLinkedUserLocale,
+    };
+    const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
+
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '👤 My account\n\n✅ Telegram is linked to your account.',
+    );
+
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Link')) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🔗 Link your account\n\nConnect Telegram to your account to keep everything in sync.',
+    );
+
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), translate('bot.menu.link'))) as never,
+    );
+    expect(createLinkInstructions).toHaveBeenCalledWith(expect.objectContaining({ providerSubject: '100' }));
+    expect(latestPayload(calls, 'editMessageText').text).toBe('Open this Telegram-only link from your account page.');
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Language')) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🌐 Language\n\nChoose the language I’ll use for messages and menus.',
+    );
+
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Russian')) as never,
+    );
+    expect(updateLinkedUserLocale).toHaveBeenCalledWith(
+      expect.objectContaining({
+        locale: 'ru',
+        userId: 'user-1',
+        tenantId: 'tenant-1',
+      }),
+    );
+    expect(latestPayload(calls, 'editMessageText').text).toBe('🌐 Язык\n\nВыберите язык сообщений и меню.');
+
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Назад')) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.',
+    );
+
+    await bot.handleUpdate(messageUpdate('/start', 'ru') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Помощь')) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '💬 Помощь\n\nНужна помощь? Напишите нашей команде поддержки.',
+    );
+
+    await bot.handleUpdate(
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Написать в поддержку')) as never,
+    );
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '💬 Помощь\n\nНужна помощь? Напишите нашей команде поддержки.',
+    );
+  }, 15_000);
+
+  it('warns users when callback message edits fail', async () => {
+    const failingApi = apiMock({ failEditMessageText: true });
+    const { bot: failingBot } = createTelegramBot(config(), {
+      fetch: failingApi.fetchMock,
+    });
+
+    await failingBot.handleUpdate(messageUpdate('/start') as never);
+    const support = callbackDataFor(latestPayload(failingApi.calls, 'sendMessage'), 'Help');
+    await failingBot.handleUpdate(callbackUpdate(support) as never);
+
+    expect(failingApi.calls.map((call) => call.method)).toEqual(
+      expect.arrayContaining(['editMessageText', 'answerCallbackQuery']),
+    );
+    expect(
+      failingApi.calls.filter((call) => call.method === 'answerCallbackQuery').map((call) => call.payload.text),
+    ).toContain('The bot could not complete this action.');
+  });
+
+  it('keeps every secondary screen limited to its action and Back', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ rateLimit: { timeFrameMs: 10, limit: 100 } }), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
+    expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
+      '🔗 Link account',
+      '‹ Back',
+    ]);
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Language')) as never);
+    expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
+      '✓ English',
+      'Russian',
+      'Chinese',
+      '‹ Back',
+    ]);
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Help')) as never);
+    expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
+      '💬 Contact support',
+      '‹ Back',
+    ]);
+  }, 15_000);
+
+  it('answers unknown callback data through the fallback callback handler', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(callbackUpdate('telegram:menu:unknown') as never);
+
+    expect(calls.filter((call) => call.method === 'answerCallbackQuery').map((call) => call.payload.text)).toContain(
+      'The bot could not complete this action.',
+    );
+  });
+
+  it('keeps deep navigation stack for Back and Home', () => {
+    const ctx: { session: TelegramBotSession } = {
+      session: initialTelegramBotSession(),
+    };
+
+    navigateTo(ctx as never, 'settings');
+    navigateTo(ctx as never, 'settings.language');
+    expect(ctx.session.stack).toEqual(['main', 'settings', 'settings.language']);
+    expect(ctx.session.currentRoute).toBe('settings.language');
+
+    expect(goBack(ctx as never)).toBe('settings');
+    expect(ctx.session.currentRoute).toBe('settings');
+
+    navigateTo(ctx as never, 'settings.language');
+    replaceCurrentRoute(ctx as never, 'settings.language.confirm', { locale: 'ru' });
+    expect(ctx.session.stack).toEqual(['main', 'settings', 'settings.language.confirm']);
+    expect(goBack(ctx as never)).toBe('settings');
+
+    goHome(ctx as never);
+    expect(ctx.session.stack).toEqual(['main']);
+    expect(ctx.session.currentRoute).toBe('main');
+    expect(ctx.session.lastMenuId).toBe('telegram:menu:main');
+
+    ctx.session.stack = [];
+    ctx.session.currentRoute = 'profile';
+    navigateTo(ctx as never, 'main');
+    expect(ctx.session.stack).toEqual(['main', 'main']);
+
+    ctx.session.stack = ['main'];
+    ctx.session.currentRoute = 'main';
+    navigateTo(ctx as never, 'settings');
+    navigateTo(ctx as never, 'settings');
+    expect(ctx.session.stack).toEqual(['main', 'settings']);
+
+    for (const route of [
+      'profile',
+      'settings',
+      'settings.language',
+      'support',
+      'link',
+      'profile',
+      'settings',
+      'support',
+      'link',
+    ] as const) {
+      navigateTo(ctx as never, route);
+    }
+    expect(ctx.session.stack).toHaveLength(8);
+
+    ctx.session.stack = [];
+    expect(goBack(ctx as never)).toBe('main');
+    expect(ctx.session.stack).toEqual(['main']);
+  });
+
+  it('rate limits rapid repeated updates', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ rateLimit: { timeFrameMs: 60_000, limit: 1 } }), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await waitForTelegramText(calls, 'Too many bot actions. Please wait and try again.');
+
+    expect(calls.map((call) => call.payload.text)).toContain('Too many bot actions. Please wait and try again.');
+  });
+
+  it('logs when a rate-limit notice cannot be sent', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const { fetchMock } = apiMock({
+      failSendMessageText: 'Too many bot actions. Please wait and try again.',
+    });
+    const { bot } = createTelegramBot(config({ rateLimit: { timeFrameMs: 60_000, limit: 1 } }), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(messageUpdate('/start') as never);
+
+    expect(stderrWrite.mock.calls.map((call) => String(call[0])).join('\n')).toContain(
+      'Telegram bot rate-limit reply failed',
+    );
+    stderrWrite.mockRestore();
+  });
+});

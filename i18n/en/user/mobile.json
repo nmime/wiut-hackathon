@@ -1,0 +1,16 @@
+{
+  "mobile.appName": "Nest React Boilerplate",
+  "mobile.status": "Mobile account",
+  "mobile.subtitle": "A calm starting point for the account journeys your product needs on mobile.",
+  "mobile.api.label": "Your space",
+  "mobile.api.value": "Account essentials stay close at hand.",
+  "mobile.card.account.label": "Account",
+  "mobile.card.account.value": "Profile and preferences",
+  "mobile.card.account.detail": "Keep identity, language, appearance, and connected accounts in one familiar place.",
+  "mobile.card.native.label": "Experience",
+  "mobile.card.native.value": "Designed for mobile",
+  "mobile.card.native.detail": "Safe areas, touch targets, and readable states provide a practical base for product features.",
+  "mobile.card.delivery.label": "Continuity",
+  "mobile.card.delivery.value": "Web and Telegram",
+  "mobile.card.delivery.detail": "Keep the account experience familiar when people move between the selected client surfaces."
+}

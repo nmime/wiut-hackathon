@@ -1,0 +1,104 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { supportedLocales } from '@app/backend-common-i18n';
+import { userThemePreferences } from '@app/backend-feature-auth-shared';
+
+const legacyTenantProperty = {
+  format: 'uuid',
+  deprecated: true,
+  description: 'Deprecated compatibility field. The server ignores this value and derives tenant ownership.',
+} as const;
+
+export class RegisterDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ example: 'user@example.com', format: 'email' })
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty({ minLength: 8, writeOnly: true })
+  @IsString()
+  @MinLength(8)
+  password!: string;
+
+  @ApiPropertyOptional({ example: 'Ada Lovelace' })
+  @IsOptional()
+  @IsString()
+  displayName?: string;
+
+  @ApiPropertyOptional({ enum: supportedLocales })
+  @IsOptional()
+  @IsString()
+  @IsIn(supportedLocales)
+  locale?: string;
+}
+
+export class LoginDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ example: 'user@example.com', format: 'email' })
+  @IsEmail()
+  email!: string;
+
+  @ApiProperty({ minLength: 8, writeOnly: true })
+  @IsString()
+  @MinLength(8)
+  password!: string;
+}
+
+export class UserActionTokenRequestDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ example: 'user@example.com', format: 'email' })
+  @IsEmail()
+  email!: string;
+}
+
+export class UserActionTokenConfirmDto {
+  @ApiPropertyOptional(legacyTenantProperty)
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ writeOnly: true })
+  @IsString()
+  @MinLength(1)
+  token!: string;
+}
+
+export class PasswordResetConfirmDto extends UserActionTokenConfirmDto {
+  @ApiProperty({ minLength: 8, writeOnly: true })
+  @IsString()
+  @MinLength(8)
+  password!: string;
+}
+
+export class UpdateLocaleDto {
+  @ApiProperty({ enum: supportedLocales })
+  @IsString()
+  @IsIn(supportedLocales)
+  locale!: string;
+}
+
+export class UpdatePreferencesDto {
+  @ApiPropertyOptional({ enum: supportedLocales })
+  @IsOptional()
+  @IsString()
+  @IsIn(supportedLocales)
+  locale?: string;
+
+  @ApiPropertyOptional({ enum: userThemePreferences })
+  @IsOptional()
+  @IsString()
+  @IsIn(userThemePreferences)
+  theme?: string;
+}

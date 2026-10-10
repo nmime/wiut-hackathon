@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Design From Reference'
+  short_description: 'Translate real design references into token-native UI'
+  default_prompt: 'Use $design-from-reference to translate this real-world reference into intentional token-native design.'

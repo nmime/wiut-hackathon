@@ -1,0 +1,23 @@
+{
+  "site.title": "Надежное место для страниц, к которым возвращаются.",
+  "site.description": "Используйте этот серверный интерфейс для постоянного контента и ведите посетителей в тот же сценарий аккаунта, что и в остальном продукте.",
+  "site.actionGroup.label": "Действия сайта",
+  "site.action.app": "Открыть аккаунт",
+  "site.action.docs": "Открыть публичный лендинг",
+  "site.metricGroup.label": "Принципы сайта",
+  "site.metric.apis.label": "Быстрый первый экран",
+  "site.metric.apis.detail": "Важный контент приходит в первом ответе и остается доступным без обязательного клиентского JavaScript.",
+  "site.metric.frontends.label": "Переход в аккаунт",
+  "site.metric.frontends.detail": "Публичный контент ведет в тот же сценарий входа и профиля, что и пользовательское приложение.",
+  "site.metric.runtime.label": "Гибкая структура",
+  "site.metric.runtime.detail": "Добавляйте продуктовые страницы, не смешивая ответственность лендинга, аккаунта и админки.",
+  "site.problems.kicker": "Реестр RFC 9457",
+  "site.problems.title": "Типы проблем API",
+  "site.problems.intro": "Этот документ является человекочитаемым назначением для URI типов проблем с корнем",
+  "site.problems.instanceDetail": "Фрагмент определяет стабильный тип, а URI instance — конкретный случай.",
+  "site.problems.aboutBlank": "Общие HTTP-ошибки используют фразу статуса как заголовок и не задают пользовательскую семантику.",
+  "site.problems.status": "Статус",
+  "site.problems.meaning": "Значение",
+  "site.problems.resolution": "Решение",
+  "site.problems.extensions": "Расширения"
+}

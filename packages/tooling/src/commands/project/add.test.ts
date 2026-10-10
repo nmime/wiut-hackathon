@@ -1,0 +1,568 @@
+// @requirements REQ-SCAFFOLD-TOOLING-005
+import assert from "node:assert/strict";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { describe as nodeDescribe, it as nodeIt } from "node:test";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { parseAddArgs, runAddCommand } from "./add.js";
+import type { CommandContext } from "../../cli.js";
+import { createNxGeneratorRunner } from "./nx-generator-runner.js";
+import type { NxGeneratorFn, NxGeneratorResult } from "./nx-generator-runner.js";
+
+// node:test and vitest expose compatible describe/it (name, fn) call shapes.
+type TestRunner = (name: string, fn: () => void | Promise<void>) => void;
+const { describe, it } = (process.env.VITEST
+  ? await import("vitest")
+  : { describe: nodeDescribe, it: nodeIt }) as unknown as {
+  describe: TestRunner;
+  it: TestRunner;
+};
+
+// ---------------------------------------------------------------------------
+// parseAddArgs unit tests
+// ---------------------------------------------------------------------------
+
+describe("parseAddArgs", () => {
+  it("parses kind and name", () => {
+    const args = parseAddArgs(["app", "my-app"]);
+    assert.equal(args.kind, "app");
+    assert.equal(args.name, "my-app");
+  });
+
+  it("parses lib kind", () => {
+    const args = parseAddArgs([
+      "lib",
+      "shared-utils",
+      "--description",
+      "Shared utilities for backend consumers and job workers.",
+    ]);
+    assert.equal(args.kind, "lib");
+    assert.equal(args.name, "shared-utils");
+    assert.equal(args.description, "Shared utilities for backend consumers and job workers.");
+  });
+
+  it("parses feature kind with --api-app", () => {
+    const args = parseAddArgs(["feature", "invoices", "--api-app", "auth-app-api"]);
+    assert.equal(args.kind, "feature");
+    assert.equal(args.name, "invoices");
+    assert.equal(args.apiApp, "auth-app-api");
+  });
+
+  it("parses --api-app= shorthand", () => {
+    const args = parseAddArgs(["feature", "billing", "--api-app=user-app-api"]);
+    assert.equal(args.apiApp, "user-app-api");
+  });
+
+  it("parses --dry-run and --force", () => {
+    const args = parseAddArgs(["feature", "x", "--dry-run", "--force"]);
+    assert.equal(args.dryRun, true);
+    assert.equal(args.force, true);
+  });
+
+  it("parses an explicit database provider", () => {
+    assert.equal(parseAddArgs(["feature", "x", "--database", "mongodb"]).database, "mongodb");
+    assert.equal(parseAddArgs(["feature", "x", "--database=postgres"]).database, "postgres");
+  });
+
+  it("parses an explicit application port", () => {
+    assert.equal(parseAddArgs(["app", "portal", "--port", "4210"]).port, 4210);
+    assert.equal(parseAddArgs(["app", "portal", "--port=4211"]).port, 4211);
+  });
+
+  it("parses --help", () => {
+    const args = parseAddArgs(["--help"]);
+    assert.equal(args.help, true);
+  });
+
+  it("captures extra args after --", () => {
+    const args = parseAddArgs(["app", "my-app", "--", "--extra-flag"]);
+    assert.deepEqual(args.extra, ["--extra-flag"]);
+  });
+
+  it("does not assign implicit feature owners", () => {
+    const args = parseAddArgs(["feature", "x"]);
+    assert.equal(args.apiApp, undefined);
+    assert.equal(args.frontendApp, undefined);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// runAddCommand tests with mocked runner
+// ---------------------------------------------------------------------------
+
+function makeMockRunner(result: NxGeneratorResult): NxGeneratorFn {
+  return () => result;
+}
+
+function makeContext(argv: string[]): CommandContext {
+  return { argv, packageRoot: "/tmp", workspaceRoot: "/tmp" };
+}
+
+function makeSelectedContext(argv: string[], capabilities: string[]): { context: CommandContext; cleanup: () => void } {
+  const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-add-"));
+  mkdirSync(join(workspaceRoot, ".nrb"));
+  writeFileSync(join(workspaceRoot, ".nrb", "workspace.json"), JSON.stringify({ capabilities }));
+  return {
+    context: { argv, packageRoot: join(workspaceRoot, "packages/tooling"), workspaceRoot },
+    cleanup: () => rmSync(workspaceRoot, { recursive: true, force: true }),
+  };
+}
+
+function featureArgs(name: string, ...extra: string[]): string[] {
+  return [
+    "feature",
+    name,
+    "--api-app",
+    "user-app-api",
+    "--frontend-app",
+    "user-app",
+    ...extra,
+  ];
+}
+
+describe("runAddCommand", () => {
+  it("dispatches app to @repo/tooling:application", async () => {
+    let capturedCg: string | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedCg = args.collectionGenerator;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    const status = await runAddCommand(
+      makeContext(["app", "payments", "--kind", "backend", "--renderer", "nest-api"]),
+      runner,
+    );
+    assert.equal(status, 0);
+    assert.equal(capturedCg, "@repo/tooling:application");
+  });
+
+  it("dispatches the Cucumber e2e renderer without a port", async () => {
+    let capturedArgs: string[] | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    assert.equal(
+      await runAddCommand(
+        makeContext(["app", "acceptance-e2e", "--kind", "e2e", "--renderer", "cucumber"]),
+        runner,
+      ),
+      0,
+    );
+    assert.ok(capturedArgs?.includes("--kind=e2e"));
+    assert.ok(capturedArgs?.includes("--renderer=cucumber"));
+  });
+
+  it("dispatches lib to @repo/tooling:library", async () => {
+    let capturedCg: string | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedCg = args.collectionGenerator;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    const status = await runAddCommand(
+      makeContext([
+        "lib",
+        "shared-utils",
+        "--kind",
+        "common",
+        "--type",
+        "util",
+        "--description",
+        "Provides shared utilities to backend and browser consumers.",
+      ]),
+      runner,
+    );
+    assert.equal(status, 0);
+    assert.equal(capturedCg, "@repo/tooling:library");
+  });
+
+  it("passes the library description to Nx", async () => {
+    let capturedArgs: string[] = [];
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(
+      makeContext([
+        "lib",
+        "money",
+        "--kind=common",
+        "--type=util",
+        "--description=Normalizes monetary values for API and browser consumers.",
+      ]),
+      runner,
+    );
+    assert.ok(capturedArgs.includes("--description=Normalizes monetary values for API and browser consumers."));
+  });
+
+  it("dispatches feature to @repo/tooling:feature", async () => {
+    let capturedCg: string | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedCg = args.collectionGenerator;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    const status = await runAddCommand(makeContext(featureArgs("billing", "--database=postgres")), runner);
+    assert.equal(status, 0);
+    assert.equal(capturedCg, "@repo/tooling:feature");
+  });
+
+  it("passes --dry-run as --dryRun=true to Nx", async () => {
+    let capturedArgs: string[] | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(makeContext(featureArgs("billing", "--database=postgres", "--dry-run")), runner);
+    assert.ok(capturedArgs?.includes("--dryRun=true"));
+  });
+
+  it("requires an explicit database provider before setup exists", async () => {
+    let called = false;
+    const runner: NxGeneratorFn = () => {
+      called = true;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    assert.equal(await runAddCommand(makeContext(featureArgs("billing")), runner), 1);
+    assert.equal(called, false);
+  });
+
+  it("derives MongoDB from setup and accepts only a consistent explicit provider", async () => {
+    let capturedArgs: string[] = [];
+    let calls = 0;
+    const runner: NxGeneratorFn = (args) => {
+      calls += 1;
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+    const selected = makeSelectedContext(featureArgs("billing"), ["mongodb"]);
+    try {
+      assert.equal(await runAddCommand(selected.context, runner), 0);
+      assert.ok(capturedArgs.includes("--database=mongodb"));
+      selected.context.argv = featureArgs("billing", "--database=postgres");
+      assert.equal(await runAddCommand(selected.context, runner), 1);
+      assert.equal(calls, 1);
+      selected.context.argv = featureArgs("billing", "--database=mongodb");
+      assert.equal(await runAddCommand(selected.context, runner), 0);
+    } finally {
+      selected.cleanup();
+    }
+  });
+
+  it("rejects missing or colliding setup database selections", async () => {
+    let called = false;
+    const runner: NxGeneratorFn = () => {
+      called = true;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+    for (const capabilities of [[], ["postgres", "mongodb"]]) {
+      const selected = makeSelectedContext(featureArgs("billing"), capabilities);
+      try {
+        assert.equal(await runAddCommand(selected.context, runner), 1);
+      } finally {
+        selected.cleanup();
+      }
+    }
+    assert.equal(called, false);
+  });
+
+  it("passes MongoDB to backend data-access library dry-runs and rejects unrelated use", async () => {
+    let capturedArgs: string[] = [];
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+    const description = "Owns native ledger persistence for backend domain consumers.";
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "lib",
+          "ledger-store",
+          "--kind=backend",
+          "--type=data-access",
+          `--description=${description}`,
+          "--database=mongodb",
+          "--dry-run",
+        ]),
+        runner,
+      ),
+      0,
+    );
+    assert.ok(capturedArgs.includes("--database=mongodb"));
+    assert.ok(capturedArgs.includes("--dryRun=true"));
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "lib",
+          "money",
+          "--kind=common",
+          "--type=util",
+          `--description=${description}`,
+          "--database=mongodb",
+        ]),
+        runner,
+      ),
+      1,
+    );
+  });
+
+  it("refuses --force instead of regenerating an existing feature", async () => {
+    let called = false;
+    const runner: NxGeneratorFn = (args) => {
+      called = true;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    assert.equal(await runAddCommand(makeContext(featureArgs("billing", "--force")), runner), 1);
+    assert.equal(called, false);
+  });
+
+  it("passes --api-app to Nx", async () => {
+    let capturedArgs: string[] | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(
+      makeContext(featureArgs("billing", "--api-app", "auth-app-api", "--database=postgres")),
+      runner,
+    );
+    assert.ok(capturedArgs?.includes("--apiApp=auth-app-api"));
+  });
+
+  it("prints Nx dry-run output so the file plan is reviewable", async () => {
+    const writes: string[] = [];
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((value: string | Uint8Array) => {
+      writes.push(String(value));
+      return true;
+    }) as typeof process.stdout.write;
+    try {
+      await runAddCommand(
+        makeContext(featureArgs("billing", "--database=postgres", "--dry-run")),
+        makeMockRunner({
+          success: true,
+          stdout: "CREATE libs/backend/feature/billing/main/lib/project.json\n",
+          stderr: "",
+          exitCode: 0,
+        }),
+      );
+    } finally {
+      process.stdout.write = originalWrite;
+    }
+    assert.match(writes.join(""), /CREATE libs\/backend\/feature\/billing/);
+  });
+
+  it("forwards extra args to Nx", async () => {
+    let capturedArgs: string[] | undefined;
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(
+      makeContext(["app", "my-app", "--kind", "frontend", "--renderer", "vite", "--", "--skip-format"]),
+      runner,
+    );
+    assert.ok(capturedArgs?.includes("--skip-format"));
+  });
+
+  it("returns non-zero on generator failure", async () => {
+    const runner = makeMockRunner({
+      success: false,
+      stdout: "",
+      stderr: "Error: something went wrong",
+      exitCode: 1,
+    });
+
+    const status = await runAddCommand(
+      makeContext(["app", "x", "--kind", "backend", "--renderer", "scheduler"]),
+      runner,
+    );
+    assert.equal(status, 1);
+  });
+
+  it("returns 1 when kind is missing", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    const status = await runAddCommand(makeContext(["my-app"]), runner);
+    assert.equal(status, 1);
+  });
+
+  it("returns 1 when name is missing", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    const status = await runAddCommand(makeContext(["app"]), runner);
+    assert.equal(status, 1);
+  });
+
+  it("requires explicit feature owners", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(await runAddCommand(makeContext(["feature", "billing"]), runner), 1);
+    assert.equal(
+      await runAddCommand(
+        makeContext(["feature", "billing", "--api-app", "user-app-api"]),
+        runner,
+      ),
+      1,
+    );
+  });
+
+  it("requires explicit app kind and renderer for every application", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(await runAddCommand(makeContext(["app", "portal"]), runner), 1);
+    assert.equal(
+      await runAddCommand(makeContext(["app", "portal", "--kind", "frontend"]), runner),
+      1,
+    );
+    assert.equal(
+      await runAddCommand(makeContext(["app", "billing-api", "--kind", "backend"]), runner),
+      1,
+    );
+  });
+
+  it("rejects the removed generic backend worker renderer", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext(["app", "billing-worker", "--kind", "backend", "--renderer", "worker"]),
+        runner,
+      ),
+      1,
+    );
+  });
+
+  it("rejects unsupported e2e renderers and ports", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext(["app", "acceptance-e2e", "--kind", "e2e", "--renderer", "vite"]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "app",
+          "acceptance-e2e",
+          "--kind",
+          "e2e",
+          "--renderer",
+          "cucumber",
+          "--port",
+          "4400",
+        ]),
+        runner,
+      ),
+      1,
+    );
+  });
+
+  it("requires a concrete description for every library", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(makeContext(["lib", "money", "--kind", "common", "--type", "util"]), runner),
+      1,
+    );
+  });
+
+  it("refuses force-overwriting every ownership kind", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "app",
+          "portal",
+          "--kind",
+          "frontend",
+          "--renderer",
+          "vite",
+          "--force",
+        ]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "lib",
+          "money",
+          "--kind",
+          "common",
+          "--type",
+          "util",
+          "--description",
+          "Normalizes monetary values for API and browser consumers.",
+          "--force",
+        ]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(await runAddCommand(makeContext(featureArgs("money", "--force")), runner), 1);
+  });
+
+  it("refuses application-only port options for other ownership kinds", async () => {
+    const runner = makeMockRunner({ success: true, stdout: "", stderr: "", exitCode: 0 });
+    assert.equal(
+      await runAddCommand(
+        makeContext([
+          "lib",
+          "money",
+          "--kind",
+          "common",
+          "--type",
+          "util",
+          "--description",
+          "Normalizes monetary values for API and browser consumers.",
+          "--port",
+          "4210",
+        ]),
+        runner,
+      ),
+      1,
+    );
+    assert.equal(await runAddCommand(makeContext(featureArgs("money", "--port", "4210")), runner), 1);
+  });
+
+  it("passes typed app and feature options to Nx", async () => {
+    let capturedArgs: string[] = [];
+    const runner: NxGeneratorFn = (args) => {
+      capturedArgs = args.generatorArgs;
+      return { success: true, stdout: "", stderr: "", exitCode: 0 };
+    };
+
+    await runAddCommand(
+      makeContext(["app", "portal", "--kind=frontend", "--renderer=vike", "--port=4210"]),
+      runner,
+    );
+    assert.ok(capturedArgs.includes("--kind=frontend"));
+    assert.ok(capturedArgs.includes("--renderer=vike"));
+    assert.ok(capturedArgs.includes("--port=4210"));
+
+    await runAddCommand(
+      makeContext(featureArgs("billing", "--frontend-app=admin-app", "--database=postgres")),
+      runner,
+    );
+    assert.ok(capturedArgs.includes("--frontendApp=admin-app"));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// nx-generator-runner tests
+// ---------------------------------------------------------------------------
+
+describe("createNxGeneratorRunner", () => {
+  it("returns mock when provided", () => {
+    const mock: NxGeneratorFn = () => ({ success: true, stdout: "mock", stderr: "", exitCode: 0 });
+    const runner = createNxGeneratorRunner(mock);
+    const result = runner({ collectionGenerator: "test", generatorArgs: [], cwd: "/tmp" });
+    assert.equal(result.stdout, "mock");
+  });
+});

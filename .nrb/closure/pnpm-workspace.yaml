@@ -1,0 +1,160 @@
+packages:
+  - '.'
+
+shamefullyHoist: true
+
+overrides:
+  # One React/DOM cohort across app, native, Storybook and auto-installed peers.
+  # Expo 57 owns this version; unconstrained optional peers must not fork it.
+  'react': '19.2.3'
+  'react-dom': '19.2.3'
+  # September 17 mature fix for GHSA-m9gg-hp2v-232j and GHSA-f596-whhp-79r4.
+  '@grpc/grpc-js@<1.14.5': '1.14.5'
+  '@fastify/static': '10.1.5'
+  'better-call': '1.4.0'
+  'better-auth': '1.7.6'
+  'drizzle-orm': '0.45.3'
+  'find-my-way': '9.9.0'
+  'kysely': '0.29.6'
+  'typescript': '6.0.3'
+  '@types/node': '24.19.0'
+  '@react-native/metro-config': '0.86.3'
+  # The 0.84.5 patch replaces Metro's vulnerable image-size 1 parser while
+  # retaining the React Native / Expo 0.84 API line.
+  'metro@0.84.4': '0.84.5'
+  'metro-config@0.84.4': '0.84.5'
+  'metro-transform-worker@0.84.4': '0.84.5'
+  '@expo/dom-webview': '57.0.1'
+  'rxjs': '7.8.2'
+  'tslib': '2.8.1'
+  '@nestjs/common': '12.1.1'
+  '@nestjs/core': '12.1.1'
+  '@nestjs/platform-fastify': '12.1.1'
+  '@nestjs/platform-express': '12.1.1'
+  '@nestjs/testing': '12.1.1'
+  'lodash': '4.18.1'
+  'brace-expansion@<2.0.0': '5.0.12'
+  'brace-expansion@>=2.0.0 <3.0.0': '5.0.12'
+  'picomatch@<3.0.0': '2.3.2'
+  'picomatch@>=4.0.0 <5.0.0': '4.0.7'
+  'path-to-regexp@>=8.0.0 <9.0.0': '8.4.2'
+  'serialize-javascript': '7.1.2'
+  'postcss': '8.5.28'
+  'follow-redirects': '1.16.0'
+  'axios': '1.20.0'
+  'fast-uri': '3.1.8'
+  # `@nestjs/platform-fastify` resolves its own Fastify range, so the direct
+  # dependency bump alone leaves a vulnerable copy in the tree.
+  'fastify@<5.12.1': '5.12.5'
+  'svgo@>=3.0.0 <4.0.0': '3.3.5'
+  'svgo@>=4.0.0 <4.1.0': '4.1.0'
+  'js-yaml@<4.0.0': '3.15.2'
+  'js-yaml@>=4.0.0 <5.0.0': '4.3.2'
+  'js-yaml@>=5.0.0 <5.4.1': '5.4.2'
+  'brace-expansion@>=4.0.0 <6.0.0': '5.0.12'
+  'yaml': '2.9.1'
+  'ajv@>=7.0.0 <9.0.0': '8.20.0'
+  'ws': '8.22.0'
+  'tmp@<0.2.7': '0.2.7'
+  'uuid@<11.1.1': '11.1.1'
+  'undici@<7.29.1': '7.30.0'
+  'undici@>=8.0.0 <8.10.2': '8.11.2'
+  'happy-dom@>=15.10.0 <20.10.6': '20.14.5'
+  'esbuild@<=0.24.2': '0.28.2'
+  'form-data@<4.0.6': '4.0.6'
+  'http-proxy-middleware@>=3.0.0 <3.0.7': '3.0.7'
+  '@opentelemetry/core@<2.8.0': '2.11.0'
+  'multer@>=2.0.0-alpha.1 <2.2.0': '2.4.0'
+  'nanoid@<3.3.18': '3.3.19'
+  'dompurify@<=3.4.12': '3.4.16'
+  'webpack-dev-server@<5.2.5': '5.2.6'
+  'http-proxy-middleware@>=2.0.0 <2.0.10': '2.0.10'
+  # The pinned shadcn CLI brings an MCP SDK range that still resolves the
+  # vulnerable v1 Node adapter. Keep its dev-tool dependency on a mature
+  # patched adapter while the SDK range catches up.
+  '@hono/node-server': '2.1.1'
+  'hono@<4.13.5': '4.13.10'
+  'ip-address@<=10.5.0': '10.7.2'
+  'smol-toml@<=1.7.0': '1.9.0'
+  'decode-uri-component@<0.5.0': '0.5.0'
+  'devalue@<5.9.1': '5.9.4'
+  '@xmldom/xmldom@<0.9.0': '0.8.15'
+  '@xmldom/xmldom@>=0.9.0': '0.9.12'
+  qs@<6.16.0: 6.16.0
+  react-native-worklets: 0.10.1
+  react-native-reanimated: 4.5.1
+  react-native-screens: 4.26.2
+  # Expo 57's native matrix, rather than unconstrained transitive peer ranges,
+  # owns the React Native animation/screen runtime above.
+  'image-size@>=2.0.0 <2.0.3': '2.0.4'
+
+peerDependencyRules:
+  allowedVersions:
+    # The CSF plugin's optional wildcard peer is rewritten by pnpm's esbuild
+    # remediation. Record the actual workspace edge explicitly.
+    '@storybook/csf-plugin>esbuild': '0.28.2'
+    # jsx-a11y 6.10.2 still caps its peer range at ESLint 9. The plugin only uses
+    # the stable rule/flat-config surface, and the repo lints clean on ESLint 10,
+    # so pin the tested edge instead of holding the workspace back a major.
+    'eslint-plugin-jsx-a11y>eslint': '10.11.0'
+
+packageExtensions:
+  '@nx/react@23.2.1':
+    # Its optional development-server peer is Express 4; Nest 12 owns the
+    # separate Express 5 adapter. Keep both consumers on their supported API.
+    dependencies:
+      express: '4.22.3'
+  # Nest's file-type dependency reaches debug through this tokenizer. Declare
+  # the optional color peer here so root and backend workspace installs share
+  # one NestJS singleton graph instead of resolving peer-context duplicates.
+  '@tokenizer/inflate@0.4.1':
+    dependencies:
+      supports-color: '10.2.2'
+  '@stryker-mutator/core@10.0.0':
+    # Stryker dynamically imports TypeScript without declaring it.
+    dependencies:
+      typescript: 6.0.3
+  'react-native-worklets@0.10.1':
+    # The compiled Babel plugin still imports these undeclared packages.
+    dependencies:
+      '@babel/generator': '7.29.7'
+      '@babel/traverse': '7.29.7'
+  '@tamagui/popper@2.7.7':
+    dependencies:
+      react-dom: 19.2.3
+  '@tamagui/floating@2.7.7':
+    dependencies:
+      react-dom: 19.2.3
+
+# Supply-chain quarantine: reject versions published less than a day ago.
+# Newly published versions require an explicit, reviewed package/version exception.
+minimumReleaseAge: 1440
+
+# Preserve registry provenance and reject untrusted transitive Git/tarball sources.
+trustPolicy: no-downgrade
+# Existing registry-signed releases predating provenance adoption remain installable;
+# trust downgrades in releases from the last week still fail closed.
+trustPolicyIgnoreAfter: 10080
+blockExoticSubdeps: true
+
+# Keep dependency reconciliation explicit. The pnpm resolver otherwise attempts an
+# implicit install before every script, which makes local and CI runs mutate
+# node_modules instead of failing with an actionable install instruction.
+verifyDepsBeforeRun: false
+
+allowBuilds:
+  '@fission-ai/openspec': false
+  '@nestjs/core': true
+  '@parcel/watcher': true
+  '@prisma/client': true
+  '@scarf/scarf': false
+  '@swc/core': true
+  better-sqlite3: true
+  cpu-features: false
+  esbuild: true
+  less: false
+  nx: true
+  protobufjs: false
+  sharp: true
+  ssh2: false
+  unrs-resolver: false

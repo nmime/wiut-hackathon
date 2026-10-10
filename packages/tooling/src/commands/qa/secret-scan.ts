@@ -1,0 +1,123 @@
+#!/usr/bin/env node
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, relative, resolve } from "node:path";
+import { collectFiles, commandExists, defaultIgnore, parseArgs, run, textFileFilter, workspaceRoot, writeJson } from "./runtime-utils.ts";
+import {
+  dockerGitleaksInvocation,
+  gitleaksEngineReportPath,
+  nativeGitleaksInvocation,
+  productGitleaksConfigPath,
+} from "./gitleaks-invocation.ts";
+import {
+  highEntropySecretPattern,
+  isAllowedSecretScanValue,
+  isSecretScanIgnoredPath,
+  secretEntropyThreshold,
+  secretValueEntropy,
+} from "./secret-scan-policy.ts";
+
+const args = parseArgs();
+const dryRun = args.flags.has("dry-run");
+const engine = args.options.get("engine") ?? process.env.SECRET_SCAN_ENGINE ?? "native";
+const failOnUnavailableExternal = (process.env.SECRET_SCAN_FAIL_ON_UNAVAILABLE_EXTERNAL ?? "true") !== "false";
+const reportPath = args.options.get("report") ?? "test-results/security-secrets/report.json";
+const gitleaksImage = args.options.get("gitleaks-image") ?? process.env.GITLEAKS_DOCKER_IMAGE ?? "zricethezav/gitleaks:v8.30.1";
+const gitleaksConfig = args.options.get("gitleaks-config") ?? process.env.GITLEAKS_CONFIG ?? productGitleaksConfigPath;
+const findings = [];
+function runGitleaksScan(container: boolean): ReturnType<typeof run> {
+  // Match the native gate's source scope. Generated builds and reports otherwise make a scan
+  // change merely because another quality gate ran first. Preserve relative source paths so
+  // product/base fixture allowlists still apply, including to uncommitted source files.
+  const source = mkdtempSync(join(tmpdir(), "nrb-secret-scan-"));
+  try {
+    for (const file of collectFiles(workspaceRoot)) {
+      const relativePath = relative(workspaceRoot, file);
+      if (isSecretScanIgnoredPath(relativePath)) continue;
+      const destination = join(source, relativePath);
+      mkdirSync(dirname(destination), { recursive: true });
+      copyFileSync(file, destination);
+    }
+    mkdirSync(resolve(source, dirname(reportPath)), { recursive: true });
+    const invocation = container
+      ? dockerGitleaksInvocation({ config: gitleaksConfig, image: gitleaksImage, reportPath, workspace: source })
+      : nativeGitleaksInvocation({ config: gitleaksConfig, reportPath });
+    const result = run(invocation.command, invocation.args, { cwd: source });
+    const engineReport = resolve(source, gitleaksEngineReportPath(reportPath));
+    if (existsSync(engineReport) && engineReport !== resolve(gitleaksEngineReportPath(reportPath))) {
+      copyFileSync(engineReport, gitleaksEngineReportPath(reportPath));
+    }
+    return result;
+  } finally {
+    rmSync(source, { recursive: true, force: true });
+  }
+}
+const patterns = [
+  { id: "private-key", severity: "critical", regex: /-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----/g },
+  { id: "aws-access-key", severity: "critical", regex: /\bAKIA[0-9A-Z]{16}\b/g },
+  { id: "github-token", severity: "critical", regex: /\b(?:gh[pousr]_[A-Za-z0-9_]{36,}|github_pat_[A-Za-z0-9_]{80,})\b/g },
+  { id: "slack-token", severity: "critical", regex: /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/g },
+  { id: "generic-secret-assignment", severity: "high", regex: /(?:api[_-]?key|secret|password|token)\s*[:=]\s*["']([A-Za-z0-9_./+=-]{24,})["']/gi },
+  { id: "jwt-like-token", severity: "high", regex: /\beyJ[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\.[A-Za-z0-9_-]{12,}\b/g },
+  { id: "database-url-credential", severity: "high", regex: /\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis):\/\/[^\s:@]+:([^\s@]{12,})@/gi },
+];
+
+if (engine === "gitleaks" && !dryRun) {
+  mkdirSync(dirname(reportPath), { recursive: true });
+  if (commandExists("gitleaks")) {
+    const result = runGitleaksScan(false);
+    if (result.status !== 0) findings.push({ rule: "gitleaks", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
+  } else if (commandExists("docker")) {
+    const result = runGitleaksScan(true);
+    if (result.status !== 0) findings.push({ rule: "gitleaks-docker", severity: "critical", message: "gitleaks reported findings", stderr: result.stderr.slice(-2000) });
+  } else if (failOnUnavailableExternal) findings.push({ rule: "gitleaks", severity: "high", message: "SECRET_SCAN_ENGINE=gitleaks requested but gitleaks/Docker is unavailable" });
+}
+
+// Run the native scan for the native engine, or as a fallback when the gitleaks
+// path produced no findings (e.g. gitleaks/Docker unavailable and not failing).
+// Do not double-run it when gitleaks already reported findings.
+if (engine !== "gitleaks" || findings.length === 0) {
+  for (const file of collectFiles(workspaceRoot, {
+    include: textFileFilter,
+    ignore: (relativePath) => defaultIgnore(relativePath) || isSecretScanIgnoredPath(relativePath),
+  })) {
+    const rel = relative(workspaceRoot, file).replaceAll("\\", "/");
+    const text = readFileSync(file, "utf8");
+    for (const pattern of patterns) for (const match of text.matchAll(pattern.regex)) {
+      const value = match[1] ?? match[0];
+      const rawValue = match[0];
+      if (isAllowedSecretScanValue(value, rel, text) || isAllowedSecretScanValue(rawValue, rel, text)) continue;
+      const line = text.slice(0, match.index).split("\n").length;
+      findings.push({ file: rel, line, rule: pattern.id, severity: pattern.severity });
+    }
+    for (const match of text.matchAll(highEntropySecretPattern)) {
+      const value = match[1];
+      if (isAllowedSecretScanValue(value, rel, text) || secretValueEntropy(value) < secretEntropyThreshold) continue;
+      const line = text.slice(0, match.index).split("\n").length;
+      findings.push({ file: rel, line, rule: "high-entropy-string", severity: "medium" });
+    }
+  }
+}
+
+writeJson(reportPath, {
+  status: findings.length ? "failed" : "ok",
+  engine,
+  dryRun,
+  gitleaksImage,
+  gitleaksConfig,
+  // Named so a reader of the summary can find the engine's own findings, which used to be written
+  // over this very file.
+  gitleaksReport: gitleaksEngineReportPath(reportPath),
+  failOnUnavailableExternal,
+  findings,
+});
+if (dryRun) {
+  console.log(JSON.stringify({ status: "dry-run", engine, rules: patterns.map((pattern) => pattern.id), findings: findings.length, report: reportPath }));
+  process.exit(0);
+}
+if (findings.length) {
+  console.error("Secret scan failed:");
+  for (const finding of findings) console.error(`- ${finding.file ?? finding.rule}${finding.line ? `:${finding.line}` : ""} ${finding.rule} (${finding.severity})`);
+  process.exit(1);
+}
+console.log(JSON.stringify({ status: "ok", engine, report: reportPath }));
