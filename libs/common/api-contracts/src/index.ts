@@ -389,6 +389,7 @@ export const ProblemSchema = z.object({
   status: z.number(),
   detail: z.string(),
   request_id: z.string(),
+  code: z.string().optional(),
   errors: z
     .array(z.object({ path: z.string(), message: z.string() }))
     .optional(),
@@ -416,6 +417,20 @@ export const EmailSchema = z
   .pipe(z.email().max(254));
 export const PasswordSchema = z.string().min(12).max(128);
 export const TenantRoleSchema = z.enum(['admin', 'officer']);
+export const TotpCodeSchema = z
+  .string()
+  .regex(/^\d{6}$/, 'Enter a six-digit authenticator code');
+export const MfaRecoveryCodeSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-F0-9]{8}(?:-[A-F0-9]{8}){3}$/, 'Enter a complete recovery code');
+const factorFields = {
+  totp_code: TotpCodeSchema.optional(),
+  recovery_code: MfaRecoveryCodeSchema.optional(),
+};
+const oneFactor = (value: { totp_code?: string; recovery_code?: string }) =>
+  !(value.totp_code && value.recovery_code);
 export const AuthRegisterSchema = z
   .object({
     email: EmailSchema,
@@ -435,8 +450,52 @@ export const AuthRegisterSchema = z
     },
   );
 export const AuthLoginSchema = z
-  .object({ email: EmailSchema, password: PasswordSchema })
+  .object({ email: EmailSchema, password: PasswordSchema, ...factorFields })
+  .strict()
+  .refine(oneFactor, { message: 'Provide one second factor' });
+export const AuthVerifySchema = z
+  .object({ current_password: PasswordSchema, ...factorFields })
+  .strict()
+  .refine(oneFactor, { message: 'Provide one second factor' });
+export const PasswordChangeSchema = z
+  .object({
+    current_password: PasswordSchema,
+    new_password: PasswordSchema,
+    ...factorFields,
+  })
+  .strict()
+  .refine(oneFactor, { message: 'Provide one second factor' });
+export const MfaSetupSchema = z
+  .object({ current_password: PasswordSchema })
   .strict();
+export const MfaConfirmSchema = z
+  .object({ totp_code: TotpCodeSchema })
+  .strict();
+export const MfaSetupResponseSchema = z.object({
+  secret: z.string().regex(/^[A-Z2-7]{32}$/),
+  otpauth_uri: z.string().startsWith('otpauth://totp/'),
+  expires_at: z.iso.datetime(),
+});
+export const MfaRecoveryCodesResponseSchema = z.object({
+  recovery_codes: z.array(MfaRecoveryCodeSchema).length(10),
+});
+export const AccountRecoveryKeyResponseSchema = z.object({
+  recovery_key: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+});
+export const AccountRecoverSchema = z
+  .object({
+    email: EmailSchema,
+    recovery_key: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+    new_password: PasswordSchema,
+  })
+  .strict();
+export const AuthSecuritySchema = z.object({
+  mfa_available: z.boolean(),
+  mfa_enabled: z.boolean(),
+  recovery_codes_remaining: z.number().int().min(0).max(10),
+  recovery_key_configured: z.boolean(),
+  mfa_setup_expires_at: z.iso.datetime().nullable(),
+});
 export const AuthUserSchema = z.object({
   id: z.string(),
   email: EmailSchema,

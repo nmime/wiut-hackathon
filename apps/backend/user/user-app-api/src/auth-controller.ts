@@ -40,6 +40,52 @@ export class AuthController {
   ) {
     return this.auth.logout(request.auth!, request.id, reply);
   }
+  @Get('auth/security') security(@Req() request: FastifyRequest) {
+    return this.auth.securityStatus(request.auth!);
+  }
+  @HttpCode(200) @Post('auth/mfa/setup') setupMfa(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.setupMfa(body, request.auth!, request);
+  }
+  @HttpCode(200) @Post('auth/mfa/confirm') confirmMfa(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.confirmMfa(body, request.auth!, request);
+  }
+  @HttpCode(200) @Post('auth/mfa/disable') disableMfa(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.disableMfa(body, request.auth!, request);
+  }
+  @HttpCode(200) @Post('auth/mfa/recovery-codes') rotateMfaCodes(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.rotateMfaRecoveryCodes(body, request.auth!, request);
+  }
+  @HttpCode(200) @Post('auth/recovery-key') rotateRecoveryKey(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.rotateAccountRecoveryKey(body, request.auth!, request);
+  }
+  @HttpCode(200) @Post('auth/password') changePassword(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.changePassword(body, request.auth!, request);
+  }
+  @Public() @HttpCode(200) @Post('auth/recover') recoverAccount(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    return this.auth.recoverAccount(body, request, reply);
+  }
   @Get('team') team(@Req() request: FastifyRequest) {
     return this.auth.team(request.auth!);
   }

@@ -1,0 +1,18 @@
+[Unit]
+Description=FlowCredit verified private database and model audit backup
+After=docker.service
+Requires=docker.service
+RequiresMountsFor=@ROOT@
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=@ROOT@
+ExecStart=/usr/bin/python3 @ROOT@/scripts/operations/backup.py --keep-days 14
+UMask=0077
+TimeoutStartSec=35min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=@ROOT@/artifacts

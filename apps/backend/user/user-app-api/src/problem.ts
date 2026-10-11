@@ -13,6 +13,7 @@ export class ApiProblem extends Error {
     public readonly title: string,
     public readonly detail: string,
     public readonly errors?: Array<{ path: string; message: string }>,
+    public readonly code?: string,
   ) {
     super(detail);
   }
@@ -90,6 +91,7 @@ export class ProblemFilter implements ExceptionFilter {
         status: problem.status,
         detail: problem.detail,
         request_id: request.id,
+        ...(problem.code ? { code: problem.code } : {}),
         ...(problem.errors ? { errors: problem.errors } : {}),
       });
   }

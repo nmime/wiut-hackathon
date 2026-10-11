@@ -31,3 +31,24 @@ test('invalid connection protocols, secrets in ML URL, timeout and wildcard orig
   }
   assert.equal(loadConfig({ ML_SERVICE_URL: '   ' }).ML_SERVICE_URL, undefined);
 });
+
+test('auth encryption uses an explicit 256-bit key and never reports secret values', () => {
+  assert.equal(
+    loadConfig({ AUTH_ENCRYPTION_KEY: ' ' }).AUTH_ENCRYPTION_KEY,
+    undefined,
+  );
+  assert.equal(
+    loadConfig({ AUTH_ENCRYPTION_KEY: 'ab'.repeat(32) }).AUTH_ENCRYPTION_KEY,
+    'ab'.repeat(32),
+  );
+  for (const key of ['secret-key', 'a'.repeat(63), 'x'.repeat(64)]) {
+    assert.throws(
+      () => loadConfig({ AUTH_ENCRYPTION_KEY: key }),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        assert.equal(error.message, 'Invalid environment: AUTH_ENCRYPTION_KEY');
+        return true;
+      },
+    );
+  }
+});

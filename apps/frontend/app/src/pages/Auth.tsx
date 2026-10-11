@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 import { type AuthSession } from '@wiut/contracts';
 import {
   ArrowRight,
@@ -22,7 +21,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { api } from '@/lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { api, ApiError } from '@/lib/api';
 import { readInvitationToken } from '@/lib/route';
 
 export function AuthPage({
@@ -43,10 +49,85 @@ export function AuthPage({
   const [tenantName, setTenantName] = useState('');
   const [invitationToken, setInvitationToken] = useState(initialToken);
   const [joining, setJoining] = useState(Boolean(initialToken));
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [factorMethod, setFactorMethod] = useState('totp');
+  const [factor, setFactor] = useState('');
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryKey, setRecoveryKey] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [recovered, setRecovered] = useState(false);
+  function resetStep() {
+    setError(null);
+    setMfaRequired(false);
+    setFactor('');
+    setFactorMethod('totp');
+    setPassword('');
+    setRecoveryKey('');
+    setNewPassword('');
+    setConfirmPassword('');
+  }
+  async function submit() {
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      if (recovering) {
+        if (newPassword !== confirmPassword)
+          throw new Error('The new passwords do not match.');
+        await api.recoverAccount({
+          email,
+          recovery_key: recoveryKey.trim(),
+          new_password: newPassword,
+        });
+        resetStep();
+        setRecovered(true);
+      } else {
+        const next =
+          tab === 'login'
+            ? await api.login({
+                email,
+                password,
+                ...(mfaRequired
+                  ? factorMethod === 'backup'
+                    ? { recovery_code: factor.trim() }
+                    : { totp_code: factor.trim() }
+                  : {}),
+              })
+            : await api.register({
+                email,
+                password,
+                display_name: displayName,
+                ...(joining
+                  ? { invitation_token: invitationToken }
+                  : { tenant_name: tenantName }),
+              });
+        resetStep();
+        await onAuthenticated(next, tab === 'register');
+      }
+    } catch (caught) {
+      if (
+        caught instanceof ApiError &&
+        caught.code === 'mfa_required' &&
+        !recovering
+      ) {
+        setMfaRequired(true);
+        setFactor('');
+      } else {
+        setError(caught instanceof Error ? caught : new Error('Please retry.'));
+      }
+    } finally {
+      setPending(false);
+    }
+  }
   useEffect(() => {
     const onHashChange = () => {
       const token = readInvitationToken();
       if (token) {
+        resetStep();
+        setRecovering(false);
         setInvitationToken(token);
         setJoining(true);
         setTab('register');
@@ -55,20 +136,6 @@ export function AuthPage({
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
-  const mutation = useMutation({
-    mutationFn: () =>
-      tab === 'login'
-        ? api.login({ email, password })
-        : api.register({
-            email,
-            password,
-            display_name: displayName,
-            ...(joining
-              ? { invitation_token: invitationToken }
-              : { tenant_name: tenantName }),
-          }),
-    onSuccess: (session) => onAuthenticated(session, tab === 'register'),
-  });
 
   return (
     <main className="grid min-h-dvh bg-background lg:grid-cols-[1fr_1fr]">
@@ -152,194 +219,409 @@ export function AuthPage({
               aria-level={1}
               className="text-2xl tracking-tight"
             >
-              {tab === 'login'
-                ? 'Welcome back'
-                : joining
-                  ? 'Join your team'
-                  : 'Start your workspace'}
+              {recovering
+                ? recovered
+                  ? 'Password reset'
+                  : 'Recover your account'
+                : tab === 'login'
+                  ? mfaRequired
+                    ? 'Verify your sign-in'
+                    : 'Welcome back'
+                  : joining
+                    ? 'Join your team'
+                    : 'Start your workspace'}
             </CardTitle>
             <CardDescription className="leading-relaxed">
-              {tab === 'login'
-                ? 'Sign in to your bank or team workspace.'
-                : joining
-                  ? 'Create your account using the invitation from your workspace admin.'
-                  : 'Create an account and a private workspace for your credit team.'}
+              {recovering
+                ? 'Use your saved account recovery code to reset your password.'
+                : tab === 'login'
+                  ? mfaRequired
+                    ? 'Complete two-step verification to open your workspace.'
+                    : 'Sign in to your bank or team workspace.'
+                  : joining
+                    ? 'Create your account using the invitation from your workspace admin.'
+                    : 'Create an account and a private workspace for your credit team.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs
-              value={tab}
-              onValueChange={(value) => {
-                if (!mutation.isPending) {
-                  setTab(value);
-                  setPassword('');
-                  mutation.reset();
-                }
-              }}
-              className="gap-5"
-            >
-              <TabsList className="w-full">
-                <TabsTrigger value="login" disabled={mutation.isPending}>
-                  Sign in
-                </TabsTrigger>
-                <TabsTrigger value="register" disabled={mutation.isPending}>
-                  Create account
-                </TabsTrigger>
-              </TabsList>
-              {notice && (
-                <Alert>
-                  <ShieldCheck />
-                  <AlertDescription>
-                    {notice}
-                    {notice.startsWith('The backend') && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => window.location.reload()}
-                      >
-                        Retry connection
-                      </Button>
-                    )}
-                  </AlertDescription>
-                </Alert>
-              )}
-              <form
-                className="space-y-4"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  mutation.mutate();
-                }}
-              >
-                <TabsContent value="register" className="mt-0 space-y-4">
+            {recovering ? (
+              recovered ? (
+                <div className="space-y-5">
+                  <Alert>
+                    <ShieldCheck />
+                    <AlertDescription>
+                      Your password was reset and all previous sessions ended.
+                      Two-step verification is now off. After signing in,
+                      generate a new account recovery code and reconnect your
+                      authenticator.
+                    </AlertDescription>
+                  </Alert>
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      setRecovering(false);
+                      setRecovered(false);
+                      setTab('login');
+                      resetStep();
+                    }}
+                  >
+                    Back to sign in
+                  </Button>
+                </div>
+              ) : (
+                <form
+                  className="space-y-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void submit();
+                  }}
+                >
                   <div className="space-y-2">
-                    <Label htmlFor="auth-name">Full name</Label>
+                    <Label htmlFor="recover-email">Email</Label>
                     <Input
-                      id="auth-name"
-                      value={displayName}
-                      onChange={(event) => setDisplayName(event.target.value)}
-                      autoComplete="name"
-                      minLength={2}
-                      maxLength={100}
-                      required={tab === 'register'}
-                      disabled={mutation.isPending}
-                      placeholder="Your full name"
+                      id="recover-email"
+                      type="email"
+                      autoComplete="username"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      maxLength={254}
+                      required
+                      disabled={pending}
                     />
                   </div>
-                  {joining ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="auth-invitation">Invitation token</Label>
-                      <Input
-                        id="auth-invitation"
-                        value={invitationToken}
-                        onChange={(event) =>
-                          setInvitationToken(event.target.value)
-                        }
-                        autoComplete="off"
-                        required={tab === 'register' && joining}
-                        maxLength={200}
-                        disabled={mutation.isPending}
-                        placeholder="Paste your invitation token"
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Use the same email address your admin invited.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="auth-workspace">Workspace name</Label>
-                      <Input
-                        id="auth-workspace"
-                        value={tenantName}
-                        onChange={(event) => setTenantName(event.target.value)}
-                        required={tab === 'register' && !joining}
-                        minLength={2}
-                        maxLength={100}
-                        disabled={mutation.isPending}
-                        placeholder="e.g. Tashkent Credit Team"
-                      />
-                    </div>
-                  )}
-                  <Button
-                    variant="link"
-                    size="sm"
-                    type="button"
-                    className="h-auto px-0 text-xs"
-                    disabled={mutation.isPending}
-                    onClick={() => setJoining(!joining)}
-                  >
-                    {joining
-                      ? 'Create a new workspace instead'
-                      : 'Have a team invitation?'}
-                  </Button>
-                </TabsContent>
-                <div className="space-y-2">
-                  <Label htmlFor="auth-email">Email</Label>
-                  <Input
-                    id="auth-email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    autoComplete="username"
-                    maxLength={254}
-                    required
-                    disabled={mutation.isPending}
-                    placeholder="you@example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="auth-password">Password</Label>
-                  <Input
-                    id="auth-password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    autoComplete={
-                      tab === 'login' ? 'current-password' : 'new-password'
-                    }
-                    minLength={tab === 'register' ? 12 : undefined}
-                    maxLength={128}
-                    required
-                    disabled={mutation.isPending}
-                  />
-                  {tab === 'register' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="recover-key">Account recovery code</Label>
+                    <Input
+                      id="recover-key"
+                      autoComplete="off"
+                      value={recoveryKey}
+                      onChange={(event) => setRecoveryKey(event.target.value)}
+                      maxLength={100}
+                      required
+                      disabled={pending}
+                    />
                     <p className="text-xs text-muted-foreground">
-                      Use at least 12 characters. Your password stays private.
+                      Use the code saved from Account security. Authenticator
+                      backup codes cannot reset a password.
                     </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="recover-password">New password</Label>
+                    <Input
+                      id="recover-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(event) => setNewPassword(event.target.value)}
+                      minLength={12}
+                      maxLength={128}
+                      required
+                      disabled={pending}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="recover-confirm">
+                      Confirm new password
+                    </Label>
+                    <Input
+                      id="recover-confirm"
+                      type="password"
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(event) =>
+                        setConfirmPassword(event.target.value)
+                      }
+                      minLength={12}
+                      maxLength={128}
+                      required
+                      disabled={pending}
+                    />
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    Recovery ends all signed-in sessions and turns off two-step
+                    verification. Your saved recovery code can be used once.
+                  </p>
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertTitle>Account recovery failed</AlertTitle>
+                      <AlertDescription>{error.message}</AlertDescription>
+                    </Alert>
                   )}
-                </div>
-                {mutation.isError && (
-                  <Alert variant="destructive" role="alert">
-                    <AlertTitle>
-                      {tab === 'login'
-                        ? 'Sign-in failed'
-                        : 'Account could not be created'}
-                    </AlertTitle>
+                  <Button className="w-full" type="submit" disabled={pending}>
+                    {pending && <Loader2 className="animate-spin" />}Reset
+                    password
+                  </Button>
+                  <Button
+                    className="w-full"
+                    type="button"
+                    variant="ghost"
+                    disabled={pending}
+                    onClick={() => {
+                      setRecovering(false);
+                      resetStep();
+                    }}
+                  >
+                    Back to sign in
+                  </Button>
+                </form>
+              )
+            ) : (
+              <Tabs
+                value={tab}
+                onValueChange={(value) => {
+                  if (!pending) {
+                    setTab(value);
+                    setPassword('');
+                    resetStep();
+                  }
+                }}
+                className="gap-5"
+              >
+                <TabsList className="w-full">
+                  <TabsTrigger value="login" disabled={pending}>
+                    Sign in
+                  </TabsTrigger>
+                  <TabsTrigger value="register" disabled={pending}>
+                    Create account
+                  </TabsTrigger>
+                </TabsList>
+                {notice && (
+                  <Alert>
+                    <ShieldCheck />
                     <AlertDescription>
-                      {mutation.error.message}
+                      {notice}
+                      {notice.startsWith('The backend') && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.location.reload()}
+                        >
+                          Retry connection
+                        </Button>
+                      )}
                     </AlertDescription>
                   </Alert>
                 )}
-                <Button
-                  className="w-full"
-                  type="submit"
-                  disabled={mutation.isPending}
+                <form
+                  className="space-y-4"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void submit();
+                  }}
                 >
-                  {mutation.isPending ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <ArrowRight />
+                  <TabsContent value="register" className="mt-0 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="auth-name">Full name</Label>
+                      <Input
+                        id="auth-name"
+                        value={displayName}
+                        onChange={(event) => setDisplayName(event.target.value)}
+                        autoComplete="name"
+                        minLength={2}
+                        maxLength={100}
+                        required={tab === 'register'}
+                        disabled={pending}
+                        placeholder="Your full name"
+                      />
+                    </div>
+                    {joining ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="auth-invitation">
+                          Invitation token
+                        </Label>
+                        <Input
+                          id="auth-invitation"
+                          value={invitationToken}
+                          onChange={(event) =>
+                            setInvitationToken(event.target.value)
+                          }
+                          autoComplete="off"
+                          required={tab === 'register' && joining}
+                          maxLength={200}
+                          disabled={pending}
+                          placeholder="Paste your invitation token"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Use the same email address your admin invited.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="auth-workspace">Workspace name</Label>
+                        <Input
+                          id="auth-workspace"
+                          value={tenantName}
+                          onChange={(event) =>
+                            setTenantName(event.target.value)
+                          }
+                          required={tab === 'register' && !joining}
+                          minLength={2}
+                          maxLength={100}
+                          disabled={pending}
+                          placeholder="e.g. Tashkent Credit Team"
+                        />
+                      </div>
+                    )}
+                    <Button
+                      variant="link"
+                      size="sm"
+                      type="button"
+                      className="h-auto px-0 text-xs"
+                      disabled={pending}
+                      onClick={() => setJoining(!joining)}
+                    >
+                      {joining
+                        ? 'Create a new workspace instead'
+                        : 'Have a team invitation?'}
+                    </Button>
+                  </TabsContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="auth-email">Email</Label>
+                    <Input
+                      id="auth-email"
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      autoComplete="username"
+                      maxLength={254}
+                      required
+                      disabled={pending || mfaRequired}
+                      placeholder="you@example.com"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="auth-password">Password</Label>
+                    <Input
+                      id="auth-password"
+                      type="password"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      autoComplete={
+                        tab === 'login' ? 'current-password' : 'new-password'
+                      }
+                      minLength={tab === 'register' ? 12 : undefined}
+                      maxLength={128}
+                      required
+                      disabled={pending || mfaRequired}
+                    />
+                    {tab === 'register' && (
+                      <p className="text-xs text-muted-foreground">
+                        Use at least 12 characters. Your password stays private.
+                      </p>
+                    )}
+                  </div>
+                  {mfaRequired && tab === 'login' && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="auth-factor-method">
+                          Verification method
+                        </Label>
+                        <Select
+                          value={factorMethod}
+                          onValueChange={(value) => {
+                            setFactorMethod(value);
+                            setFactor('');
+                            setError(null);
+                          }}
+                          disabled={pending}
+                        >
+                          <SelectTrigger id="auth-factor-method">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="totp">
+                              Authenticator app
+                            </SelectItem>
+                            <SelectItem value="backup">
+                              Authenticator backup code
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="auth-factor">
+                          {factorMethod === 'backup'
+                            ? 'Authenticator backup code'
+                            : 'Authenticator code'}
+                        </Label>
+                        <Input
+                          id="auth-factor"
+                          value={factor}
+                          onChange={(event) => setFactor(event.target.value)}
+                          autoComplete="one-time-code"
+                          inputMode={
+                            factorMethod === 'totp' ? 'numeric' : 'text'
+                          }
+                          pattern={
+                            factorMethod === 'totp' ? '[0-9]{6}' : undefined
+                          }
+                          maxLength={factorMethod === 'totp' ? 6 : 100}
+                          required
+                          disabled={pending}
+                          autoFocus
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {factorMethod === 'backup'
+                            ? 'Each backup code works once.'
+                            : 'Enter the six-digit code from your authenticator app.'}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto px-0 text-xs"
+                        disabled={pending}
+                        onClick={resetStep}
+                      >
+                        Use another account
+                      </Button>
+                    </div>
                   )}
-                  {mutation.isPending
-                    ? 'Please wait…'
-                    : tab === 'login'
-                      ? 'Sign in to workspace'
-                      : joining
-                        ? 'Create account and join team'
-                        : 'Create account and workspace'}
-                </Button>
-              </form>
-            </Tabs>
+                  {Boolean(error) && (
+                    <Alert variant="destructive" role="alert">
+                      <AlertTitle>
+                        {tab === 'login'
+                          ? 'Sign-in failed'
+                          : 'Account could not be created'}
+                      </AlertTitle>
+                      <AlertDescription>{error?.message}</AlertDescription>
+                    </Alert>
+                  )}
+                  <Button className="w-full" type="submit" disabled={pending}>
+                    {pending ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      <ArrowRight />
+                    )}
+                    {pending
+                      ? 'Please wait…'
+                      : tab === 'login'
+                        ? mfaRequired
+                          ? 'Verify and sign in'
+                          : 'Sign in to workspace'
+                        : joining
+                          ? 'Create account and join team'
+                          : 'Create account and workspace'}
+                  </Button>
+                </form>
+                {tab === 'login' && (
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="h-auto px-0 text-xs"
+                    disabled={pending}
+                    onClick={() => {
+                      resetStep();
+                      setRecovering(true);
+                      setRecovered(false);
+                    }}
+                  >
+                    Forgot password?
+                  </Button>
+                )}
+              </Tabs>
+            )}
           </CardContent>
         </Card>
         <p className="mt-6 max-w-md text-center text-xs leading-relaxed text-muted-foreground">

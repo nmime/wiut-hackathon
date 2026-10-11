@@ -1,0 +1,11 @@
+[Unit]
+Description=FlowCredit five-minute local health checks
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+Unit=flowcredit-health.service
+
+[Install]
+WantedBy=timers.target

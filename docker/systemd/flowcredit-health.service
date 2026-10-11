@@ -1,0 +1,19 @@
+[Unit]
+Description=FlowCredit local HTTPS, database, scorer, disk and backup monitoring
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+RequiresMountsFor=@ROOT@
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=@ROOT@
+ExecStart=/usr/bin/python3 @ROOT@/scripts/operations/check_health.py
+UMask=0077
+TimeoutStartSec=3min
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=@ROOT@/artifacts
