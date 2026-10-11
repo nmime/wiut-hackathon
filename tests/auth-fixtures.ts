@@ -11,8 +11,18 @@ type Playwright = PlaywrightWorkerArgs['playwright'];
 
 export interface TestSession {
   user: { id: string; email: string; display_name: string };
-  tenant: { id: string; name: string; role: 'admin' | 'officer' };
-  tenants: { id: string; name: string; role: 'admin' | 'officer' }[];
+  tenant: {
+    id: string;
+    name: string;
+    role: 'admin' | 'officer';
+    kind: 'bank' | 'showcase';
+  };
+  tenants: {
+    id: string;
+    name: string;
+    role: 'admin' | 'officer';
+    kind: 'bank' | 'showcase';
+  }[];
   csrf_token: string;
 }
 

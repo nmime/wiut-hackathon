@@ -19,6 +19,8 @@ import {
   TeamSchema,
   TenantCreateSchema,
   TenantSwitchSchema,
+  ShowcaseGenerateSchema,
+  ShowcaseGenerationSchema,
   type AuthLogin,
   type AuthRegister,
   type TenantRole,
@@ -34,6 +36,7 @@ import {
   type BusinessImport,
   type CreateAssessment,
   type DecisionInput,
+  type ShowcaseGenerate,
 } from '@wiut/contracts';
 
 type Parser<T> = { parse: (data: unknown) => T };
@@ -82,6 +85,12 @@ function authInput<T>(schema: Parser<T>, input: unknown): T {
       totp_code: 'Authenticator code',
       recovery_code: 'Authenticator backup code',
       recovery_key: 'Account recovery code',
+      scenario: 'Scenario',
+      seed: 'Random seed',
+      months: 'History length',
+      count: 'Number of cases',
+      monthly_revenue_uzs: 'Monthly revenue in UZS',
+      end_month: 'Last complete month',
     };
     const issues =
       error &&
@@ -284,6 +293,18 @@ export const api = {
       '/tenants',
       AuthSessionSchema,
       authInput(TenantCreateSchema, input),
+    ),
+  createShowcaseTenant: (input: { name: string }) =>
+    request(
+      '/auth/showcase-tenants',
+      AuthSessionSchema,
+      authInput(TenantCreateSchema, input),
+    ),
+  generateShowcase: (input: ShowcaseGenerate) =>
+    request(
+      '/showcase/generate',
+      ShowcaseGenerationSchema,
+      authInput(ShowcaseGenerateSchema, input),
     ),
   switchTenant: (input: { tenant_id: string }) =>
     request(

@@ -20,6 +20,7 @@ import {
   Users,
   Loader2,
   ShieldCheck,
+  FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -115,6 +116,11 @@ const AccountSecurityPage = lazy(() =>
     default: module.AccountSecurityPage,
   })),
 );
+const ShowcasePage = lazy(() =>
+  import('@/pages/Showcase').then((module) => ({
+    default: module.ShowcasePage,
+  })),
+);
 
 type Page =
   | 'overview'
@@ -123,7 +129,8 @@ type Page =
   | 'audit'
   | 'team'
   | 'invite'
-  | 'security';
+  | 'security'
+  | 'showcase';
 type WorkspaceRoute = {
   page: Page;
   businessId: string | null;
@@ -153,6 +160,7 @@ function readRoute(): WorkspaceRoute {
       'audit',
       'team',
       'security',
+      'showcase',
     ].includes(hash)
       ? (hash as Page)
       : 'overview',
@@ -166,6 +174,7 @@ const navigation = [
   { id: 'reviews' as const, label: 'Review history', icon: ClipboardCheck },
   { id: 'audit' as const, label: 'Audit trail', icon: FileClock },
   { id: 'team' as const, label: 'Team & access', icon: Users },
+  { id: 'showcase' as const, label: 'Showcase lab', icon: FlaskConical },
 ];
 
 const SESSION_BROADCAST_KEY = 'flowcredit-session-change';
@@ -332,6 +341,7 @@ function WorkspaceApp({
   const queryClient = useQueryClient();
   const { setOpenMobile } = useSidebar();
   const pendingMutations = useIsMutating();
+  const isShowcase = session.tenant.kind === 'showcase';
   const [createWorkspaceOpen, setCreateWorkspaceOpen] = useState(false);
   const [workspaceName, setWorkspaceName] = useState('');
   const switchWorkspace = useMutation({
@@ -491,6 +501,7 @@ function WorkspaceApp({
                 {session.tenants.map((tenant) => (
                   <SelectItem key={tenant.id} value={tenant.id}>
                     {tenant.name}
+                    {tenant.kind === 'showcase' ? ' · Showcase' : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -615,9 +626,17 @@ function WorkspaceApp({
             )}
           </div>
           <Badge variant="outline" className="shrink-0 gap-1.5 font-normal">
-            <ShieldCheck className="size-3" />
-            <span className="hidden sm:inline">Human-led review</span>
-            <span className="sm:hidden">Credit review</span>
+            {isShowcase ? (
+              <FlaskConical className="size-3" />
+            ) : (
+              <ShieldCheck className="size-3" />
+            )}
+            <span className="hidden sm:inline">
+              {isShowcase ? 'Showcase workspace' : 'Human-led review'}
+            </span>
+            <span className="sm:hidden">
+              {isShowcase ? 'Showcase' : 'Credit review'}
+            </span>
           </Badge>
         </header>
         <main
@@ -625,6 +644,20 @@ function WorkspaceApp({
           tabIndex={-1}
           className="mx-auto w-full max-w-[1440px] flex-1 space-y-6 p-4 sm:p-6 lg:p-8"
         >
+          {isShowcase && (
+            <Alert
+              className="border-amber-200 bg-amber-50/60"
+              data-testid="showcase-disclosure"
+            >
+              <FlaskConical className="text-amber-700" />
+              <AlertTitle>Showcase workspace · Synthetic inputs</AlertTitle>
+              <AlertDescription>
+                Generated businesses and practice decisions are separate from
+                bank portfolios. Model results are computed live from these
+                illustrative inputs and do not establish real borrower accuracy.
+              </AlertDescription>
+            </Alert>
+          )}
           {health.isError && (
             <Alert variant="destructive">
               <HeartPulse />
@@ -655,6 +688,18 @@ function WorkspaceApp({
               </div>
             }
           >
+            {page === 'showcase' && (
+              <ShowcasePage
+                session={session}
+                businesses={businesses}
+                onOpen={openBusiness}
+                onSessionChange={(next) => {
+                  window.location.hash =
+                    next.tenant.kind === 'showcase' ? 'showcase' : 'overview';
+                  return onSessionChange(next, false);
+                }}
+              />
+            )}
             {page === 'security' && (
               <AccountSecurityPage
                 session={session}
@@ -690,14 +735,20 @@ function WorkspaceApp({
                 mlConfigured={health.data?.ml_configured}
                 onOpen={openBusiness}
                 onViewBusinesses={() => navigate('businesses')}
-                onImport={() => setImportOpen(true)}
+                onImport={() =>
+                  isShowcase ? navigate('showcase') : setImportOpen(true)
+                }
+                showcase={isShowcase}
               />
             )}
             {page === 'businesses' && !businessId && (
               <BusinessesPage
                 businesses={businesses}
                 onOpen={openBusiness}
-                onImport={() => setImportOpen(true)}
+                onImport={() =>
+                  isShowcase ? navigate('showcase') : setImportOpen(true)
+                }
+                showcase={isShowcase}
               />
             )}
             {page === 'businesses' && businessId && (
@@ -718,6 +769,7 @@ function WorkspaceApp({
                 assessments={assessments}
                 businesses={businesses.data?.items ?? []}
                 onOpen={openBusiness}
+                workspace={session.tenant}
               />
             )}
             {page === 'audit' && (
@@ -725,6 +777,7 @@ function WorkspaceApp({
                 audit={audit}
                 businesses={businesses.data?.items ?? []}
                 onOpen={openBusiness}
+                workspace={session.tenant}
               />
             )}
           </Suspense>

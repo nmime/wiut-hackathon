@@ -78,14 +78,20 @@ needs observed operating costs and repayment outcomes.
 - Original teammate implementation: 49 supplied tests passed.
 - Private wrapper: 24 focused tests passed, including input limits, genuine
   interest totals, refusals, artifact identity and audit durability.
-- Candidate integration: eight end-to-end tests through Python, Nest,
+- Candidate integration: nine end-to-end tests through Python, Nest,
   PostgreSQL and React passed, including annuity/adaptive labels, requested
-  limits, immutable human review and tenant isolation.
-- Public HTTPS default-model flow: eleven checks passed, including actual
-  scoring, saved results, authentication, permissions and guarded removal of
-  temporary test records.
+  limits, immutable human review, tenant isolation, and generated showcase
+  scenarios with a persisted short-history refusal.
+- Default-model integration: six end-to-end tests passed, including all six
+  generated showcase scenarios, persisted model results and human review.
+- Public HTTPS default-model flow verified actual scoring, saved results,
+  authentication, permissions and guarded removal of temporary test records.
 - Both deployed scorer identities were checked against the exact frozen
   artifacts. These are working-system checks, not accuracy measurements.
+
+The [Showcase lab](showcase.md) generates explicitly synthetic inputs in separate
+workspaces. It leaves these artifacts and validation evidence unchanged; it does
+not add real training observations or establish model accuracy.
 
 ## Recommendation and sources
 

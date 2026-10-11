@@ -12,6 +12,9 @@ export function businessExport(business: BusinessDetail) {
     location: business.location,
     data_source: business.data_source,
     amount_unit: business.amount_unit,
+    ...(business.showcase_provenance
+      ? { showcase_provenance: business.showcase_provenance }
+      : {}),
     transactions: business.transactions.map(
       ({ amount_index, ...transaction }) => ({
         ...transaction,
@@ -90,19 +93,39 @@ export function downloadJson(filename: string, value: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function downloadTransactions(business: BusinessDetail) {
+export function transactionCsv(business: BusinessDetail) {
+  const synthetic = business.data_source === 'synthetic';
+  const provenance = business.showcase_provenance;
+  const declaration = synthetic
+    ? [
+        'synthetic',
+        business.amount_unit,
+        provenance?.generator_version ?? 'legacy-synthetic',
+        provenance?.seed ?? '',
+        provenance?.scenario ?? '',
+        provenance?.months ?? '',
+        provenance?.end_month ?? '',
+        provenance?.monthly_revenue_uzs ?? '',
+        provenance?.batch_index ?? '',
+      ]
+    : [];
   const rows = [
-    `ts,direction,channel,${business.amount_unit === 'UZS' ? 'amount' : 'amount_index'}`,
-    ...business.transactions.map(
-      (t) => `${t.ts},${t.direction},${t.channel},${t.amount_index}`,
+    `${synthetic ? 'data_source,amount_unit,generator_version,seed,scenario,history_months,end_month,monthly_revenue_uzs,batch_index,' : ''}ts,direction,channel,${business.amount_unit === 'UZS' ? 'amount' : 'amount_index'}`,
+    ...business.transactions.map((t) =>
+      [...declaration, t.ts, t.direction, t.channel, t.amount_index].join(','),
     ),
   ];
+  return rows.join('\n');
+}
+
+export function downloadTransactions(business: BusinessDetail) {
+  const synthetic = business.data_source === 'synthetic';
   const url = URL.createObjectURL(
-    new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' }),
+    new Blob([transactionCsv(business)], { type: 'text/csv;charset=utf-8' }),
   );
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `${business.id}-transactions-${business.amount_unit}.csv`;
+  anchor.download = `${synthetic ? 'showcase-synthetic-' : ''}${business.id}-transactions-${business.amount_unit}.csv`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
