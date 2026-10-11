@@ -239,6 +239,31 @@ def test_unrequested_annuity_offer_materiality_uses_discounted_monthly_budget(
         assert offer["rows"] == []
 
 
+def test_zero_first_month_budget_cannot_create_main_offer_from_lp_residual(
+    engine, monkeypatch
+):
+    # Synthetic input: low first-season revenue, then stronger months. The
+    # median supports repayment but both lower bands start with zero capacity.
+    median = np.full(12, 500000.0)
+    median[0] = 100000.0
+    payload, forecast = fixture(median=median, spread=300000.0)
+    native_maximum = engine.max_feasible_principal
+    monkeypatch.setattr(
+        engine,
+        "max_feasible_principal",
+        lambda rate, caps: max(native_maximum(rate, caps), 20.0),
+    )
+    assessed = evaluate(engine, payload, forecast)
+    assessment = assessed["evidence"]["assessment"]
+    assert assessment["tiers"]["p10"]["caps"][0] == 0
+    assert assessment["tiers"]["p20"]["caps"][0] == 0
+    assert assessment["tiers"]["p10"]["principal"] == 0
+    assert assessment["tiers"]["p20"]["principal"] == 0
+    assert assessment["tier"] == "p50"
+    assert assessment["verdict"] == "elevatedrisk_officer"
+    assert assessed["result"]["recommended_loan"]["suggested_principal_index"] > 0
+
+
 def test_persistent_decline_sets_main_offer_and_score_zero(engine):
     history = np.geomspace(500000.0, 70000.0, 24)
     payload, forecast = fixture(history=history, median=np.full(12, 150000.0))
