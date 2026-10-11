@@ -286,6 +286,40 @@ class ProductionOperationsTests(unittest.TestCase):
             "second",
         )
 
+    def test_http_checks_identify_monitor_keep_host_scoped_and_bound_body(self):
+        requests = []
+
+        def response(request, *, timeout):
+            requests.append(request)
+            self.assertEqual(timeout, 8)
+            body = io.BytesIO(b"{}")
+            body.status = 200
+            return body
+
+        with patch.object(check_health, "urlopen", side_effect=response):
+            self.assertEqual(
+                check_health.http_status(
+                    "http://127.0.0.1:18080/api/health", host="example.com"
+                ),
+                (200, b"{}"),
+            )
+            self.assertEqual(
+                check_health.http_status("https://example.com/api/health"),
+                (200, b"{}"),
+            )
+        for request in requests:
+            self.assertEqual(request.get_header("User-agent"), "FlowCredit-Health/1.0")
+            self.assertEqual(request.get_header("Accept"), "application/json")
+        self.assertEqual(requests[0].get_header("Host"), "example.com")
+        self.assertIsNone(requests[1].get_header("Host"))
+        oversized = io.BytesIO(b"x" * 65537)
+        oversized.status = 200
+        with (
+            patch.object(check_health, "urlopen", return_value=oversized),
+            self.assertRaises(common.OperationError),
+        ):
+            check_health.http_status("https://example.com/api/health")
+
     def test_certificate_hostname_requires_positive_output_even_on_exit_zero(self):
         # common.run returns stdout when the subprocess exit status is zero.
         # Both positive and negative `openssl x509 -checkhost` responses can

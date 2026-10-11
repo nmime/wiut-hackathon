@@ -61,7 +61,7 @@ Verification consumes extra PostgreSQL storage and CPU. Only restore trusted arc
 
 The monitor checks:
 
-- Loopback API/database health and public HTTPS API/database health, with normal TLS verification.
+- Loopback API/database health and public HTTPS API/database health, with normal TLS verification and the explicit `FlowCredit-Health/1.0` user agent. This avoids the host's Cloudflare rule rejecting Python's default user agent; blocked requests still fail the health check.
 - Anonymous business-list access remains protected by HTTP `401`.
 - Every installed FlowCredit container is running and healthy, and the selected scorer is available.
 - Scorer version and complete artifact SHA-256 match the accepted baseline. The teammate baseline additionally preserves its actual full source-archive and bridge-source SHA-256 values. No nonexistent source digest is invented for the default scorer.

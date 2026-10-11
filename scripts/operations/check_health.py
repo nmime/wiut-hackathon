@@ -30,7 +30,14 @@ from common import (
 
 
 def http_status(url: str, *, host: str | None = None) -> tuple[int, bytes]:
-    request = Request(url, headers={"Host": host} if host else {})
+    request = Request(
+        url,
+        headers={
+            "User-Agent": "FlowCredit-Health/1.0",
+            "Accept": "application/json",
+            **({"Host": host} if host else {}),
+        },
+    )
     try:
         with urlopen(request, timeout=8) as response:
             data = response.read(65537)
