@@ -251,7 +251,7 @@ test('the browser renders each advisory verdict and actual interest while preser
     { kind: 'stable' as const, label: 'Affordable' },
     {
       kind: 'elevated' as const,
-      label: 'Affordable at elevated risk — officer decides',
+      label: 'Elevated risk — officer review required',
     },
     { kind: 'declining' as const, label: 'Decline recommendation' },
   ]) {
