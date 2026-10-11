@@ -77,6 +77,11 @@ compose config --quiet
 # This is a manual application rollback aid; database rollback is never automatic.
 rollback_stamp=$(date -u +%Y%m%dT%H%M%SZ)-$$
 rollback_file="artifacts/production-backups/images-$rollback_stamp.txt"
+skip_rollback_images=${FLOWCREDIT_SKIP_ROLLBACK_IMAGES:-0}
+[[ "$skip_rollback_images" == 0 || "$skip_rollback_images" == 1 ]] || { printf 'Invalid rollback image override.\n' >&2; exit 1; }
+if [[ "$skip_rollback_images" == 1 ]]; then
+  printf 'Operator override: skipping old image preservation; database backup remains required.\n'
+else
 for service in api web ml; do
   current_container=$(compose ps --quiet "$service")
   if [[ -n "$current_container" ]]; then
@@ -131,6 +136,7 @@ except (AssertionError, KeyError, TypeError, ValueError):
     printf '%s %s %s\n' "$service" "$rollback_tag" "$current_image" >> "$rollback_file"
   fi
 done
+fi
 # Reject overlapping IPv4 subnets, except the correctly configured project network.
 network_ids=$(docker network ls --quiet)
 if [[ -n "$network_ids" ]]; then

@@ -37,7 +37,10 @@ class DeploymentEnvironmentTests(unittest.TestCase):
   [[ ${AUTH_ENCRYPTION_KEY+x} ]] && inherited=true
   printf '],"inherited_auth_key":%s}\\n' "$inherited"
 } >> "$TEST_DOCKER_CALLS"
-[[ "$1" == volume && "$2" == inspect ]] && exit 1
+if [[ "$1" == volume && "$2" == inspect ]]; then
+  [[ "$TEST_IMAGE_SCENARIO" == skip ]] && exit 0
+  exit 1
+fi
 if [[ -n "$TEST_IMAGE_SCENARIO" ]]; then
   if [[ "$1" == compose && "$*" == *" ps --quiet "* ]]; then
     case "${!#}" in
@@ -88,13 +91,14 @@ exit 0
             "TRUSTED_PROXY_IP=172.30.84.1\n" + suffix
         )
 
-    def deploy(self, image_scenario=""):
+    def deploy(self, image_scenario="", skip_rollback_images=""):
         environment = os.environ.copy()
         environment.update(
             PATH=f"{self.bin}:{environment['PATH']}",
             TEST_DOCKER_CALLS=str(self.calls),
             AUTH_ENCRYPTION_KEY="f" * 64,
             TEST_IMAGE_SCENARIO=image_scenario,
+            FLOWCREDIT_SKIP_ROLLBACK_IMAGES=skip_rollback_images,
         )
         return subprocess.run(
             ["bash", str(self.root / "scripts/deploy.sh")],
@@ -223,6 +227,25 @@ exit 0
                 for command in commands
             )
         )
+
+    def test_explicit_image_skip_still_builds_and_backs_up_database(self):
+        self.existing(f"AUTH_ENCRYPTION_KEY={'b' * 64}\n")
+        result = self.deploy("skip", "1")
+        self.assert_success(result)
+        commands = [
+            json.loads(row)["args"] for row in self.calls.read_text().splitlines()
+        ]
+        self.assertFalse(
+            any(
+                command[0] in {"inspect", "commit"}
+                or command[:2] in [["image", "inspect"], ["image", "tag"]]
+                for command in commands
+            )
+        )
+        self.assertTrue(any("build" in command for command in commands))
+        self.assertTrue(any("pg_dump" in command for command in commands))
+        self.assertTrue(any("stop" in command for command in commands))
+        self.assertIn("skipping old image preservation", result.stdout)
 
     def test_pruned_ml_image_with_unexpected_secret_aborts_before_snapshot(self):
         self.existing(f"AUTH_ENCRYPTION_KEY={'b' * 64}\n")
