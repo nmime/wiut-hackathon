@@ -1,0 +1,30 @@
+{
+  "measured_at_utc": "2026-10-11T07:15:47.874674+00:00",
+  "provenance": "disclosed_synthetic_input_actual_final_model",
+  "scope": "In-process FastAPI HTTP serialization, real model inference, validation and durable audit; excludes network, Nest, browser, concurrency and cloud load",
+  "environment": {
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "python": "3.12.13"
+  },
+  "model_version": "final-v1-9391d577e3c718a2",
+  "model_artifact_sha256": "9391d577e3c718a274aa7aefc24a5772853dcbdcf1c76aa00ad440ba22eadd14",
+  "history_months": 36,
+  "transaction_rows": 72,
+  "warm_requests": 20,
+  "startup_ms": 297.40966700046556,
+  "first_request_ms": 91.10716699979093,
+  "median_ms": 23.509771000135515,
+  "p95_nearest_rank_ms": 25.931083000614308,
+  "min_ms": 21.679208999557886,
+  "max_ms": 26.121875000171713,
+  "durably_completed_requests": 21,
+  "external_inference_api_calls": 0,
+  "samples_ms": [
+    24.71220799998264, 25.931083000614308, 24.395417000050656,
+    23.571792000439018, 24.033040999711375, 23.447749999832013,
+    22.69470900137094, 23.24170899919409, 23.61979200031783, 22.350834000462783,
+    22.650290999081335, 25.67220800119685, 22.76858400000492,
+    23.341666999840527, 21.679208999557886, 22.62870800041128,
+    23.43670800109976, 24.625707999803126, 26.121875000171713, 25.54995799982862
+  ]
+}
