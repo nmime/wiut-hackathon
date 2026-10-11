@@ -27,6 +27,8 @@ jobs:
       - run: corepack enable
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
+      - run: python3 -m unittest discover -s tests/operations -v
+      - run: bash -n scripts/deploy.sh scripts/install-operations.sh
       - run: pnpm exec playwright install --with-deps chromium
       - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_no_ml'
         env:

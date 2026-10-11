@@ -75,6 +75,7 @@ services:
       SESSION_COOKIE_SECURE: 'true'
       SESSION_TTL_HOURS: ${SESSION_TTL_HOURS:-168}
       AUTH_RATE_LIMIT_MAX: ${AUTH_RATE_LIMIT_MAX:-20}
+      AUTH_ENCRYPTION_KEY: ${AUTH_ENCRYPTION_KEY:?Run scripts/deploy.sh to initialize the private auth encryption key}
       # API is unpublished; only the internal nginx supplies the client header.
       TRUST_PROXY_HOPS: '1'
     depends_on:

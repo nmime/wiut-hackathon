@@ -3,6 +3,15 @@ import {
   AuthLoginSchema,
   AuthRegisterSchema,
   AuthSessionSchema,
+  AuthSecuritySchema,
+  AuthVerifySchema,
+  MfaSetupSchema,
+  MfaSetupResponseSchema,
+  MfaConfirmSchema,
+  MfaRecoveryCodesResponseSchema,
+  AccountRecoveryKeyResponseSchema,
+  PasswordChangeSchema,
+  AccountRecoverSchema,
   InvitationAcceptSchema,
   InvitationCreateSchema,
   InvitationCreateResponseSchema,
@@ -48,6 +57,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     public requestId?: string,
+    public code?: string,
   ) {
     super(message);
   }
@@ -67,6 +77,11 @@ function authInput<T>(schema: Parser<T>, input: unknown): T {
       token: 'Invitation token',
       role: 'Team role',
       tenant_id: 'Workspace',
+      current_password: 'Current password',
+      new_password: 'New password',
+      totp_code: 'Authenticator code',
+      recovery_code: 'Authenticator backup code',
+      recovery_key: 'Account recovery code',
     };
     const issues =
       error &&
@@ -161,6 +176,7 @@ async function request<T>(
         : `The request failed (${response.status}). Please retry.`,
       response.status,
       problem.success ? problem.data.request_id : undefined,
+      problem.success ? problem.data.code : undefined,
     );
   }
   try {
@@ -197,6 +213,71 @@ export const api = {
       },
     ),
   logout: () => request('/auth/logout', SuccessSchema, {}),
+  security: () => request('/auth/security', AuthSecuritySchema),
+  setupMfa: (input: { current_password: string }) =>
+    request(
+      '/auth/mfa/setup',
+      MfaSetupResponseSchema,
+      authInput(MfaSetupSchema, input),
+    ),
+  confirmMfa: (input: { totp_code: string }) =>
+    request(
+      '/auth/mfa/confirm',
+      MfaRecoveryCodesResponseSchema,
+      authInput(MfaConfirmSchema, input),
+    ),
+  disableMfa: (input: {
+    current_password: string;
+    totp_code?: string;
+    recovery_code?: string;
+  }) =>
+    request(
+      '/auth/mfa/disable',
+      SuccessSchema,
+      authInput(AuthVerifySchema, input),
+    ),
+  rotateMfaCodes: (input: {
+    current_password: string;
+    totp_code?: string;
+    recovery_code?: string;
+  }) =>
+    request(
+      '/auth/mfa/recovery-codes',
+      MfaRecoveryCodesResponseSchema,
+      authInput(AuthVerifySchema, input),
+    ),
+  rotateRecoveryKey: (input: {
+    current_password: string;
+    totp_code?: string;
+    recovery_code?: string;
+  }) =>
+    request(
+      '/auth/recovery-key',
+      AccountRecoveryKeyResponseSchema,
+      authInput(AuthVerifySchema, input),
+    ),
+  changePassword: (input: {
+    current_password: string;
+    new_password: string;
+    totp_code?: string;
+    recovery_code?: string;
+  }) =>
+    request(
+      '/auth/password',
+      AuthSessionSchema,
+      authInput(PasswordChangeSchema, input),
+    ),
+  recoverAccount: (input: {
+    email: string;
+    recovery_key: string;
+    new_password: string;
+  }) =>
+    request(
+      '/auth/recover',
+      SuccessSchema,
+      authInput(AccountRecoverSchema, input),
+      { publicRequest: true },
+    ),
   team: () => request('/team', TeamSchema),
   createTenant: (input: { name: string }) =>
     request(

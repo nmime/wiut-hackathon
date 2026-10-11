@@ -29,12 +29,14 @@ if [[ ! -e "$environment_file" ]]; then
   domain=${FLOWCREDIT_DOMAIN:-wiut-hackathon.dehqonhub.uz}
   valid_domain "$domain" || { printf 'Invalid production domain.\n' >&2; exit 1; }
   password=$(openssl rand -hex 32)
+  encryption_key=$(openssl rand -hex 32)
   {
     printf 'DOMAIN=%s\n' "$domain"
     printf 'POSTGRES_PASSWORD=%s\n' "$password"
+    printf 'AUTH_ENCRYPTION_KEY=%s\n' "$encryption_key"
     printf 'TRUSTED_PROXY_IP=172.30.84.1\nSESSION_TTL_HOURS=168\nAUTH_RATE_LIMIT_MAX=20\nML_TIMEOUT_MS=8000\n'
   } > "$environment_file"
-  unset password
+  unset password encryption_key
   printf 'Created private .env.production with generated database credentials.\n'
 fi
 chmod 600 "$environment_file"
@@ -50,6 +52,18 @@ unset database_password
 trusted_proxy=$(env_value TRUSTED_PROXY_IP)
 [[ "$trusted_proxy" == 172.30.84.1 ]] || { printf 'TRUSTED_PROXY_IP must match the dedicated network gateway 172.30.84.1.\n' >&2; exit 1; }
 
+encryption_key=$(env_value AUTH_ENCRYPTION_KEY true)
+key_lines=$(awk 'index($0,"AUTH_ENCRYPTION_KEY=")==1 {count++} END {print count+0}' "$environment_file")
+if [[ "$key_lines" == 0 ]]; then
+  # Existing installations receive one stable key before MFA can be enabled.
+  # Never overwrite an existing key; encrypted authenticator secrets depend on it.
+  encryption_key=$(openssl rand -hex 32)
+  printf '\nAUTH_ENCRYPTION_KEY=%s\n' "$encryption_key" >> "$environment_file"
+  printf 'Initialized the private authentication encryption key. Preserve it with database backups.\n'
+fi
+[[ "$encryption_key" =~ ^[a-fA-F0-9]{64}$ ]] || { printf 'AUTH_ENCRYPTION_KEY must contain 64 hex characters. Preserve the existing encryption key.\n' >&2; exit 1; }
+unset encryption_key key_lines
+
 model_endpoint=$(env_value ML_SERVICE_URL true)
 services=(db ml api web)
 build_targets=(api web ml)
@@ -60,7 +74,7 @@ fi
 
 compose() {
   # The private file is authoritative, even if this shell has dev values exported.
-  env -u DOMAIN -u POSTGRES_PASSWORD -u TRUSTED_PROXY_IP -u SESSION_TTL_HOURS -u AUTH_RATE_LIMIT_MAX -u ML_TIMEOUT_MS -u ML_SERVICE_URL \
+  env -u DOMAIN -u POSTGRES_PASSWORD -u AUTH_ENCRYPTION_KEY -u TRUSTED_PROXY_IP -u SESSION_TTL_HOURS -u AUTH_RATE_LIMIT_MAX -u ML_TIMEOUT_MS -u ML_SERVICE_URL \
     docker compose --project-name flowcredit --env-file "$environment_file" -f docker-compose.production.yml "$@"
 }
 compose config --quiet

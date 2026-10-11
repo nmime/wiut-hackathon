@@ -137,8 +137,11 @@ test('legacy migration archives once without reseeding or losing accounts, asses
     );
 
     const snapshot = async () => ({
-      users: (await database!.pool.query('SELECT * FROM app_users ORDER BY id'))
-        .rows,
+      users: (
+        await database!.pool.query(
+          'SELECT id,email,display_name,password_hash,created_at FROM app_users ORDER BY id',
+        )
+      ).rows,
       members: (
         await database!.pool.query(
           'SELECT * FROM memberships ORDER BY user_id,tenant_id',
@@ -175,6 +178,35 @@ test('legacy migration archives once without reseeding or losing accounts, asses
     for (let startup = 0; startup < 2; startup++) {
       await database.onModuleInit();
       expect(await snapshot()).toEqual(original);
+      expect(
+        (
+          await database.pool.query(
+            'SELECT mfa_secret_encrypted,mfa_pending_secret_encrypted,mfa_pending_expires_at,mfa_last_counter,account_recovery_key_hash FROM app_users ORDER BY id',
+          )
+        ).rows,
+      ).toEqual([
+        {
+          mfa_secret_encrypted: null,
+          mfa_pending_secret_encrypted: null,
+          mfa_pending_expires_at: null,
+          mfa_last_counter: null,
+          account_recovery_key_hash: null,
+        },
+      ]);
+      expect(
+        (
+          await database.pool.query(
+            'SELECT count(*)::int AS count FROM mfa_recovery_codes',
+          )
+        ).rows[0].count,
+      ).toBe(0);
+      expect(
+        (
+          await database.pool.query(
+            "SELECT count(*)::int AS count FROM schema_migrations WHERE name='account-security-v1'",
+          )
+        ).rows[0].count,
+      ).toBe(1);
       expect(
         await verifyPassword(legacyPassword, original.users[0].password_hash),
       ).toBe(true);

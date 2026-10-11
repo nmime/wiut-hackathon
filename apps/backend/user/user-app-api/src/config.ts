@@ -45,6 +45,10 @@ const ConfigSchema = z.object({
     .string()
     .default('http://localhost:5173,http://127.0.0.1:5173'),
   AUTH_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(1000).default(20),
+  AUTH_ENCRYPTION_KEY: z
+    .string()
+    .regex(/^[a-fA-F0-9]{64}$/)
+    .optional(),
   SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(168).default(168),
   SESSION_COOKIE_SECURE: z.enum(['true', 'false']).optional(),
 });
@@ -66,6 +70,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
   const values = {
     ...environment,
     ML_SERVICE_URL: environment.ML_SERVICE_URL?.trim() || undefined,
+    AUTH_ENCRYPTION_KEY: environment.AUTH_ENCRYPTION_KEY?.trim() || undefined,
   };
   const result = ConfigSchema.safeParse(values);
   if (!result.success)

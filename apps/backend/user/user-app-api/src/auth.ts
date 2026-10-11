@@ -18,6 +18,15 @@ import {
   AuthLoginSchema,
   AuthRegisterSchema,
   AuthSessionSchema,
+  AuthSecuritySchema,
+  AuthVerifySchema,
+  MfaSetupSchema,
+  MfaSetupResponseSchema,
+  MfaConfirmSchema,
+  MfaRecoveryCodesResponseSchema,
+  AccountRecoveryKeyResponseSchema,
+  AccountRecoverSchema,
+  PasswordChangeSchema,
   InvitationAcceptSchema,
   InvitationCreateResponseSchema,
   InvitationCreateSchema,
@@ -33,6 +42,15 @@ import type { AppConfig } from './config.js';
 import type { AuthContext } from './auth-types.js';
 import { Database } from './database.js';
 import { ApiProblem, validate } from './problem.js';
+import {
+  authenticatorUri,
+  decryptTotp,
+  encryptTotp,
+  newRecoveryCodes,
+  newTotpSecret,
+  recoveryHash,
+  totpCounter,
+} from './account-security.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -116,6 +134,20 @@ interface SessionRow {
   tenant_name: string;
   role: TenantRole;
   csrf_token: string;
+}
+interface SecurityUserRow {
+  id: string;
+  email: string;
+  password_hash: string;
+  mfa_secret_encrypted: string | null;
+  mfa_pending_secret_encrypted: string | null;
+  mfa_pending_expires_at: Date | null;
+  mfa_last_counter: string | null;
+  account_recovery_key_hash: string | null;
+}
+interface FactorInput {
+  totp_code?: string;
+  recovery_code?: string;
 }
 interface InviteRow {
   id: string;
@@ -223,10 +255,10 @@ export class AuthService {
     }
   }
   private async security(
-    client: PoolClient,
+    client: Pick<PoolClient, 'query'>,
     event: string,
     requestId: string,
-    userId: string,
+    userId: string | null,
     tenantId: string | null,
     metadata: Record<string, unknown> = {},
   ) {
@@ -459,34 +491,73 @@ export class AuthService {
         [input.email],
       )
     ).rows[0];
-    if (!(await verifyPassword(input.password, user?.password_hash)) || !user)
+    if (!(await verifyPassword(input.password, user?.password_hash)) || !user) {
+      await this.security(
+        this.database.pool,
+        'account_sign_in_failed',
+        request.id,
+        user?.id ?? null,
+        null,
+      );
       throw new ApiProblem(
         401,
         'Sign in failed',
         'The email or password is incorrect.',
       );
-    const result = await this.transaction(async (client) => {
-      const tenant = (
-        await client.query<{ tenant_id: string }>(
-          'SELECT tenant_id FROM memberships WHERE user_id=$1 ORDER BY created_at,tenant_id LIMIT 1',
-          [user.id],
-        )
-      ).rows[0];
-      if (!tenant)
-        throw new ApiProblem(
-          401,
-          'Sign in failed',
-          'This account has no workspace membership.',
+    }
+    let result;
+    try {
+      result = await this.transaction(async (client) => {
+        const locked = (
+          await client.query<SecurityUserRow>(
+            'SELECT * FROM app_users WHERE id=$1 FOR UPDATE',
+            [user.id],
+          )
+        ).rows[0];
+        if (!locked || locked.password_hash !== user.password_hash)
+          throw new ApiProblem(
+            401,
+            'Sign in failed',
+            'The email or password is incorrect.',
+          );
+        await this.verifyFactor(client, locked, input, 401);
+        const tenant = (
+          await client.query<{ tenant_id: string }>(
+            'SELECT tenant_id FROM memberships WHERE user_id=$1 ORDER BY created_at,tenant_id LIMIT 1',
+            [user.id],
+          )
+        ).rows[0];
+        if (!tenant)
+          throw new ApiProblem(
+            401,
+            'Sign in failed',
+            'This account has no workspace membership.',
+          );
+        await this.security(
+          client,
+          'account_signed_in',
+          request.id,
+          user.id,
+          tenant.tenant_id,
         );
+        return this.createSession(client, user.id, tenant.tenant_id);
+      });
+    } catch (error) {
       await this.security(
-        client,
-        'account_signed_in',
+        this.database.pool,
+        'account_sign_in_failed',
         request.id,
         user.id,
-        tenant.tenant_id,
+        null,
+        {
+          reason:
+            error instanceof ApiProblem
+              ? (error.code ?? 'request_rejected')
+              : 'service_unavailable',
+        },
       );
-      return this.createSession(client, user.id, tenant.tenant_id);
-    });
+      throw error;
+    }
     this.cookie(reply, result.token);
     return this.session(result.context);
   }
@@ -503,6 +574,434 @@ export class AuthService {
         auth.tenant.id,
       );
     });
+    this.cookie(reply, null);
+    return { ok: true as const };
+  }
+  private async verifyFactor(
+    client: PoolClient,
+    user: SecurityUserRow,
+    input: FactorInput,
+    status: 401 | 403 = 403,
+  ) {
+    if (!user.mfa_secret_encrypted) return;
+    if (!input.totp_code && !input.recovery_code)
+      throw new ApiProblem(
+        status,
+        'Authenticator required',
+        'Enter a fresh authenticator code or an unused MFA recovery code.',
+        undefined,
+        'mfa_required',
+      );
+    if (input.recovery_code) {
+      const consumed = await client.query(
+        'DELETE FROM mfa_recovery_codes WHERE user_id=$1 AND code_hash=$2 RETURNING code_hash',
+        [user.id, recoveryHash(user.id, input.recovery_code, 'mfa')],
+      );
+      if (consumed.rowCount) return;
+    } else if (input.totp_code) {
+      const secret = decryptTotp(
+        user.mfa_secret_encrypted,
+        this.config.AUTH_ENCRYPTION_KEY,
+        user.id,
+        'enabled',
+      );
+      const counter = totpCounter(
+        secret,
+        input.totp_code,
+        user.mfa_last_counter === null ? null : Number(user.mfa_last_counter),
+      );
+      if (counter !== null) {
+        await client.query(
+          'UPDATE app_users SET mfa_last_counter=$2 WHERE id=$1',
+          [user.id, counter],
+        );
+        return;
+      }
+    }
+    throw new ApiProblem(
+      status,
+      'Verification failed',
+      'The code is invalid or already used. Enter a fresh authenticator code or an unused MFA recovery code.',
+      undefined,
+      'invalid_factor',
+    );
+  }
+  private async verifyCurrent(
+    client: PoolClient,
+    user: SecurityUserRow,
+    input: FactorInput & { current_password: string },
+  ) {
+    if (!(await verifyPassword(input.current_password, user.password_hash)))
+      throw new ApiProblem(
+        403,
+        'Verification failed',
+        'The current password is incorrect.',
+        undefined,
+        'invalid_credentials',
+      );
+    await this.verifyFactor(client, user, input);
+  }
+  private async securityAction<T>(
+    action: string,
+    auth: AuthContext,
+    request: FastifyRequest,
+    operation: (client: PoolClient, user: SecurityUserRow) => Promise<T>,
+  ): Promise<T> {
+    this.rateLimit(request, 'security', auth.user.email);
+    try {
+      return await this.transaction(async (client) => {
+        const user = (
+          await client.query<SecurityUserRow>(
+            'SELECT * FROM app_users WHERE id=$1 FOR UPDATE',
+            [auth.user.id],
+          )
+        ).rows[0];
+        if (
+          !user ||
+          !(
+            await client.query(
+              'SELECT 1 FROM auth_sessions WHERE token_hash=$1 AND user_id=$2 AND expires_at>now()',
+              [auth.session_hash, auth.user.id],
+            )
+          ).rowCount
+        )
+          throw new ApiProblem(
+            401,
+            'Sign in required',
+            'Sign in to access this workspace.',
+          );
+        const result = await operation(client, user);
+        await this.security(
+          client,
+          action,
+          request.id,
+          auth.user.id,
+          auth.tenant.id,
+        );
+        return result;
+      });
+    } catch (error) {
+      await this.security(
+        this.database.pool,
+        `${action}_failed`,
+        request.id,
+        auth.user.id,
+        auth.tenant.id,
+        {
+          reason:
+            error instanceof ApiProblem
+              ? (error.code ?? 'request_rejected')
+              : 'service_unavailable',
+        },
+      );
+      throw error;
+    }
+  }
+  private async revokeOtherSessions(client: PoolClient, auth: AuthContext) {
+    await client.query(
+      'DELETE FROM auth_sessions WHERE user_id=$1 AND token_hash<>$2',
+      [auth.user.id, auth.session_hash],
+    );
+  }
+  private async replaceRecoveryCodes(
+    client: PoolClient,
+    userId: string,
+  ): Promise<string[]> {
+    const codes = newRecoveryCodes();
+    await client.query('DELETE FROM mfa_recovery_codes WHERE user_id=$1', [
+      userId,
+    ]);
+    for (const code of codes)
+      await client.query(
+        'INSERT INTO mfa_recovery_codes(user_id,code_hash) VALUES($1,$2)',
+        [userId, recoveryHash(userId, code, 'mfa')],
+      );
+    return codes;
+  }
+  async securityStatus(auth: AuthContext) {
+    const user = (
+      await this.database.pool.query<SecurityUserRow>(
+        'SELECT * FROM app_users WHERE id=$1',
+        [auth.user.id],
+      )
+    ).rows[0];
+    if (!user)
+      throw new ApiProblem(
+        401,
+        'Sign in required',
+        'Sign in to access this workspace.',
+      );
+    const remaining = (
+      await this.database.pool.query<{ count: string }>(
+        'SELECT count(*) FROM mfa_recovery_codes WHERE user_id=$1',
+        [auth.user.id],
+      )
+    ).rows[0]!.count;
+    return AuthSecuritySchema.parse({
+      mfa_available: Boolean(this.config.AUTH_ENCRYPTION_KEY),
+      mfa_enabled: Boolean(user.mfa_secret_encrypted),
+      recovery_codes_remaining: Number(remaining),
+      recovery_key_configured: Boolean(user.account_recovery_key_hash),
+      mfa_setup_expires_at:
+        user.mfa_pending_expires_at &&
+        user.mfa_pending_expires_at.getTime() > Date.now()
+          ? user.mfa_pending_expires_at.toISOString()
+          : null,
+    });
+  }
+  async setupMfa(body: unknown, auth: AuthContext, request: FastifyRequest) {
+    const input = validate(MfaSetupSchema, body);
+    return this.securityAction(
+      'mfa_setup_started',
+      auth,
+      request,
+      async (client, user) => {
+        if (user.mfa_secret_encrypted)
+          throw new ApiProblem(
+            409,
+            'Authenticator already enabled',
+            'Disable the current authenticator before enrolling another device.',
+          );
+        await this.verifyCurrent(client, user, input);
+        const secret = newTotpSecret(),
+          expires = new Date(Date.now() + 10 * 60 * 1000);
+        await client.query(
+          'UPDATE app_users SET mfa_pending_secret_encrypted=$2,mfa_pending_expires_at=$3 WHERE id=$1',
+          [
+            user.id,
+            encryptTotp(
+              secret,
+              this.config.AUTH_ENCRYPTION_KEY,
+              user.id,
+              'pending',
+            ),
+            expires,
+          ],
+        );
+        return MfaSetupResponseSchema.parse({
+          secret,
+          otpauth_uri: authenticatorUri(secret, user.email),
+          expires_at: expires.toISOString(),
+        });
+      },
+    );
+  }
+  async confirmMfa(body: unknown, auth: AuthContext, request: FastifyRequest) {
+    const input = validate(MfaConfirmSchema, body);
+    return this.securityAction(
+      'mfa_enabled',
+      auth,
+      request,
+      async (client, user) => {
+        if (
+          user.mfa_secret_encrypted ||
+          !user.mfa_pending_secret_encrypted ||
+          !user.mfa_pending_expires_at ||
+          user.mfa_pending_expires_at.getTime() <= Date.now()
+        )
+          throw new ApiProblem(
+            409,
+            'Setup expired',
+            'Start a new authenticator setup before confirming.',
+          );
+        const secret = decryptTotp(
+          user.mfa_pending_secret_encrypted,
+          this.config.AUTH_ENCRYPTION_KEY,
+          user.id,
+          'pending',
+        );
+        const counter = totpCounter(secret, input.totp_code, null);
+        if (counter === null)
+          throw new ApiProblem(
+            403,
+            'Verification failed',
+            'The authenticator code is invalid. Check your device clock and try again.',
+            undefined,
+            'invalid_factor',
+          );
+        await client.query(
+          'UPDATE app_users SET mfa_secret_encrypted=$2,mfa_last_counter=$3,mfa_pending_secret_encrypted=NULL,mfa_pending_expires_at=NULL WHERE id=$1',
+          [
+            user.id,
+            encryptTotp(
+              secret,
+              this.config.AUTH_ENCRYPTION_KEY,
+              user.id,
+              'enabled',
+            ),
+            counter,
+          ],
+        );
+        const codes = await this.replaceRecoveryCodes(client, user.id);
+        await this.revokeOtherSessions(client, auth);
+        return MfaRecoveryCodesResponseSchema.parse({ recovery_codes: codes });
+      },
+    );
+  }
+  async disableMfa(body: unknown, auth: AuthContext, request: FastifyRequest) {
+    const input = validate(AuthVerifySchema, body);
+    return this.securityAction(
+      'mfa_disabled',
+      auth,
+      request,
+      async (client, user) => {
+        await this.verifyCurrent(client, user, input);
+        await client.query(
+          'UPDATE app_users SET mfa_secret_encrypted=NULL,mfa_last_counter=NULL,mfa_pending_secret_encrypted=NULL,mfa_pending_expires_at=NULL WHERE id=$1',
+          [user.id],
+        );
+        await client.query('DELETE FROM mfa_recovery_codes WHERE user_id=$1', [
+          user.id,
+        ]);
+        await this.revokeOtherSessions(client, auth);
+        return { ok: true as const };
+      },
+    );
+  }
+  async rotateMfaRecoveryCodes(
+    body: unknown,
+    auth: AuthContext,
+    request: FastifyRequest,
+  ) {
+    const input = validate(AuthVerifySchema, body);
+    return this.securityAction(
+      'mfa_recovery_codes_rotated',
+      auth,
+      request,
+      async (client, user) => {
+        if (!user.mfa_secret_encrypted)
+          throw new ApiProblem(
+            409,
+            'Authenticator required',
+            'Enable an authenticator before generating MFA recovery codes.',
+          );
+        await this.verifyCurrent(client, user, input);
+        const codes = await this.replaceRecoveryCodes(client, user.id);
+        await this.revokeOtherSessions(client, auth);
+        return MfaRecoveryCodesResponseSchema.parse({ recovery_codes: codes });
+      },
+    );
+  }
+  async rotateAccountRecoveryKey(
+    body: unknown,
+    auth: AuthContext,
+    request: FastifyRequest,
+  ) {
+    const input = validate(AuthVerifySchema, body);
+    return this.securityAction(
+      'account_recovery_key_rotated',
+      auth,
+      request,
+      async (client, user) => {
+        await this.verifyCurrent(client, user, input);
+        const key = secretToken();
+        await client.query(
+          'UPDATE app_users SET account_recovery_key_hash=$2 WHERE id=$1',
+          [user.id, recoveryHash(user.id, key, 'account')],
+        );
+        await this.revokeOtherSessions(client, auth);
+        return AccountRecoveryKeyResponseSchema.parse({ recovery_key: key });
+      },
+    );
+  }
+  async changePassword(
+    body: unknown,
+    auth: AuthContext,
+    request: FastifyRequest,
+  ) {
+    const input = validate(PasswordChangeSchema, body);
+    if (input.current_password === input.new_password)
+      throw new ApiProblem(
+        400,
+        'Choose a new password',
+        'The new password must differ from the current password.',
+      );
+    return this.securityAction(
+      'password_changed',
+      auth,
+      request,
+      async (client, user) => {
+        await this.verifyCurrent(client, user, input);
+        const encoded = await passwordHash(input.new_password);
+        await client.query(
+          'UPDATE app_users SET password_hash=$2,mfa_pending_secret_encrypted=NULL,mfa_pending_expires_at=NULL WHERE id=$1',
+          [user.id, encoded],
+        );
+        await this.revokeOtherSessions(client, auth);
+        await client.query(
+          'UPDATE auth_sessions SET csrf_token=$2 WHERE token_hash=$1',
+          [auth.session_hash, secretToken()],
+        );
+        return this.session(
+          (await this.loadContext(auth.session_hash, client))!,
+        );
+      },
+    );
+  }
+  async recoverAccount(
+    body: unknown,
+    request: FastifyRequest,
+    reply: FastifyReply,
+  ) {
+    this.assertOrigin(request);
+    const input = validate(AccountRecoverSchema, body);
+    this.rateLimit(request, 'recover', input.email);
+    const encoded = await passwordHash(input.new_password);
+    const result = await this.transaction(async (client) => {
+      const user = (
+        await client.query<SecurityUserRow>(
+          'SELECT * FROM app_users WHERE email=$1 FOR UPDATE',
+          [input.email],
+        )
+      ).rows[0];
+      const suppliedHash = recoveryHash(
+        user?.id ?? 'unknown',
+        input.recovery_key,
+        'account',
+      );
+      const expectedHash = user?.account_recovery_key_hash ?? '0'.repeat(64);
+      const valid =
+        timingSafeEqual(
+          Buffer.from(suppliedHash, 'hex'),
+          Buffer.from(expectedHash, 'hex'),
+        ) && Boolean(user?.account_recovery_key_hash);
+      if (!valid || !user) {
+        await this.security(
+          client,
+          'account_recovery_failed',
+          request.id,
+          user?.id ?? null,
+          null,
+        );
+        return false;
+      }
+      await client.query(
+        'UPDATE app_users SET password_hash=$2,account_recovery_key_hash=NULL,mfa_secret_encrypted=NULL,mfa_last_counter=NULL,mfa_pending_secret_encrypted=NULL,mfa_pending_expires_at=NULL WHERE id=$1',
+        [user.id, encoded],
+      );
+      await client.query('DELETE FROM mfa_recovery_codes WHERE user_id=$1', [
+        user.id,
+      ]);
+      await client.query('DELETE FROM auth_sessions WHERE user_id=$1', [
+        user.id,
+      ]);
+      await this.security(
+        client,
+        'account_recovered',
+        request.id,
+        user.id,
+        null,
+      );
+      return true;
+    });
+    if (!result)
+      throw new ApiProblem(
+        401,
+        'Recovery failed',
+        'The account recovery code is invalid or already used.',
+        undefined,
+        'invalid_recovery',
+      );
     this.cookie(reply, null);
     return { ok: true as const };
   }

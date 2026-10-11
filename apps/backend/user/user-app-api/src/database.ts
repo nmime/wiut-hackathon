@@ -62,6 +62,15 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           id uuid PRIMARY KEY, email text NOT NULL UNIQUE, display_name text NOT NULL,
           password_hash text NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
         );
+        ALTER TABLE app_users ADD COLUMN IF NOT EXISTS mfa_secret_encrypted text;
+        ALTER TABLE app_users ADD COLUMN IF NOT EXISTS mfa_pending_secret_encrypted text;
+        ALTER TABLE app_users ADD COLUMN IF NOT EXISTS mfa_pending_expires_at timestamptz;
+        ALTER TABLE app_users ADD COLUMN IF NOT EXISTS mfa_last_counter bigint;
+        ALTER TABLE app_users ADD COLUMN IF NOT EXISTS account_recovery_key_hash text;
+        CREATE TABLE IF NOT EXISTS mfa_recovery_codes (
+          user_id uuid NOT NULL REFERENCES app_users(id), code_hash text NOT NULL,
+          created_at timestamptz NOT NULL DEFAULT now(), PRIMARY KEY(user_id,code_hash)
+        );
         CREATE TABLE IF NOT EXISTS tenants (
           id uuid PRIMARY KEY, name text NOT NULL, is_legacy boolean NOT NULL DEFAULT false,
           created_at timestamptz NOT NULL DEFAULT now()
@@ -93,6 +102,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           created_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS schema_migrations(name text PRIMARY KEY,applied_at timestamptz NOT NULL DEFAULT now());
+        INSERT INTO schema_migrations(name) VALUES('account-security-v1') ON CONFLICT(name) DO NOTHING;
         DO $$ BEGIN
           IF to_regclass('public.synthetic_businesses') IS NOT NULL AND to_regclass('public.businesses') IS NOT NULL THEN
             RAISE EXCEPTION 'Both legacy and current business tables exist; preserve data and reconcile before startup';

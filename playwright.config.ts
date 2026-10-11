@@ -43,6 +43,8 @@ export default defineConfig({
         ML_TIMEOUT_MS: '250',
         CORS_ORIGINS: 'http://127.0.0.1:5174',
         AUTH_RATE_LIMIT_MAX: '200',
+        // Fixed key only for the isolated test database, never production.
+        AUTH_ENCRYPTION_KEY: '8'.repeat(64),
       },
       reuseExistingServer: false,
       timeout: 60_000,
@@ -56,6 +58,8 @@ export default defineConfig({
         API_HOST: '127.0.0.1',
         API_PORT: '3002',
         ML_SERVICE_URL: '',
+        // Exercise fail-closed MFA availability without inheriting the dev key.
+        AUTH_ENCRYPTION_KEY: '',
         CORS_ORIGINS: 'http://127.0.0.1:5174',
         AUTH_RATE_LIMIT_MAX: '200',
       },

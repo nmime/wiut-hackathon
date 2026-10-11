@@ -110,8 +110,20 @@ const TeamPage = lazy(() =>
 const InvitationPage = lazy(() =>
   import('@/pages/Team').then((module) => ({ default: module.InvitationPage })),
 );
+const AccountSecurityPage = lazy(() =>
+  import('@/pages/AccountSecurity').then((module) => ({
+    default: module.AccountSecurityPage,
+  })),
+);
 
-type Page = 'overview' | 'businesses' | 'reviews' | 'audit' | 'team' | 'invite';
+type Page =
+  | 'overview'
+  | 'businesses'
+  | 'reviews'
+  | 'audit'
+  | 'team'
+  | 'invite'
+  | 'security';
 type WorkspaceRoute = {
   page: Page;
   businessId: string | null;
@@ -134,7 +146,14 @@ function readRoute(): WorkspaceRoute {
   if (hash.startsWith('invite'))
     return { page: 'invite', businessId: null, assessmentId: null };
   return {
-    page: ['overview', 'businesses', 'reviews', 'audit', 'team'].includes(hash)
+    page: [
+      'overview',
+      'businesses',
+      'reviews',
+      'audit',
+      'team',
+      'security',
+    ].includes(hash)
       ? (hash as Page)
       : 'overview',
     businessId: null,
@@ -410,7 +429,9 @@ function WorkspaceApp({
   const activeLabel =
     page === 'invite'
       ? 'Team invitation'
-      : navigation.find((item) => item.id === page)!.label;
+      : page === 'security'
+        ? 'Account security'
+        : navigation.find((item) => item.id === page)!.label;
 
   return (
     <>
@@ -538,6 +559,15 @@ function WorkspaceApp({
             >
               {session.user.email}
             </p>
+            <Button
+              variant="link"
+              size="sm"
+              className="mt-1 h-7 px-0 text-xs"
+              onClick={() => navigate('security')}
+            >
+              <ShieldCheck className="size-3.5" />
+              Account security
+            </Button>
             <div className="mt-3 flex items-center justify-between gap-2">
               <Badge variant="secondary" className="text-[10px]">
                 {session.tenant.role === 'admin' ? 'Admin' : 'Credit officer'}
@@ -625,6 +655,12 @@ function WorkspaceApp({
               </div>
             }
           >
+            {page === 'security' && (
+              <AccountSecurityPage
+                session={session}
+                onSessionChange={(next) => onSessionChange(next, false)}
+              />
+            )}
             {page === 'team' &&
               (session.tenant.role === 'admin' ? (
                 <TeamPage session={session} />

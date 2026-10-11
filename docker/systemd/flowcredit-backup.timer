@@ -1,0 +1,11 @@
+[Unit]
+Description=FlowCredit nightly backup schedule
+
+[Timer]
+OnCalendar=*-*-* 02:15:00 Asia/Tashkent
+RandomizedDelaySec=15min
+Persistent=true
+Unit=flowcredit-backup.service
+
+[Install]
+WantedBy=timers.target

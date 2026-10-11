@@ -33,6 +33,9 @@ an administrator's invitation link. Accounts use email and a password of at leas
 12 characters. Each workspace has an isolated portfolio. Import a business to
 begin. An upgraded installation retains its existing workspace and saved history;
 new registrations and additional workspaces receive no seeded businesses.
+For authenticator setup, generate a persistent local encryption key with
+`openssl rand -hex 32` and put it in `AUTH_ENCRYPTION_KEY` in the ignored `.env`.
+Preserve that key across restarts and backups; production setup generates it automatically.
 
 The ML service is optional during frontend/backend development. With
 `ML_SERVICE_URL` empty, business histories, imports, and audit views work;
@@ -148,6 +151,10 @@ months; refusals are saved as failed attempts with an actionable message. The
 product never substitutes a fabricated score. Production selection and private
 container startup are described in [deployment](docs/deployment.md).
 
+The [model comparison](docs/model-comparison.md) explains their training data,
+forecast targets, repayment policies and validation evidence. Their reported
+errors use different datasets and targets and do not establish an accuracy winner.
+
 Imports accept user-provided transactions in UZS. Core scoring runs in the local
 Python service and does not require external AI calls. Public-data training and
 synthetic model components remain explicitly disclosed; accepting actual inputs
@@ -206,10 +213,21 @@ client address. Enable `TRUST_PROXY_HOPS=1` only when the API is reachable solel
 through a trusted proxy that replaces client-supplied forwarding headers.
 The limiter is process-local; run one API process per database for this MVP.
 
+Open **Account security** to change your password, enable an authenticator,
+and generate an offline account recovery key. Authenticator setup returns ten
+single-use backup codes; these replace an authenticator code when signing in or
+confirming security changes. The separate account recovery key resets a forgotten
+password, disables MFA and revokes every session. Save both offline when displayed:
+the application stores their hashes and cannot display them again. No email
+delivery is required. See [account security](docs/account-security.md).
+Scheduled backups and local health monitoring are documented in
+[operations](docs/operations.md).
+
 ## Verify
 
 ```bash
 pnpm check
+python3 -m unittest discover -s tests/operations -v
 # Create an isolated browser-test database once:
 docker compose exec -T db createdb -U wiut wiut_test
 docker compose exec -T db createdb -U wiut wiut_no_ml
@@ -276,9 +294,9 @@ They are excluded from active portfolio, review and audit lists. The determinist
 business generator remains test infrastructure; it never runs during registration,
 workspace creation, development startup or production startup.
 
-This MVP has authenticated tenant access, role administration and human review.
-It has no email verification, password recovery, MFA, banking connector, or credit
-origination integration. Public revenue data supplies neither borrower default
+This MVP has authenticated tenant access, role administration, opt-in MFA,
+offline account recovery and human review. It has no email verification, banking
+connector, or credit origination integration. Public revenue data supplies neither borrower default
 nor repayment ground truth. Real banking use requires additional account and
 operational controls.
 Run one API process per database; startup recovers interrupted pending assessments

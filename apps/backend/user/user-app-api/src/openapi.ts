@@ -15,6 +15,15 @@ import {
   AuthRegisterSchema,
   AuthLoginSchema,
   AuthSessionSchema,
+  AuthSecuritySchema,
+  AuthVerifySchema,
+  MfaSetupSchema,
+  MfaSetupResponseSchema,
+  MfaConfirmSchema,
+  MfaRecoveryCodesResponseSchema,
+  AccountRecoveryKeyResponseSchema,
+  AccountRecoverSchema,
+  PasswordChangeSchema,
   TeamSchema,
   TenantCreateSchema,
   TenantSwitchSchema,
@@ -40,6 +49,15 @@ export function setupDocumentation(app: INestApplication, config: AppConfig) {
     AuthRegister: AuthRegisterSchema,
     AuthLogin: AuthLoginSchema,
     AuthSession: AuthSessionSchema,
+    AuthSecurity: AuthSecuritySchema,
+    AuthVerify: AuthVerifySchema,
+    MfaSetup: MfaSetupSchema,
+    MfaSetupResponse: MfaSetupResponseSchema,
+    MfaConfirm: MfaConfirmSchema,
+    MfaRecoveryCodesResponse: MfaRecoveryCodesResponseSchema,
+    AccountRecoveryKeyResponse: AccountRecoveryKeyResponseSchema,
+    AccountRecover: AccountRecoverSchema,
+    PasswordChange: PasswordChangeSchema,
     Team: TeamSchema,
     TenantCreate: TenantCreateSchema,
     TenantSwitch: TenantSwitchSchema,
@@ -133,7 +151,7 @@ export function setupDocumentation(app: INestApplication, config: AppConfig) {
       title: 'WIUT capacity review API',
       version: '0.1.0',
       description:
-        'Import user-provided transactions in UZS into an initially empty workspace. Scores estimate payment capacity; a human records each final decision. Imported amount values map explicitly 1:1 to the unchanged ML amount_index transport: one index equals one UZS for a business or assessment with amount_unit=UZS. Archived legacy synthetic records keep original indices with amount_unit=index and no currency conversion. The configured model requires borrower-level validation before relying on its forecasts or recommendations. Opaque HttpOnly sessions select a tenant; all domain resources are tenant-scoped. Mutations require a trusted application Origin and x-csrf-token; x-tenant-id optionally rejects stale workspace state. Administrators manage invitations; admins and officers review businesses. Decision identities come from the session; reviewer_name input is deprecated and ignored. Default lists omit archived businesses and their history; direct IDs and explicit business_id history filters preserve historical access. Lists are bounded to 200 businesses, 100 assessments, 500 domain audit events, 500 members and 100 invitations. Invitations expire after seven days; email ownership is not independently verified. No email delivery, password reset, MFA or external identity provider is included.',
+        'Import user-provided transactions in UZS into an initially empty workspace. Scores estimate payment capacity; a human records each final decision. Imported amount values map explicitly 1:1 to the unchanged ML amount_index transport: one index equals one UZS for a business or assessment with amount_unit=UZS. Archived legacy synthetic records keep original indices with amount_unit=index and no currency conversion. The configured model requires borrower-level validation before relying on its forecasts or recommendations. Opaque HttpOnly sessions select a tenant; all domain resources are tenant-scoped. Mutations require a trusted application Origin and x-csrf-token; x-tenant-id optionally rejects stale workspace state. Administrators manage invitations; admins and officers review businesses. Decision identities come from the session; reviewer_name input is deprecated and ignored. Default lists omit archived businesses and their history; direct IDs and explicit business_id history filters preserve historical access. Lists are bounded to 200 businesses, 100 assessments, 500 domain audit events, 500 members and 100 invitations. Invitations expire after seven days; email ownership is not independently verified. Optional authenticator MFA uses six-digit SHA1 TOTP with a 30-second period, one-use backup codes, encrypted secrets and replay protection. Login responds with Problem.code=mfa_required after correct password when a second factor is missing. Password changes and security credential rotations require current credentials and fresh MFA when enabled, and revoke other sessions. An independently saved one-use account recovery key resets password, disables MFA and revokes all sessions; it cannot be retrieved later and must be rotated after recovery. No email recovery, email delivery or external identity provider is included.',
     },
     paths: {
       '/api/health': {
@@ -169,6 +187,78 @@ export function setupDocumentation(app: INestApplication, config: AppConfig) {
           'Current signed-in user, active tenant, memberships and CSRF token',
           'AuthSession',
         ),
+      },
+      '/api/auth/security': {
+        get: operation(
+          'Current account authenticator and recovery-code availability; secrets omitted',
+          'AuthSecurity',
+        ),
+      },
+      '/api/auth/mfa/setup': {
+        post: operation(
+          'Start password-verified authenticator enrollment; secret expires in ten minutes',
+          'MfaSetupResponse',
+          'MfaSetup',
+          undefined,
+          200,
+        ),
+      },
+      '/api/auth/mfa/confirm': {
+        post: operation(
+          'Confirm authenticator; return ten once-displayed recovery codes and revoke other sessions',
+          'MfaRecoveryCodesResponse',
+          'MfaConfirm',
+          undefined,
+          200,
+        ),
+      },
+      '/api/auth/mfa/disable': {
+        post: operation(
+          'Disable MFA with current password and fresh factor; revoke other sessions',
+          'Success',
+          'AuthVerify',
+          undefined,
+          200,
+        ),
+      },
+      '/api/auth/mfa/recovery-codes': {
+        post: operation(
+          'Replace all MFA backup codes with current credentials; revoke other sessions',
+          'MfaRecoveryCodesResponse',
+          'AuthVerify',
+          undefined,
+          200,
+        ),
+      },
+      '/api/auth/recovery-key': {
+        post: operation(
+          'Generate a once-displayed account recovery key, invalidate the previous key and revoke other sessions',
+          'AccountRecoveryKeyResponse',
+          'AuthVerify',
+          undefined,
+          200,
+        ),
+      },
+      '/api/auth/password': {
+        post: operation(
+          'Change password with current credentials, revoke other sessions and rotate current CSRF',
+          'AuthSession',
+          'PasswordChange',
+          undefined,
+          200,
+        ),
+      },
+      '/api/auth/recover': {
+        post: {
+          ...operation(
+            'Consume offline account recovery key; reset password and MFA, revoke all sessions without signing in',
+            'Success',
+            'AccountRecover',
+            undefined,
+            200,
+          ),
+          security: [],
+        },
       },
       '/api/auth/logout': {
         post: {
