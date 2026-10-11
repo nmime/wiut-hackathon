@@ -22,6 +22,9 @@ from teammate_bridge.schemas import ScoreRequest
 ANNUAL_RATE = 0.24
 TERM_MONTHS = 12
 LEVELS = np.round(np.linspace(0.01, 0.99, 99), 2)
+MIN_OFFER_SHARE_OF_BUDGET = (
+    0.05  # offer below 5% of the discounted budget is immaterial
+)
 MONEY_TOLERANCE = 1.0  # Native solver's stated tolerance, in explicitly mapped UZS.
 
 
@@ -372,7 +375,11 @@ class HybridEngine:
                     upper_cents = midpoint_cents
             upper_cents = lower_cents
         principal = upper_cents / 100
-        if principal < 0.01:
+        # Materiality: a cent-sized principal that only fits because interest is
+        # below the 1 UZS tolerance is not an offer. Treat it as no capacity.
+        if principal < 0.01 or (
+            requested is None and principal < MIN_OFFER_SHARE_OF_BUDGET * pv_budget
+        ):
             return empty
         rows, raw = self._rows(principal, payments, months)
         settled = np.asarray([row["payment"] for row in rows])
