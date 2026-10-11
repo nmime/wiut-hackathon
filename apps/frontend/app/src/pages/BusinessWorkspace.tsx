@@ -184,6 +184,8 @@ export function BusinessWorkspace({
       null)
     : (assessments[0] ?? business?.latest_assessment ?? null);
   const result = assessmentError ? null : assessment?.result;
+  const annuitySchedule = result?.loan_terms?.schedule_type === 'annuity';
+  const paymentLabel = annuitySchedule ? 'Annuity payment' : 'Adaptive payment';
   const businessUnit = business?.amount_unit ?? 'index';
   const assessmentUnit = assessment?.amount_unit ?? 'index';
   const filteredTransactions = (business?.transactions ?? []).filter(
@@ -1622,12 +1624,15 @@ export function BusinessWorkspace({
             <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">
-                  Adaptive repayment schedule
+                  {annuitySchedule
+                    ? 'Annuity repayment schedule'
+                    : 'Adaptive repayment schedule'}
                 </CardTitle>
                 <CardDescription>
-                  Adaptive payments versus an equal-payment comparison with the
-                  same total and term. The comparison divides total scheduled
-                  payments equally; it does not calculate a separate loan offer.
+                  {annuitySchedule ? 'Annuity' : 'Adaptive'} payments versus an
+                  equal-payment comparison with the same total and term. The
+                  comparison divides total scheduled payments equally; it does
+                  not calculate a separate loan offer.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1645,7 +1650,7 @@ export function BusinessWorkspace({
                     <ChartContainer
                       config={{
                         installment_index: {
-                          label: 'Adaptive payment',
+                          label: paymentLabel,
                           color: 'var(--chart-1)',
                         },
                         equal_payment: {
@@ -1678,7 +1683,7 @@ export function BusinessWorkspace({
                           content={
                             <ChartTooltipContent
                               formatter={(value, name) =>
-                                `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? 'Adaptive payment' : 'Equal payment'}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
+                                `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? paymentLabel : 'Equal payment'}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
                               }
                             />
                           }

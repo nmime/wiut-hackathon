@@ -1,0 +1,33 @@
+[project]
+name = "wiut-teammate-ml-bridge"
+version = "0.1.0"
+description = "Private, audited transport adapter for the teammate's frozen ML candidate"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "fastapi==0.143.0",
+  "pydantic==2.14.0",
+  "uvicorn==0.54.0",
+  "numpy==2.4.4",
+  "pandas==3.0.6",
+  "scipy==1.17.1",
+  "lightgbm==4.7.0",
+]
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "httpx==0.28.1", "ruff==0.17.0"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+exclude = ["vendor"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

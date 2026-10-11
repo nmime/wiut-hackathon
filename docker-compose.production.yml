@@ -14,6 +14,29 @@ services:
       timeout: 3s
       retries: 24
     restart: unless-stopped
+  teammate-ml:
+    profiles: ['teammate']
+    build:
+      context: ./teammate-ml-service
+    environment:
+      ML_AUDIT_PATH: /data/audit/requests.jsonl
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    volumes:
+      - teammate-ml-audit:/data/audit
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
+        ]
+      interval: 10s
+      timeout: 6s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
   ml:
     build:
       context: ./ml-service
@@ -96,6 +119,7 @@ services:
 volumes:
   postgres-data:
   ml-audit:
+  teammate-ml-audit:
 networks:
   default:
     ipam:

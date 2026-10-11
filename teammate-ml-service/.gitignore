@@ -1,0 +1,10 @@
+runtime/
+.ruff_cache/
+.venv/
+__pycache__/
+.pytest_cache/
+core
+core.*
+# Frozen runtime model artifacts are intentionally shipped, not local evidence.
+!vendor/models/artifacts/
+!vendor/models/artifacts/**

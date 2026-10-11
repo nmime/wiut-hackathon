@@ -13,6 +13,7 @@
     "test": "pnpm --filter @wiut/contracts build && pnpm --filter @wiut/contracts test && pnpm --filter @wiut/api test && pnpm --filter @wiut/web test:import",
     "test:e2e": "playwright test",
     "test:real-ml": "playwright test --config tests/playwright.real-ml.config.ts",
+    "test:teammate-ml": "playwright test --config tests/playwright.teammate-ml.config.ts",
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm format:check",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

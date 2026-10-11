@@ -130,10 +130,23 @@ limits, rather than claiming identical model bytes or additional fresh evidence.
 
 ## Connect the teammate's ML service
 
-Set `ML_SERVICE_URL=http://127.0.0.1:8000` in `.env`, then restart the API.
+The supplied teammate service is integrated in `teammate-ml-service/` as a private,
+optional candidate. Its LightGBM artifacts remain unchanged. It adds native
+forecast intervals, requested-amount checks and interest-bearing schedules at
+**24% annual interest**. It trained on synthetic businesses, so it does not
+establish an accuracy improvement on real borrowers. The real-revenue blend
+remains the default. See the [independent review](docs/teammate-ml-review.md) and
+[candidate setup](teammate-ml-service/README.md).
+
+Run the candidate on loopback port 8111 as documented there, set
+`ML_SERVICE_URL=http://127.0.0.1:8111` in `.env`, then restart the API.
 The adapter posts to `${ML_SERVICE_URL}/score`. The contract is documented in
 [ML integration](docs/ml-integration.md) and enforced by the shared schemas in
 `libs/common/api-contracts/src/index.ts`. The default timeout is 8 seconds.
+The candidate requires a completed month-end and at least six complete history
+months; refusals are saved as failed attempts with an actionable message. The
+product never substitutes a fabricated score. Production selection and private
+container startup are described in [deployment](docs/deployment.md).
 
 Imports accept user-provided transactions in UZS. Core scoring runs in the local
 Python service and does not require external AI calls. Public-data training and
@@ -156,10 +169,13 @@ does not establish real borrower accuracy.
 User-provided histories declare `amount_unit: "UZS"`; the API maps one UZS to
 one internal `amount_index` unit. Cash flows and assessment amounts preserve
 that unit snapshot. Legacy synthetic histories retain **index** units and are
-never relabeled as currency. The current scorer does not receive this unit
+never relabeled as currency. The default scorer does not receive this unit
 declaration: an optional UZS `requested_amount` remains context only, is flagged,
 and does not cap its recommendation. Officers must check the requested amount
 when reviewing. See [transaction imports](docs/imports.md).
+The optional teammate candidate explicitly treats one internal unit as one UZS
+and checks requested amounts against its native capacity limits; its actual rate,
+schedule type and total interest are shown in saved results and exports.
 
 ## Accounts and workspaces
 
@@ -221,6 +237,20 @@ pnpm test:real-ml
 This suite uses the `wiut_real_ml` database and separate service ports. Its
 `WIUT_REAL_ML_DATABASE_URL` connection can be overridden.
 
+Verify the optional candidate independently:
+
+```bash
+cd teammate-ml-service
+uv sync --frozen
+uv run pytest -q
+cd ..
+docker compose exec -T db createdb -U wiut wiut_teammate_ml
+pnpm test:teammate-ml
+```
+
+Its browser suite uses a separate database and ports 8111/3011/5177. It never
+changes the default model or supplies additional real-borrower accuracy evidence.
+
 ## Container stack
 
 ```bash
@@ -258,7 +288,8 @@ events. Overview counts describe the returned records, not unbounded portfolio t
 The optional ML service has its own synthetic generator and measured held-out
 evaluation. Its report describes performance on unseen synthetic businesses and
 future months; it does not establish real borrower performance or default risk.
-The teammate's service can replace it without changing the frontend.
+The teammate candidate can be selected without changing the frontend; it remains
+optional pending a common, predeclared comparison on unseen actual outcomes.
 
 ## Repository
 
@@ -267,6 +298,7 @@ apps/frontend/app/                  React, Tailwind, official shadcn/ui
 apps/backend/user/user-app-api/      NestJS, PostgreSQL, ML adapter, audit
 libs/common/api-contracts/           Runtime schemas and shared TypeScript types
 ml-service/                         Optional local FastAPI model and evaluation
+teammate-ml-service/                Frozen teammate candidate and private adapter
 tests/                              Isolated API and browser integration tests
 docs/                               ML contract and fork provenance
 ```

@@ -79,21 +79,22 @@ the indexed principal while the conversion is undeclared.
 The source of truth is `ScoreResponseSchema` in
 `libs/common/api-contracts/src/index.ts`.
 
-| Field                                      | Meaning                                                                                          |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `capacity_score`                           | Number 0–100, payment capacity, not default probability                                          |
-| `score_band`                               | `low`, `medium`, or `high`                                                                       |
-| `cashflow_summary`                         | Mean inflow index, volatility, net surplus index, trend                                          |
-| `recommended_loan`                         | Nonnegative indexed principal/installment, term 1–120 months, rationale                          |
-| `seasonality.monthly_forecast_index`       | Exactly 12 future monthly net-flow indices, may be negative                                      |
-| `seasonality.weak_months`, `strong_months` | Calendar month numbers 1–12; unique and disjoint                                                 |
-| `adaptive_schedule`                        | One-based contiguous month offsets, indexed installments, notes                                  |
-| `explanation.top_factors`                  | Factor names, positive/negative impact, finite weights                                           |
-| `explanation.advisory`                     | Advice strings                                                                                   |
-| `confidence`                               | Fraction 0–1, displayed as a percentage                                                          |
-| `forecast_provenance`                      | Optional actual public/synthetic forecast weights, expense policy and real-training target count |
-| `flags`                                    | Known failure and uncertainty warning strings                                                    |
-| `model_version`, `request_id`              | Nonempty audit identifiers                                                                       |
+| Field                                      | Meaning                                                                                           |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `capacity_score`                           | Number 0–100, payment capacity, not default probability                                           |
+| `score_band`                               | `low`, `medium`, or `high`                                                                        |
+| `cashflow_summary`                         | Mean inflow index, volatility, net surplus index, trend                                           |
+| `recommended_loan`                         | Nonnegative indexed principal/installment, term 1–120 months, rationale                           |
+| `seasonality.monthly_forecast_index`       | Exactly 12 future monthly net-flow indices, may be negative                                       |
+| `seasonality.weak_months`, `strong_months` | Calendar month numbers 1–12; unique and disjoint                                                  |
+| `adaptive_schedule`                        | One-based contiguous month offsets, indexed installments, notes                                   |
+| `explanation.top_factors`                  | Factor names, positive/negative impact, finite weights                                            |
+| `explanation.advisory`                     | Advice strings                                                                                    |
+| `confidence`                               | Fraction 0–1, displayed as a percentage                                                           |
+| `forecast_provenance`                      | Optional actual public/synthetic forecast weights, expense policy and real-training target count  |
+| `loan_terms`                               | Optional actual annual rate, schedule type, interest, total repayment and requested-amount policy |
+| `flags`                                    | Known failure and uncertainty warning strings                                                     |
+| `model_version`, `request_id`              | Nonempty audit identifiers                                                                        |
 
 The 12 forecast values correspond to the next 12 calendar months after the
 assessment month. A positive principal requires a schedule matching the
@@ -196,6 +197,23 @@ replacement teammate service may use its own validated policy while preserving
 the response contract.
 
 ## Error and audit behavior
+
+The optional teammate bridge in `teammate-ml-service/` retains native 24% annual
+interest and genuine annuity/adaptive payments. Its `loan_terms` declare
+`annual_rate`, `schedule_type`, `total_interest_index`, `total_repayment_index`
+and `requested_amount_policy` (`capacity_checked` or `context_only`). When
+present, principal plus interest, total repayment and schedule sums must agree
+within the same tolerances as below. Older/default results can omit this field.
+Annuity fallback is labeled as annuity in the browser; the equal-payment
+comparison divides actual scheduled repayments by term and is not another offer.
+
+The candidate requires month-end cutoffs in December 2019–December 2028,
+never future dates, and at least six complete history months. It discloses missing
+category/counterparty metadata and purely synthetic training. Safe bounded
+refusals for history/calendar/input limits are shown as actionable upstream
+errors and persisted with null results. Unknown upstream errors remain generic.
+See the [review](teammate-ml-review.md) for findings, artifact/audit identity and
+the reason the real-revenue blend remains the default.
 
 The adapter validates the full response before showing any recommendation.
 Positive recommended principal requires positive total payments; zero principal

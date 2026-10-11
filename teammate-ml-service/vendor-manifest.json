@@ -1,0 +1,107 @@
+{
+  "archive_sha256": "c0a062c8b700fe0824fbcb746db4615d1fab3ad8c7360adf7133e706ea2039db",
+  "attribution": "Teammate-provided ml-service.zip, received 2026-10-11. Selected runtime and text artifacts copied byte-for-byte; no training or generator included. No public dataset or real-borrower validation is claimed.",
+  "files": {
+    "README.md": {
+      "sha256": "1225d2dfe57a15773efefe5a4be122b88ee964f43f4df3953d3c8506be34f59f",
+      "bytes": 36776
+    },
+    "api/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "api/audit.py": {
+      "sha256": "0edf75ab7567b0b2ae50acf1ce393499148158bdfc8ee065d210a757149f74f2",
+      "bytes": 4221
+    },
+    "api/schemas.py": {
+      "sha256": "2799c88cb71e75cb6b733fecd38b874df5dab04b34f620c3ab8fd179bbfade28",
+      "bytes": 11345
+    },
+    "api/service.py": {
+      "sha256": "e32d2595e4eb258f57265c17aac685719e66b11b6f1f389446ffa66d23ead56c",
+      "bytes": 11091
+    },
+    "config.py": {
+      "sha256": "bb474d7e9f84ec2cc9047b044902d675729862a28607dcaf479099ff6f1ede38",
+      "bytes": 2296
+    },
+    "features/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "features/calendar.py": {
+      "sha256": "2a318b70b10f7bd480455e68b0dcf422339997390f82a7067e62e27841214d7b",
+      "bytes": 2990
+    },
+    "features/profile.py": {
+      "sha256": "53ae00037445954f5b82fc21bdb51b7485add888f414890289d5685bd0440b29",
+      "bytes": 9509
+    },
+    "features/schema.py": {
+      "sha256": "c73fc10a6424be81a1ea357844f911d240e4260c88a9141016cbd61a8a3c8415",
+      "bytes": 15216
+    },
+    "models/__init__.py": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "models/artifacts/calibration.json": {
+      "sha256": "73be065717f646680c90cbf100eddbd6fe4e906015be9f29da8e0ed072201ba4",
+      "bytes": 8263
+    },
+    "models/artifacts/conformal.json": {
+      "sha256": "aa987dd1185770538e01130fb334aa3933f1d662fc26cf59371081e2ec69afb5",
+      "bytes": 23140
+    },
+    "models/artifacts/industry_priors.json": {
+      "sha256": "a6cf231bb4cdf68c4212c0741dfaf4a3f504fe06e25a8872120d34f1746de404",
+      "bytes": 1001
+    },
+    "models/artifacts/lgb_inflow.txt": {
+      "sha256": "8d629ebf093941feebdb966a5fdd6adae292282891c40b417bea310dddc056f2",
+      "bytes": 1508366
+    },
+    "models/artifacts/lgb_outflow.txt": {
+      "sha256": "daeadcd5919a9623c4986d6ccf454a49f07f85d26181cb43d856594bae3cac03",
+      "bytes": 1510150
+    },
+    "models/artifacts/meta.json": {
+      "sha256": "5db1e486a19071f6d4bf7335e6739f0276954dcfb9f5f23b39ae388286ee9b24",
+      "bytes": 707
+    },
+    "models/artifacts/population.json": {
+      "sha256": "1923854f80be24f00b5991c3e9b49081c89284bb0df1d8ad556f77825e06f7e0",
+      "bytes": 2442
+    },
+    "models/capacity.py": {
+      "sha256": "d6f761adce2567513242340bca4baf80b917b8c485d83d7d24be8c370ade63a5",
+      "bytes": 8187
+    },
+    "models/explain.py": {
+      "sha256": "35430eda03d30522b1f60368779d51a65bf9e9916de140769d69ddc2d2dad101",
+      "bytes": 13420
+    },
+    "models/forecast.py": {
+      "sha256": "15977ef412c9617f8e8b713d387dc8364c80e358959e24793d8624c964b55bb7",
+      "bytes": 19596
+    },
+    "models/llm.py": {
+      "sha256": "6c581d6ebda58667232c8a4a7ec4e76b86e33f4af991aba38c17de16d9e6ad7c",
+      "bytes": 2129
+    },
+    "models/plan.py": {
+      "sha256": "9dcacd6544017677b00ad7ed1ae3368bfb27832b3b76042f3e1b3e5985a920bd",
+      "bytes": 11234
+    },
+    "models/registry.py": {
+      "sha256": "b7d1e1d854de6cee47989762661ee31412c27b908597db3a5548cfcb88fe0497",
+      "bytes": 1257
+    },
+    "models/schedule.py": {
+      "sha256": "eb0cf03f9abbe93b6b46c33ff23db8fa247436c412a996c4209f002c2abaefac",
+      "bytes": 8763
+    }
+  },
+  "model_artifact_sha256": "51091e827f0b9d768878bd8e414e2c10dd18c7e3dee884acb3680b722bfa8d1a"
+}

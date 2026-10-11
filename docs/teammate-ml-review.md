@@ -203,3 +203,43 @@ and UI tests for successful UZS scoring, requested-amount limits, distinct busin
 outputs, insufficient history, persisted review/audit and interest disclosures.
 Keep the real-revenue blend default until a common, honestly reported comparison
 supports changing that choice.
+
+## Private adapter verification
+
+The separate adapter in `teammate-ml-service/` preserves the original native
+artifacts and mathematics. Its private API has no vendor demo, audit-read or
+officer-decision routes. It verifies vendored source/artifact bytes before loading
+an immutable snapshot; model identity includes the original model, artifact
+manifest digest and separate bridge-source digest. Wrapper audit entries carry
+the full archive, model-artifact and bridge-source SHA-256 values and are fsynced
+before releasing results. Nest saves the full returned model version, response,
+request/input identity and human decision; the full ML hashes live in the wrapper
+audit rather than separate Nest columns.
+
+The bridge deliberately requires a completed month-end cutoff. It returns an
+actionable, audited refusal for midmonth dates and fewer than six complete months,
+preserving the native refused response in its own evidence rather than generating
+an illustrative successful score. Original timestamp calendar components are
+preserved. Missing categories/counterparties and synthetic-only training are
+explicitly disclosed. Native 24% annual interest and actual adaptive/annuity
+payments remain intact. Excessive requests use a second genuine model assessment
+for the conservative recommendation instead of scaling or inventing a result.
+
+The isolated candidate end-to-end suite passed **8/8 in 14.9 seconds** through the
+actual bridge, Nest and React, using explicit test-only UZS observations in a
+separate database. It verified differing business outputs, shared schema validity,
+payment = principal + interest, requested-amount checks, persisted failed attempts
+with null results, authenticated immutable human review, tenant isolation,
+unavailable original public routes, month-boundary offsets, and browser
+APR/interest/total repayment after reload and export. An additional eight-month
+history verified that the native annuity fallback is correctly labelled in the
+browser, rather than presented as adaptive. Desktop and 390-pixel mobile
+screenshots were inspected; there was no document overflow. Copied screenshots,
+export, corresponding original/wrapper audit evidence and a SHA-256 manifest are
+preserved in ignored `artifacts/teammate-ml-review/integration-evidence/`.
+This is integration
+verification, not an independently measured forecast-accuracy comparison.
+
+Command: `pnpm exec playwright test --config tests/playwright.teammate-ml.config.ts`.
+The opt-in suite uses PostgreSQL `wiut_teammate_ml` and ports 8111/3011/5177. Its
+configuration never changes the default scorer or the frozen real-model suite.

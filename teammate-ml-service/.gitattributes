@@ -1,0 +1,2 @@
+# Original vendor bytes are the provenance boundary, including CRLF line endings.
+vendor/** -text whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
