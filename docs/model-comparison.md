@@ -38,6 +38,43 @@ missing inputs instead of inventing them.
 
 ## What the validation actually shows
 
+The [paired real-revenue benchmark](../ml-service/reports/real-model-benchmark.md)
+now compares the two frozen revenue components on identical histories and actual
+future aggregate revenues. On the 197 mutually supported legacy forecast windows,
+provider-balanced normalized MAE was **0.105012 for the default** and **0.256733
+for the teammate**: the default error was **59.10% lower**. The other 67 of 264
+legacy windows had only three months of history and were explicitly refused by
+the teammate; they remain in the all-case report.
+
+A separately reserved retrospective temporal panel contains **448 windows and
+4,540 actual target months** that were absent from all original real training,
+development, reported test, and original public-retail target coordinates. Its
+errors were **0.104989 versus 0.250751**, or **58.13% lower for the default**.
+These are known economic periods, revised source vintages and previously trained
+geographies, not independent new borrower evidence. Both panels are now consumed
+for future model development. The paired geographic bootstrap consistently
+favored the default against this frozen synthetic-trained revenue transfer.
+
+The experiment also trained four real-only LightGBM candidates on the original
+licensed revenue training splits and selected fixed mixtures only on development
+data. The best development mixture improved error **2.74%**, below the
+preregistered 5% replacement threshold. The selected real-trained LightGBM's
+gain on the reserved temporal panel was **0.78%**, with descriptive 95% interval
+**[-1.31%, 3.21%]**. Every mixture with the frozen teammate component increased
+development error. The result supports retaining the incumbent, without changing
+either deployed scorer or overwriting its frozen evidence.
+
+This comparison measures revenue components, not full product capacity models.
+Unknown teammate expense/channel/activity/counterparty features remain missing,
+and historical revenue is normalized consistently before inference. Real
+aggregate data cannot validate expense prediction, capacity, repayment or
+default accuracy. Its nominal 80% revenue intervals covered only 17.5–27.9% of
+observations for the four non-Uzbekistan providers; Uzbekistan coverage was
+89.6% with much wider intervals. Native-unit sensitivity was also reported and
+did not reverse the revenue ranking.
+
+The earlier frozen evidence below remains preserved independently.
+
 The default model's frozen external revenue audit used **68 actual series and
 816 future months in six usable country clusters**, with reserved European
 countries and the entire UK ONS provider excluded from fitting and selection.
@@ -65,13 +102,13 @@ Industry priors used before grouped calibration folds include held-out-fold
 histories, and the control seeds were examined before the final formula change.
 These limitations are preserved in the independent review.
 
-The above error numbers measure different targets, units, cohorts and policies.
-**They do not prove either model is more accurate than the other.** A replacement
-decision needs both fixed artifacts evaluated against the same unseen histories
-and observed future outcomes, with forecast error, interval coverage, refusal
-rate and capacity checks declared in advance. Repayment comparisons must use
-the same principal, term and interest rate. Real borrower validation additionally
-needs observed operating costs and repayment outcomes.
+The earlier synthetic and external reports measure different targets, units,
+cohorts and policies and cannot be numerically ranked against each other. The
+new common benchmark supports the default specifically for aggregate revenue
+forecasting with the supplied fields. Full product replacement additionally
+needs actual operating costs and repayment outcomes; repayment comparisons must
+use the same principal, term and interest rate. Native borrower performance with
+complete auxiliary fields remains unmeasured.
 
 ## What was independently verified
 
@@ -89,13 +126,19 @@ needs observed operating costs and repayment outcomes.
 
 ## Recommendation and sources
 
-Keep the real-revenue blend as the default because it has relevant licensed
-public-data lineage and preserved external revenue validation. Keep the
-teammate candidate available for its richer uncertainty and interest-bearing
-planning features, without claiming a real-data accuracy improvement. Preserve
-both artifacts before collecting a common evaluation cohort.
+Keep the real-revenue blend as the default: its revenue component now has
+substantially lower error than the frozen teammate transfer in a common real
+aggregate comparison, alongside its preserved data lineage and prior audits.
+The small gains from a real-trained LightGBM experiment do not meet the frozen
+replacement gates. Keep the teammate candidate optional for interest-bearing
+planning research; its synthetic uncertainty intervals should not be promoted as
+calibrated real-revenue intervals. Preserve both serving artifacts and the new
+experimental artifacts. Any further tuning consumes this comparison and needs
+new reserved outcome evidence.
 
 - [Default implementation and data](../ml-service/README.md)
+- [Common real-revenue evidence and reproduction](../ml-service/reports/real-model-benchmark.md)
+- [Preregistered comparison protocol](model-benchmark-protocol.md)
 - [Frozen external revenue audit](../ml-service/reports/external-audit-v2-frozen.md)
 - [Frozen synthetic engineering audit](../ml-service/reports/engineering-audit-v5-frozen.md)
 - [Independent teammate review](teammate-ml-review.md)
