@@ -16,7 +16,7 @@ Run this as root. It requires the host's existing Docker/Compose installation, P
 Scheduled backups are stored in the ignored `artifacts/scheduled-backups/` directory. Directories have permissions `700`, and archives and status files have permissions `600`. Each archive contains:
 
 - A PostgreSQL custom-format dump of `wiut`, made with a transaction-consistent `pg_dump` without stopping application writes.
-- The exact complete JSONL prefix of each existing ML audit volume, including the optional teammate volume even if its container is stopped. The separate snapshot helper uses an already installed local ML image by its complete image ID, read-only volumes, no network, no capabilities, and the audit owner's numeric UID.
+- The exact complete JSONL prefix of each existing ML audit volume, including the optional teammate volume even if its container is stopped. The separate snapshot helper resolves the stack's already built `flowcredit-ml` image to its complete immutable image ID and uses read-only volumes, no network, no capabilities, and the audit owner's numeric UID. It runs only standard-library Python, without starting or evaluating a model, and does not depend on the running container's old image metadata remaining present.
 - `.env.production`, including database and authentication-encryption credentials. These are secrets: the archive is private but is **not encrypted**.
 - A manifest with SHA-256 checksums and audit snapshot lengths/record counts. The script reads and verifies every archive member before atomically publishing the archive.
 

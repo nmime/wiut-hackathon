@@ -54,8 +54,8 @@ class ProductionOperationsTests(unittest.TestCase):
     def fake_run(self, arguments, *, stdout=None, stdin=None, timeout=60):
         if "pg_dump" in arguments:
             stdout.write(b"PGDMP-test-fixture")
-        if "images" in arguments:
-            return b"a" * 64 + b"\n"
+        if arguments[:3] == ["docker", "image", "inspect"]:
+            return b"sha256:" + b"a" * 64 + b"\n"
         if arguments[:4] == ["docker", "volume", "ls", "--quiet"]:
             return b"flowcredit_ml-audit\nflowcredit_teammate-ml-audit\n"
         return b""
@@ -156,6 +156,34 @@ class ProductionOperationsTests(unittest.TestCase):
         )
         self.assertFalse(old.exists())
         self.assertTrue(unrelated.exists())
+
+    def test_backup_uses_installed_project_image_without_old_container_metadata(self):
+        calls = []
+
+        def existing_image_only(arguments, **kwargs):
+            calls.append(arguments)
+            if "images" in arguments:
+                raise common.OperationError("Old running image metadata was removed")
+            return self.fake_run(arguments, **kwargs)
+
+        with (
+            patch.object(backup, "run", side_effect=existing_image_only),
+            patch.object(
+                backup, "snapshot_audit", side_effect=self.fake_snapshot
+            ) as snapshots,
+        ):
+            archive = backup.create_backup(14)
+        self.assertTrue(archive.is_file())
+        self.assertIn(
+            ["docker", "image", "inspect", "--format", "{{.Id}}", "flowcredit-ml"],
+            calls,
+        )
+        self.assertTrue(
+            all(
+                call.args[0] == "sha256:" + "a" * 64
+                for call in snapshots.call_args_list
+            )
+        )
 
     def test_retention_does_not_follow_or_remove_symlinks(self):
         target = self.old_archive("operator-file.dump")

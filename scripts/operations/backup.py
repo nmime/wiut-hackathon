@@ -211,12 +211,18 @@ def create_backup(keep_days: int) -> Path:
                 stdin=source,
                 timeout=120,
             )
-        images = set(run(compose("images", "-q", "ml")).decode().split())
-        if len(images) != 1 or not re.fullmatch(
-            r"(?:sha256:)?[a-f0-9]{64}", next(iter(images))
-        ):
-            raise OperationError("Cannot identify the running local Python image")
-        image = next(iter(images))
+        # The fixed project/service build tag is owned by this Compose stack.
+        # A running container can retain its filesystem after Docker removes its
+        # old image metadata, making `compose images` fail during an update.
+        # The helper needs only stdlib Python, not that serving model's image.
+        # Resolve the already-built local tag to an immutable full ID; never pull.
+        image = (
+            run(["docker", "image", "inspect", "--format", "{{.Id}}", "flowcredit-ml"])
+            .decode()
+            .strip()
+        )
+        if not re.fullmatch(r"sha256:[a-f0-9]{64}", image):
+            raise OperationError("Cannot identify the installed local Python image")
         volumes = set(run(["docker", "volume", "ls", "--quiet"]).decode().split())
         for service in ("ml", "teammate-ml"):
             volume = f"flowcredit_{service}-audit"
