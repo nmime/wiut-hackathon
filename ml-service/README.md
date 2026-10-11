@@ -31,6 +31,16 @@ The Dockerfile installs the frozen environment and trains during the build, then
 
 ## Data and forecasting
 
+The separate [common real-revenue benchmark](reports/real-model-benchmark.md)
+compares this frozen revenue component with the teammate's frozen inflow model,
+four real-trained LightGBM experiments and development-selected mixtures. It
+preserves the serving artifact, original audits and source snapshots. Reproduce
+with `bash scripts/benchmark_models.sh /absolute/path/to/trusted/model.joblib`
+from the repository root. The benchmark uses separate prediction processes and
+history-only inputs; it does not infer expenses or evaluate borrower repayment.
+The [preregistered protocol](../docs/model-benchmark-protocol.md) and reserved
+temporal coordinate manifest record selection, exclusions and evidence limits.
+
 Business profiles, inflows, outflows and transaction events are synthetic. The fixed seed is **20261010**; [generator.py](capacity_ml/generator.py) contains the full process. Revenue is base × calendar seasonality × time trend × multiplicative noise, with correlated shocks. Expenses combine a stochastic revenue share and independent operating costs. Positive transaction sizes use a Dirichlet allocation; event dates and card/transfer/QR/cash/other channels are sampled. There are no confidential records, customer identifiers, invented default labels or borrowed elimination-stage implementation.
 
 The population includes stable, seasonal, growing, declining, volatile growing, cold-start and negative-surplus businesses, plus abrupt seasonal/level changes. Test-only unfamiliar seasonal shapes and realised shocks prevent trivial reconstruction. The model cannot see latent parameters or cohort labels. The future actual transaction process, rather than a score-generation formula, is the evaluation target.
