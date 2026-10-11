@@ -281,16 +281,23 @@ class HybridEngine:
             final_balance = principal - sum(row["principal"] for row in rounded_rows)
         rounded[-1] = round(rounded[-1] + final_balance, 2)
         settled = self.amortize(principal, ANNUAL_RATE / 12, rounded)
+
+        def money(value):
+            value = round(float(value), 2)
+            # Native optimization may produce -0.0. JSONB normalizes it to 0;
+            # publish the same monetary zero in ML audit and persisted results.
+            return 0.0 if value == 0 else value
+
         rows = []
         for month, row in zip(months, settled, strict=True):
-            payment, interest = round(row["payment"], 2), round(row["interest"], 2)
+            payment, interest = money(row["payment"]), money(row["interest"])
             rows.append(
                 {
                     "month": month_label(month),
                     "payment": payment,
                     "interest": interest,
-                    "principal": round(payment - interest, 2),
-                    "balance": round(row["balance"], 2),
+                    "principal": money(payment - interest),
+                    "balance": money(row["balance"]),
                 }
             )
         return rows, raw
