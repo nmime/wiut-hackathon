@@ -306,6 +306,11 @@ class HybridEngine:
             upper = min(self.max_feasible_principal(rate, caps), pv_budget)
         else:
             upper = self.present_value(float(np.min(caps)), rate, 12)
+        # No negative amortization: the first payment must cover P * rate.
+        # Enforce this exact unscaled bound before a normalized LP residual can
+        # turn a zero first-month budget into a tiny positive main-tier offer.
+        # This is an accounting constraint, not a learned minimum-loan policy.
+        upper = min(upper, float(caps[0]) / rate)
         upper = max(float(upper), 0.0)
         if requested is not None:
             upper = min(upper, requested)
@@ -315,6 +320,7 @@ class HybridEngine:
             "rows": [],
             "native_rows": [],
             "pv_budget": pv_budget,
+            "first_period_interest_principal_bound": float(caps[0]) / rate,
             "actual_within_capacity": False,
             "caps": caps.tolist(),
         }
