@@ -12,7 +12,50 @@ import {
   InvitationCreateSchema,
   AuthSessionSchema,
   UserTransactionSchema,
+  ShowcaseGenerateSchema,
+  TenantCreateSchema,
+  TenantSchema,
 } from './index.js';
+
+test('showcase requests enforce bounded batches, supported periods and strictly declared parameters', () => {
+  const request = ShowcaseGenerateSchema.parse({});
+  assert.equal(request.scenario, 'mixed');
+  assert.equal(request.count, 6);
+  assert.equal(request.months, 24);
+  for (const invalid of [
+    { count: 0 },
+    { count: 7 },
+    { months: 37 },
+    { months: 2 },
+    { seed: -1 },
+    { seed: 4294967296 },
+    { seed: 1.5 },
+    { scenario: 'guaranteed_approval' },
+    { end_month: '2026-13' },
+    { monthly_revenue_uzs: 0 },
+    { monthly_revenue_uzs: 1000000001 },
+    { data_source: 'user_provided' },
+    { amount_unit: 'index' },
+  ])
+    assert.equal(ShowcaseGenerateSchema.safeParse(invalid).success, false);
+  assert.equal(
+    TenantSchema.parse({ id: 'old', name: 'Bank', role: 'admin' }).kind,
+    'bank',
+  );
+  assert.equal(
+    TenantSchema.parse({
+      id: 'lab',
+      name: 'Lab',
+      role: 'officer',
+      kind: 'showcase',
+    }).kind,
+    'showcase',
+  );
+  assert.equal(
+    TenantCreateSchema.safeParse({ name: 'Bank', kind: 'showcase' }).success,
+    false,
+  );
+});
 
 test('transaction input rejects invalid dates, unsupported amounts and unknown fields', () => {
   const transaction = {

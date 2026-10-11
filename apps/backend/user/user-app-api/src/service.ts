@@ -12,6 +12,8 @@ import {
   DecisionInputSchema,
   HealthSchema,
   ScoreRequestSchema,
+  ShowcaseGenerateSchema,
+  ShowcaseGenerationSchema,
   type CreateAssessment,
   type ScoreRequest,
   type DecisionInput,
@@ -22,6 +24,10 @@ import { MlClient } from './ml.js';
 import { ApiProblem, errorMessage, validate } from './problem.js';
 import { businessDetail, type StoredBusiness } from './business.js';
 import type { AuthContext } from './auth-types.js';
+import {
+  generateShowcaseBusinesses,
+  resolveShowcaseParameters,
+} from './showcase.js';
 
 function knownBusinessId(body: unknown): string | undefined {
   if (typeof body !== 'object' || body === null || !('business_id' in body))
@@ -92,6 +98,12 @@ export class ProductService {
     });
   }
   async importBusiness(body: unknown, requestId: string, auth: AuthContext) {
+    if (auth.tenant.kind === 'showcase')
+      throw new ApiProblem(
+        409,
+        'Bank workspace required',
+        'Import actual business transactions into a bank workspace. Showcase workspaces contain generated illustrative cases only.',
+      );
     const legacy =
       this.config.NODE_ENV === 'test' &&
       typeof body === 'object' &&
@@ -141,6 +153,25 @@ export class ProductService {
     };
     await this.database.importBusiness(business, requestId, auth);
     return BusinessDetailSchema.parse(businessDetail(business));
+  }
+
+  async generateShowcase(body: unknown, requestId: string, auth: AuthContext) {
+    if (auth.tenant.kind !== 'showcase')
+      throw new ApiProblem(
+        403,
+        'Showcase workspace required',
+        'Create or switch to a showcase workspace before generating illustrative businesses.',
+      );
+    const parameters = resolveShowcaseParameters(
+      validate(ShowcaseGenerateSchema, body),
+    );
+    const businesses = generateShowcaseBusinesses(parameters);
+    const result = ShowcaseGenerationSchema.parse({
+      items: businesses.map(businessDetail),
+      provenance: parameters,
+    });
+    await this.database.generateShowcase(businesses, requestId, auth);
+    return result;
   }
 
   async createAssessment(body: unknown, requestId: string, auth: AuthContext) {

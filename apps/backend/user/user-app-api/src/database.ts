@@ -75,6 +75,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           id uuid PRIMARY KEY, name text NOT NULL, is_legacy boolean NOT NULL DEFAULT false,
           created_at timestamptz NOT NULL DEFAULT now()
         );
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'bank' CHECK(kind IN ('bank','showcase'));
         INSERT INTO tenants(id,name,is_legacy) VALUES('00000000-0000-4000-8000-000000000001','Legacy demonstration',true) ON CONFLICT(id) DO NOTHING;
         CREATE TABLE IF NOT EXISTS memberships (
           user_id uuid NOT NULL REFERENCES app_users(id), tenant_id uuid NOT NULL REFERENCES tenants(id),
@@ -137,6 +138,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         ALTER TABLE businesses ADD COLUMN IF NOT EXISTS data_source text NOT NULL DEFAULT 'synthetic' CHECK(data_source IN ('user_provided','synthetic'));
         ALTER TABLE businesses ADD COLUMN IF NOT EXISTS amount_unit text NOT NULL DEFAULT 'index' CHECK(amount_unit IN ('UZS','index'));
         ALTER TABLE businesses ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS showcase_provenance jsonb;
         ALTER TABLE assessments ADD COLUMN IF NOT EXISTS amount_unit text NOT NULL DEFAULT 'index' CHECK(amount_unit IN ('UZS','index'));
         ALTER TABLE businesses ALTER COLUMN data_source DROP DEFAULT;
         ALTER TABLE businesses ALTER COLUMN amount_unit DROP DEFAULT;
@@ -159,6 +161,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         CREATE INDEX IF NOT EXISTS audit_tenant_created_idx ON audit_events(tenant_id,created_at DESC);
         CREATE UNIQUE INDEX IF NOT EXISTS businesses_tenant_id_unique ON businesses(tenant_id,id);
         CREATE UNIQUE INDEX IF NOT EXISTS assessments_tenant_id_unique ON assessments(tenant_id,id);
+        INSERT INTO schema_migrations(name) VALUES('showcase-workspaces-v1') ON CONFLICT(name) DO NOTHING;
         DO $$ BEGIN
           IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='assessments_tenant_business_fk') THEN
             ALTER TABLE assessments ADD CONSTRAINT assessments_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES businesses(tenant_id,id);
@@ -183,7 +186,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           tenant_id: string;
           archived_at: Date;
         }>(
-          "UPDATE businesses SET archived_at=now() WHERE data_source='synthetic' AND archived_at IS NULL RETURNING id,tenant_id,archived_at",
+          "UPDATE businesses b SET archived_at=now() FROM tenants t WHERE b.tenant_id=t.id AND t.kind='bank' AND b.data_source='synthetic' AND b.archived_at IS NULL RETURNING b.id,b.tenant_id,b.archived_at",
         );
         for (const row of archived.rows)
           await this.audit(
@@ -253,7 +256,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
   async businesses(tenantId: string): Promise<StoredBusiness[]> {
     return (
       await this.pool.query<StoredBusiness>(
-        'SELECT id,name,sector,location,archetype,transactions,data_source,amount_unit,archived_at FROM businesses WHERE tenant_id=$1 AND archived_at IS NULL ORDER BY created_at DESC,id LIMIT 200',
+        'SELECT id,name,sector,location,archetype,transactions,data_source,amount_unit,archived_at,showcase_provenance FROM businesses WHERE tenant_id=$1 AND archived_at IS NULL ORDER BY created_at DESC,id LIMIT 200',
         [tenantId],
       )
     ).rows;
@@ -262,7 +265,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     return (
       (
         await this.pool.query<StoredBusiness>(
-          'SELECT id,name,sector,location,archetype,transactions,data_source,amount_unit,archived_at FROM businesses WHERE id=$1 AND tenant_id=$2',
+          'SELECT id,name,sector,location,archetype,transactions,data_source,amount_unit,archived_at,showcase_provenance FROM businesses WHERE id=$1 AND tenant_id=$2',
           [id, tenantId],
         )
       ).rows[0] ?? null
@@ -312,6 +315,109 @@ export class Database implements OnModuleInit, OnModuleDestroy {
         auth.tenant.id,
         client,
       );
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async generateShowcase(
+    businesses: StoredBusiness[],
+    requestId: string,
+    auth: AuthContext,
+  ) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      // Account-security mutations lock the user before sessions. Match that
+      // ordering because each generated audit also references this account.
+      await client.query('SELECT 1 FROM app_users WHERE id=$1 FOR KEY SHARE', [
+        auth.user.id,
+      ]);
+      // Serialize batches for this workspace so parallel requests cannot pass
+      // the same capacity check and overflow the bounded demonstration data.
+      const tenant = (
+        await client.query<{ kind: 'bank' | 'showcase' }>(
+          'SELECT kind FROM tenants WHERE id=$1 FOR UPDATE',
+          [auth.tenant.id],
+        )
+      ).rows[0];
+      if (tenant?.kind !== 'showcase')
+        throw new ApiProblem(
+          403,
+          'Showcase workspace required',
+          'Create or switch to a showcase workspace before generating illustrative businesses.',
+        );
+      const session = await client.query(
+        'SELECT 1 FROM auth_sessions WHERE token_hash=$1 AND user_id=$2 AND tenant_id=$3 AND csrf_token=$4 AND expires_at>now() FOR UPDATE',
+        [auth.session_hash, auth.user.id, auth.tenant.id, auth.csrf_token],
+      );
+      if (!session.rowCount)
+        throw new ApiProblem(
+          409,
+          'Session changed',
+          'Refresh your session before generating showcase data.',
+        );
+      const count = (
+        await client.query<{ count: string }>(
+          'SELECT count(*)::text AS count FROM businesses WHERE tenant_id=$1 AND archived_at IS NULL',
+          [auth.tenant.id],
+        )
+      ).rows[0]!;
+      if (Number(count.count) + businesses.length > 100)
+        throw new ApiProblem(
+          409,
+          'Showcase limit reached',
+          'A showcase workspace supports at most 100 active generated businesses. Create another showcase workspace for additional scenarios.',
+        );
+      for (const business of businesses) {
+        if (
+          business.data_source !== 'synthetic' ||
+          business.amount_unit !== 'UZS' ||
+          !business.showcase_provenance
+        )
+          throw new Error(
+            'Showcase generation requires explicitly labeled synthetic UZS provenance.',
+          );
+        await client.query(
+          'INSERT INTO businesses(id,name,sector,location,archetype,transactions,tenant_id,data_source,amount_unit,showcase_provenance) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10::jsonb)',
+          [
+            business.id,
+            business.name,
+            business.sector,
+            business.location,
+            business.archetype,
+            JSON.stringify(business.transactions),
+            auth.tenant.id,
+            business.data_source,
+            business.amount_unit,
+            JSON.stringify(business.showcase_provenance),
+          ],
+        );
+        await this.audit(
+          {
+            business_id: business.id,
+            assessment_id: null,
+            event_type: 'showcase_business_generated',
+            request_id: requestId,
+            actor: auth.user.display_name,
+            metadata: {
+              data_source: 'synthetic',
+              amount_unit: 'UZS',
+              amount_conversion: '1 amount_index = 1 UZS',
+              transaction_count: business.transactions.length,
+              actor_user_id: auth.user.id,
+              purpose: 'testing_and_showcase_only',
+              provenance: business.showcase_provenance,
+            },
+          },
+          auth.tenant.id,
+          client,
+        );
+      }
       await client.query('COMMIT');
     } catch (error) {
       await client.query('ROLLBACK');
