@@ -185,6 +185,7 @@ export function BusinessWorkspace({
       null)
     : (assessments[0] ?? business?.latest_assessment ?? null);
   const result = assessmentError ? null : assessment?.result;
+  const finalModel = result?.flags.includes('final_combined_model') ?? false;
   const modelVerdict = result?.flags.includes('verdict_affordable')
     ? {
         label: 'Affordable',
@@ -234,12 +235,24 @@ export function BusinessWorkspace({
       month: forecastMonthLabel(result.as_of_date, index + 1),
       surplus: value,
     })) ?? [];
-  const equalPayment = result?.adaptive_schedule.length
-    ? result.adaptive_schedule.reduce(
-        (sum, row) => sum + row.installment_index,
-        0,
-      ) / result.adaptive_schedule.length
-    : 0;
+  const monthlyRate = (result?.loan_terms?.annual_rate ?? 0) / 12;
+  const comparisonTerm = result?.recommended_loan.suggested_term_months ?? 12;
+  const comparisonPrincipal =
+    result?.recommended_loan.suggested_principal_index ?? 0;
+  const equalPayment = result?.loan_terms
+    ? monthlyRate === 0
+      ? comparisonPrincipal / comparisonTerm
+      : (comparisonPrincipal * monthlyRate) /
+        (1 - (1 + monthlyRate) ** -comparisonTerm)
+    : result?.adaptive_schedule.length
+      ? result.adaptive_schedule.reduce(
+          (sum, row) => sum + row.installment_index,
+          0,
+        ) / result.adaptive_schedule.length
+      : 0;
+  const comparisonLabel = result?.loan_terms
+    ? 'Fixed annuity comparison'
+    : 'Equal payment comparison';
   const schedule =
     result?.adaptive_schedule.map((row) => ({
       ...row,
@@ -1169,9 +1182,10 @@ export function BusinessWorkspace({
                   disabled={assessMutation.isPending || !!business.archived_at}
                 />
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Request handling depends on the connected scorer. Check the
-                  saved recommendation and model flags; the current real-data
-                  scorer records this amount as context only.
+                  The requested amount is checked against payment capacity. If
+                  it fits, the offered schedule uses that amount. Larger
+                  requests are capped at assessed capacity; review any request
+                  warning before deciding.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1304,8 +1318,11 @@ export function BusinessWorkspace({
                 Assessment recommendation
               </p>
               <h2 className="text-xl font-semibold tracking-tight">
-                Understand the business's payment capacity
+                Payment capacity · {business.name}
               </h2>
+              {business.data_source === 'synthetic' && (
+                <Badge variant="outline">Showcase · Synthetic inputs</Badge>
+              )}
               <p className="text-xs text-muted-foreground">
                 As of {dateLabel(result.as_of_date)} · Model{' '}
                 {result.model_version} · Created{' '}
@@ -1364,20 +1381,23 @@ export function BusinessWorkspace({
                   aria-label={`Capacity score ${indexNumber(result.capacity_score)} out of 100`}
                 />
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Measures ability to service debt. This score is not a
-                  probability of default or an automatic approval.
+                  {finalModel
+                    ? 'Modeled coverage of the offered payments, conditional on projected costs. This is not default probability or an automatic approval.'
+                    : 'Measures ability to service debt. This score is not a probability of default or an automatic approval.'}
                 </p>
                 <Separator />
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    Forecast confidence
+                    {finalModel ? 'Evidence indicator' : 'Forecast confidence'}
                   </span>
                   <span className="font-medium tabular-nums">
                     {indexNumber(result.confidence * 100)}%
                   </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  Reported by the model; this is not an evaluation metric.
+                  {finalModel
+                    ? 'Based on history and interval width; not a calibrated probability or an accuracy metric.'
+                    : 'Reported by the model; this is not an evaluation metric.'}
                 </p>
               </CardContent>
             </Card>
@@ -1409,7 +1429,9 @@ export function BusinessWorkspace({
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      Affordable installment
+                      {finalModel
+                        ? 'Highest offered payment'
+                        : 'Affordable installment'}
                     </p>
                     <p className="mt-2 text-2xl font-semibold tabular-nums">
                       {indexNumber(
@@ -1480,20 +1502,35 @@ export function BusinessWorkspace({
                   <div className="space-y-2">
                     <p className="text-xs font-medium">Forecast evidence</p>
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary">
-                        Public revenue forecast{' '}
-                        {indexNumber(
-                          result.forecast_provenance.real_revenue_weight * 100,
-                        )}
-                        %
-                      </Badge>
-                      <Badge variant="outline">
-                        Synthetic net forecast{' '}
-                        {indexNumber(
-                          result.forecast_provenance.synthetic_net_weight * 100,
-                        )}
-                        %
-                      </Badge>
+                      {finalModel ? (
+                        <>
+                          <Badge variant="secondary">
+                            Real-data revenue model
+                          </Badge>
+                          <Badge variant="outline">
+                            Observed cost projection
+                          </Badge>
+                        </>
+                      ) : (
+                        <>
+                          <Badge variant="secondary">
+                            Public revenue forecast{' '}
+                            {indexNumber(
+                              result.forecast_provenance.real_revenue_weight *
+                                100,
+                            )}
+                            %
+                          </Badge>
+                          <Badge variant="outline">
+                            Synthetic net forecast{' '}
+                            {indexNumber(
+                              result.forecast_provenance.synthetic_net_weight *
+                                100,
+                            )}
+                            %
+                          </Badge>
+                        </>
+                      )}
                     </div>
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       {result.flags.includes('zero_revenue_history_guard')
@@ -1616,9 +1653,13 @@ export function BusinessWorkspace({
                   12-month surplus forecast
                 </CardTitle>
                 <CardDescription>
-                  Net cash flow forecast in {amountUnitLabel(assessmentUnit)},
-                  starting the calendar month after{' '}
-                  {dateLabel(result.as_of_date)}.
+                  {finalModel
+                    ? 'Revenue forecast minus projected observed costs'
+                    : 'Net cash flow forecast'}{' '}
+                  in {amountUnitLabel(assessmentUnit)}, starting the calendar
+                  month after {dateLabel(result.as_of_date)}.
+                  {finalModel &&
+                    ' Future costs remain an assumption; this is not a calibrated net-flow interval.'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1701,10 +1742,9 @@ export function BusinessWorkspace({
                     : 'Adaptive repayment schedule'}
                 </CardTitle>
                 <CardDescription>
-                  {annuitySchedule ? 'Annuity' : 'Adaptive'} payments versus an
-                  equal-payment comparison with the same total and term. The
-                  comparison divides total scheduled payments equally; it does
-                  not calculate a separate loan offer.
+                  {result.loan_terms
+                    ? `${annuitySchedule ? 'Offered annuity' : 'Seasonal'} payments versus a fixed annuity at the same principal, annual interest rate and term. Different repayment timing can change total interest; the comparison is not another loan offer.`
+                    : 'Adaptive payments versus an equal-payment comparison with the same total and term. The comparison divides total scheduled payments equally; it does not calculate a separate loan offer.'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1726,7 +1766,7 @@ export function BusinessWorkspace({
                           color: 'var(--chart-1)',
                         },
                         equal_payment: {
-                          label: 'Equal payment comparison',
+                          label: comparisonLabel,
                           color: 'var(--chart-3)',
                         },
                       }}
@@ -1755,7 +1795,7 @@ export function BusinessWorkspace({
                           content={
                             <ChartTooltipContent
                               formatter={(value, name) =>
-                                `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? paymentLabel : 'Equal payment'}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
+                                `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? paymentLabel : comparisonLabel}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
                               }
                             />
                           }

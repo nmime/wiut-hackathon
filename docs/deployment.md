@@ -18,17 +18,34 @@ If Cloudflare proxies the hostname, the host nginx must first trust only Cloudfl
 
 The stack owns subnet `172.30.84.0/24` with gateway `172.30.84.1`. The script rejects overlaps with other Docker networks before building. The nginx template uses the official image's entrypoint and substitutes only `TRUSTED_PROXY_IP`, preserving nginx variables such as `$remote_addr` and `$http_host`.
 
-The [final combined scorer](final-model-runtime.md) is the default endpoint, `http://ml:8000`. The optional historical teammate candidate is packaged in the `teammate` Compose profile. To build and start it privately while keeping the final scorer selected:
+Production serves one [final combined scorer](final-model-runtime.md) at the fixed
+internal endpoint `http://ml:8000`. Existing `ML_SERVICE_URL` entries in the private
+environment file are ignored by production Compose. Historical scorer services,
+profiles and endpoint switching are unavailable in the production stack. Their
+frozen source, artifacts and regression tests remain research evidence.
 
-```sh
-docker compose --project-name flowcredit --env-file .env.production -f docker-compose.production.yml up -d --build --wait teammate-ml
-```
+After the final stack is healthy, deployment gracefully stops and removes only
+an existing `teammate-ml` container belonging to the `flowcredit` project. Its
+`flowcredit_teammate-ml-audit` volume is preserved and remains included in backups.
+The active final scorer continues using `flowcredit_ml-audit`, preserving earlier
+assessment records alongside new final-model records.
 
-To select it for Nest scoring, add `ML_SERVICE_URL=http://teammate-ml:8000` to the private `.env.production` and rerun `bash scripts/deploy.sh`. The script then builds and starts all five services, including the candidate, and backs up the database before restarting the app. To return to the final scorer, set `ML_SERVICE_URL=http://ml:8000` and rerun the script. The candidate stays private, with a separate durable `flowcredit_teammate-ml-audit` volume; its original public demo, records and decision routes are absent. Other reachable scorer URLs do not automatically create a service.
-
-The candidate uses frozen synthetic-trained artifacts, 24% annual interest and actual annuity/adaptive repayment plans. It requires a completed month-end with at least six complete history months and a supported calendar cutoff. Do not select it on the assumption that its synthetic evaluations prove superior actual borrower accuracy. See the [independent review](teammate-ml-review.md) and [candidate limitations](../teammate-ml-service/README.md).
+The deployment requires a clean committed checkout. It publishes public
+`/release.json` with the Git commit SHA, accepted bundle SHA-256, and the verified
+serving model version and assembly SHA-256. These values contain no credentials or
+customer data. The deployment checks that the commit and bundle did not change
+while images were built. nginx serves this file with `Cache-Control: no-store`;
+its directory is mounted read-only into the web container. Keep that directory
+restricted to generated public release metadata.
 
 Updates build images first. When a database volume already exists, the script stops web/API writes, starts PostgreSQL alone, and creates a consistent custom-format dump under `artifacts/production-backups/` before starting the API's migrations. Backups have permissions `600`; the directory has permissions `700` and is ignored by Git. Startup archives legacy synthetic portfolios without deleting accounts, model results, decisions or audit events. A backup failure stops the update before application startup. Updates can cause a brief maintenance interruption.
+
+Before rebuilding, installed API, web and ML image IDs receive unique rollback
+tags recorded in the private `images-<timestamp>-<pid>.txt` file alongside the
+deployment backups. A deliberate application rollback can restore those tags
+and restart those services with `--no-build`. It does not restore or erase a
+database or audit volume. Verify migration compatibility before rolling back;
+restoring the database requires a separate operator decision and a verified dump.
 
 The script never runs `down -v` or deletes a persistent volume. Keep a separately secured copy of the database dumps and `.env.production` off the server; local dumps alone do not protect against host loss. A failed update can leave the web/API stopped, so inspect the error and repair it before restarting them. Restore into a separate PostgreSQL instance first to verify a dump with `pg_restore`; applying a database rollback to the live system requires an explicit operator decision.
 
@@ -38,6 +55,20 @@ For status and safe diagnostics:
 docker compose --project-name flowcredit --env-file .env.production -f docker-compose.production.yml ps
 docker compose --project-name flowcredit --env-file .env.production -f docker-compose.production.yml logs --tail 100 api ml web
 curl --fail -H 'Host: wiut-hackathon.dehqonhub.uz' http://127.0.0.1:18080/api/health
+curl --fail https://wiut-hackathon.dehqonhub.uz/release.json
 ```
 
 Keep the private environment file and backups out of tickets or command output. Use `docker compose config --quiet` for validation; the full rendered configuration contains database credentials. The current app has a bounded in-process authentication limiter and supports one API process per database. Account recovery works with an offline recovery key, and authenticator MFA is opt-in; email verification and email delivery are absent. See [account security](account-security.md). Install the dedicated backup and health-check timers as described in [operations](operations.md). Forecast and payment-capacity limitations remain documented in the ML integration notes and [model comparison](model-comparison.md).
+
+After deployment, measure the actual warmed private scorer with:
+
+```sh
+python3 scripts/operations/benchmark_score.py --requests 20
+```
+
+The probe uses 36 months of explicitly synthetic history and 72 transaction rows,
+three warm-up calls and 20 measured loopback HTTP calls. Timing includes response
+validation and durable ML audit completion. These test-only calls never create
+customers or assessments in a bank workspace. The output records median/P95
+latency, actual serving identity and an input hash, without transaction contents.
+It establishes runtime performance, not real borrower accuracy.
