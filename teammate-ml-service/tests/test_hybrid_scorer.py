@@ -11,6 +11,7 @@ import pytest
 from hybrid.backtest import compare_actual_surplus
 from hybrid.scorer import (
     LEVELS,
+    MIN_OFFER_SHARE_OF_BUDGET,
     HybridEngine,
     HybridInputError,
     assess_request,
@@ -149,6 +150,93 @@ def test_wide_interval_with_positive_median_is_elevated_risk_not_decline(engine)
     assert "verdict_elevated_risk" in result["flags"]
     assert result["capacity_score"] > 0
     assert result["confidence"] < 0.3
+
+
+@pytest.mark.parametrize("requested", [None, 0.0])
+def test_sparse_conservative_budget_rejects_tolerance_dust_and_selects_material_offer(
+    engine, requested
+):
+    payload, forecast = fixture(
+        median=np.asarray([300000.0] * 3 + [150000.0] * 9),
+        spread=300000.0,
+        requested=requested,
+    )
+    assessed = evaluate(engine, payload, forecast)
+    result = ScoreResponse.model_validate(assessed["result"])
+    assessment = assessed["evidence"]["assessment"]
+    conservative = assessment["tiers"]["p10"]
+    assert np.count_nonzero(np.asarray(conservative["caps"]) == 0) == 9
+    assert conservative["pv_budget"] > 300000
+    # Before the fix this budget yielded a 6.16 UZS "affordable" offer solely
+    # because its interest and payments fit within the 1 UZS solver tolerance.
+    assert conservative["principal"] == 0
+    assert conservative["rows"] == []
+    assert not conservative["actual_within_capacity"]
+    assert assessment["verdict"] == "elevatedrisk_officer"
+    assert assessment["tier"] == "p20"
+    assert assessment["requested_fit_status"] == "unspecified"
+    offered = assessment["offered"]
+    assert offered["principal"] > 100000
+    assert offered["principal"] >= (MIN_OFFER_SHARE_OF_BUDGET * offered["pv_budget"])
+    assert offered["actual_within_capacity"]
+    assert assessment["comparison"]["offered_overload_months"] == 0
+    assert result.loan_terms.schedule_type == "adaptive"
+    assert "verdict_elevated_risk" in result.flags
+    assert "verdict_affordable" not in result.flags
+    assert result.recommended_loan.suggested_principal_index == offered["principal"]
+    assert result.capacity_score == assessment["score"]
+
+
+def test_explicit_small_principal_is_not_subject_to_offer_materiality_policy(engine):
+    payload, forecast = fixture(
+        median=np.asarray([300000.0] * 3 + [150000.0] * 9),
+        spread=300000.0,
+        requested=1.0,
+    )
+    assessed = evaluate(engine, payload, forecast)
+    result = ScoreResponse.model_validate(assessed["result"])
+    assessment = assessed["evidence"]["assessment"]
+    assert assessment["tiers"]["p10"]["principal"] == 0
+    assert assessment["verdict"] == "elevatedrisk_officer"
+    assert assessment["tier"] == "p20"
+    assert assessment["requested_fit_status"] == "fits_selected_offer"
+    assert not assessment["requested_exceeds"]
+    offered = assessment["offered"]
+    assert (
+        offered["principal"] == result.recommended_loan.suggested_principal_index == 1
+    )
+    assert offered["principal"] < MIN_OFFER_SHARE_OF_BUDGET * offered["pv_budget"]
+    assert offered["actual_within_capacity"]
+    assert result.loan_terms.total_interest_index > 0
+    assert result.loan_terms.total_repayment_index > 1
+    assert assessment["comparison"]["offered_overload_months"] == 0
+
+
+@pytest.mark.parametrize("budget_share,material", [(0.049, False), (0.051, True)])
+def test_unrequested_annuity_offer_materiality_uses_discounted_monthly_budget(
+    engine, budget_share, material
+):
+    discounts = (1 + 0.24 / 12) ** -np.arange(1, 13)
+    strong_budget = 100000.0
+    weak_budget = (
+        budget_share
+        * strong_budget
+        * float(discounts[1:].sum())
+        / (float(discounts.sum()) - budget_share * discounts[0])
+    )
+    caps = np.asarray([weak_budget] + [strong_budget] * 11)
+    offer = engine._solve_offer(
+        caps, np.full(12, strong_budget), list(range(2025 * 12, 2026 * 12)), False
+    )
+    theoretical = engine.present_value(weak_budget, 0.24 / 12, 12)
+    assert theoretical / offer["pv_budget"] == pytest.approx(budget_share)
+    assert (offer["principal"] > 0) is material
+    assert offer["actual_within_capacity"] is material
+    if material:
+        assert offer["principal"] >= MIN_OFFER_SHARE_OF_BUDGET * offer["pv_budget"]
+        assert offer["rows"]
+    else:
+        assert offer["rows"] == []
 
 
 def test_persistent_decline_sets_main_offer_and_score_zero(engine):

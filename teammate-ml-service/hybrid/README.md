@@ -23,13 +23,21 @@ tolerance. Every comparison uses identical principal, twelve months and
 24% annual nominal interest (2% per month). Cent rounding is settled in the final
 payment, and raw native amortization rows remain in evidence.
 
+An automatically generated offer below 5% of its tier's discounted monthly
+budget is immaterial and rejected before selecting a verdict. This prevents the
+1 UZS numerical tolerance from turning near-zero principal into an affordable
+loan when seasonal months have no payment budget. The scorer tries the next
+tier instead. The threshold does not suppress a deliberately smaller positive
+requested amount that fits an already selected material capacity; a zero request
+remains unspecified.
+
 The three advisory verdicts are:
 
 - `affordable`: the actual offered schedule fits buffered P10 monthly budgets.
-- `elevatedrisk_officer`: P20 or buffered P50 supports a positive schedule when
+- `elevatedrisk_officer`: P20 or buffered P50 supports a material offer when
   P10 cannot. Wide P10 intervals alone never suppress a feasible positive median
   offer. An officer must explicitly assess this uncertainty.
-- `decline`: fewer than six observed months, no feasible positive median schedule,
+- `decline`: fewer than six observed months, no feasible material median offer,
   nonpositive mean median surplus or at least six nonpositive median months,
   or the observed persistent-decline guard suppresses the main recommendation.
   Offered principal, payments and capacity score are then zero.
