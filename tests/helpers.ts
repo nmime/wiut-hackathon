@@ -11,23 +11,25 @@ export const FIXTURE_URL = 'http://127.0.0.1:8101';
 export const AS_OF_DATE = '2026-09-30';
 
 export function importInput(label = 'API integration'): BusinessImport {
+  // Explicitly fabricated observations supplied only by tests, never app seeds.
   return {
-    name: `${label} ${randomUUID().slice(0, 8)}`,
-    sector: 'Synthetic retail',
-    location: 'Synthetic Tashkent district',
-    data_source: 'synthetic',
+    name: `Test-only ${label} ${randomUUID().slice(0, 8)}`,
+    sector: 'Test retail',
+    location: 'Test Tashkent district',
+    data_source: 'user_provided',
+    amount_unit: 'UZS',
     transactions: Array.from({ length: 12 }, (_, index) => [
       {
         ts: `2025-${String(index + 1).padStart(2, '0')}-15T10:00:00Z`,
         direction: 'in' as const,
         channel: 'card' as const,
-        amount_index: 100 + index * 5,
+        amount: (100 + index * 5) * 100_000,
       },
       {
         ts: `2025-${String(index + 1).padStart(2, '0')}-20T10:00:00Z`,
         direction: 'out' as const,
         channel: 'transfer' as const,
-        amount_index: 60 + index * 2,
+        amount: (60 + index * 2) * 100_000,
       },
     ]).flat(),
   };

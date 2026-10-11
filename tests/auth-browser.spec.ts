@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { test, expect, TEST_PASSWORD } from './auth-fixtures';
 import { importInput } from './helpers';
+import { importFormat, openImport } from './ui-helpers';
 
 test.use({ authenticate: false });
 
@@ -28,17 +29,13 @@ test('account registration, invitations, workspace switching, logout, and login 
   ).toContainText(firstName);
 
   const input = importInput('Browser private workspace');
-  await page
-    .getByRole('button', { name: 'Import business', exact: true })
-    .click();
-  const dialog = page.getByRole('dialog', {
-    name: 'Import synthetic business',
-  });
+  const dialog = await openImport(page);
+  await importFormat(page, dialog, 'JSON');
   await dialog.getByLabel('Business name').fill(input.name);
   await dialog.getByLabel('Sector', { exact: true }).fill(input.sector);
   await dialog.getByLabel('Location', { exact: true }).fill(input.location);
   await dialog
-    .getByLabel('Transaction JSON')
+    .getByLabel('Transaction data')
     .fill(JSON.stringify(input.transactions));
   await dialog
     .getByRole('button', { name: 'Import business', exact: true })

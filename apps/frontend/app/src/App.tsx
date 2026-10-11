@@ -5,13 +5,12 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { BusinessImportSchema, type AuthSession } from '@wiut/contracts';
+import { type AuthSession } from '@wiut/contracts';
 import {
   Building2,
   ChevronRight,
   ClipboardCheck,
   FileClock,
-  FlaskConical,
   HeartPulse,
   Import,
   Landmark,
@@ -21,19 +20,11 @@ import {
   Users,
   Loader2,
   ShieldCheck,
-  Upload,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -73,6 +64,12 @@ import {
   SESSION_WORKSPACE_CHANGED_EVENT,
 } from '@/lib/api';
 import { readInvitationToken } from '@/lib/route';
+import {
+  MAX_IMPORT_BYTES,
+  parseTransactionInput,
+  prepareBusinessImport,
+  type ImportFormat,
+} from '@/lib/import';
 import {
   Select,
   SelectContent,
@@ -360,6 +357,7 @@ function WorkspaceApp({
   const [sector, setSector] = useState('');
   const [location, setLocation] = useState('');
   const [transactionJson, setTransactionJson] = useState('');
+  const [importFormat, setImportFormat] = useState<ImportFormat>('csv');
   const [importError, setImportError] = useState<string | null>(null);
   const health = useQuery({
     queryKey: ['health'],
@@ -384,10 +382,11 @@ function WorkspaceApp({
       setSector('');
       setLocation('');
       setTransactionJson('');
+      setImportFormat('csv');
       setImportError(null);
       openBusiness(business.id);
       toast.success('Business imported', {
-        description: 'Synthetic transactions are ready for review.',
+        description: 'Transaction history is ready for review.',
       });
     },
     onError: (error) => setImportError(error.message),
@@ -555,23 +554,6 @@ function WorkspaceApp({
               </Button>
             </div>
           </div>
-          <Card className="gap-3 border-dashed bg-background shadow-none">
-            <CardHeader className="px-4 py-0">
-              <CardTitle className="flex items-center gap-2 text-sm">
-                <FlaskConical className="size-4 text-primary" /> Synthetic
-                sandbox
-              </CardTitle>
-              <CardDescription className="text-xs leading-relaxed">
-                Explore business cash flow safely. All cases use synthetic
-                transaction data.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-4">
-              <Badge variant="secondary" className="text-[10px]">
-                WIUT Hackathon 2026
-              </Badge>
-            </CardContent>
-          </Card>
           <div className="flex items-center gap-3 px-2">
             <ShieldCheck className="size-5 text-muted-foreground" />
             <div>
@@ -603,9 +585,9 @@ function WorkspaceApp({
             )}
           </div>
           <Badge variant="outline" className="shrink-0 gap-1.5 font-normal">
-            <FlaskConical className="size-3" />
-            <span className="hidden sm:inline">Synthetic data only</span>
-            <span className="sm:hidden">Sandbox</span>
+            <ShieldCheck className="size-3" />
+            <span className="hidden sm:inline">Human-led review</span>
+            <span className="sm:hidden">Credit review</span>
           </Badge>
         </header>
         <main
@@ -734,7 +716,7 @@ function WorkspaceApp({
             <DialogTitle>Create a workspace</DialogTitle>
             <DialogDescription>
               Create a separate workspace for another bank or team. You will be
-              its admin, with a fresh synthetic demo portfolio.
+              its admin. Start with an empty portfolio and invite your team.
             </DialogDescription>
           </DialogHeader>
           <form
@@ -796,10 +778,10 @@ function WorkspaceApp({
       >
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Import synthetic business</DialogTitle>
+            <DialogTitle>Import business</DialogTitle>
             <DialogDescription>
-              Add a case using synthetic transaction history. Amount indices
-              stay separate from currency.
+              Add a business and its transaction history from CSV or JSON. All
+              imported amounts must be actual Uzbekistani som (UZS).
             </DialogDescription>
           </DialogHeader>
           <form
@@ -807,32 +789,21 @@ function WorkspaceApp({
             onSubmit={(event) => {
               event.preventDefault();
               setImportError(null);
-              let transactions: unknown;
               try {
-                transactions = JSON.parse(transactionJson);
-              } catch {
-                setImportError(
-                  'Transaction JSON is invalid. Paste a JSON array of transactions.',
+                importMutation.mutate(
+                  prepareBusinessImport(
+                    { name, sector, location },
+                    transactionJson,
+                    importFormat,
+                  ),
                 );
-                return;
-              }
-              const parsed = BusinessImportSchema.safeParse({
-                name,
-                sector,
-                location,
-                data_source: 'synthetic',
-                transactions,
-              });
-              if (!parsed.success) {
+              } catch (error) {
                 setImportError(
-                  parsed.error.issues
-                    .slice(0, 4)
-                    .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
-                    .join(' · '),
+                  error instanceof Error
+                    ? error.message
+                    : 'Transaction data could not be read.',
                 );
-                return;
               }
-              importMutation.mutate(parsed.data);
             }}
           >
             <div className="space-y-2">
@@ -841,7 +812,7 @@ function WorkspaceApp({
                 id="import-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Synthetic Corner Bakery"
+                placeholder="Business trading name"
                 maxLength={100}
                 required
                 disabled={importMutation.isPending}
@@ -873,73 +844,108 @@ function WorkspaceApp({
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <Label htmlFor="import-transactions">Transaction JSON</Label>
-                <Label
-                  htmlFor="transaction-file"
-                  className="cursor-pointer gap-1.5 text-xs text-muted-foreground"
+            <div className="grid gap-4 sm:grid-cols-[160px_1fr]">
+              <div className="space-y-2">
+                <Label htmlFor="import-format">Import format</Label>
+                <Select
+                  value={importFormat}
+                  onValueChange={(value) => {
+                    setImportFormat(value as ImportFormat);
+                    setImportError(null);
+                  }}
+                  disabled={importMutation.isPending}
                 >
-                  <Upload className="size-3.5" /> Upload JSON file
+                  <SelectTrigger id="import-format" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="json">JSON</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="transaction-file">
+                  Upload transaction file
                 </Label>
                 <Input
                   id="transaction-file"
                   type="file"
-                  accept=".json,application/json"
-                  className="sr-only"
+                  accept=".csv,.json,text/csv,application/json"
                   disabled={importMutation.isPending}
                   onChange={async (event) => {
-                    const file = event.target.files?.[0];
+                    const input = event.target;
+                    const file = input.files?.[0];
                     if (!file) return;
-                    if (file.size > 3_000_000) {
+                    input.value = '';
+                    if (file.size > MAX_IMPORT_BYTES) {
                       setImportError(
-                        'The JSON file must be smaller than 3 MB, matching the API request limit.',
+                        'The transaction file must be smaller than 3 MB.',
+                      );
+                      return;
+                    }
+                    const format = file.name.toLowerCase().endsWith('.csv')
+                      ? 'csv'
+                      : file.name.toLowerCase().endsWith('.json')
+                        ? 'json'
+                        : null;
+                    if (!format) {
+                      setImportError(
+                        'Choose a file with a .csv or .json extension.',
                       );
                       return;
                     }
                     try {
-                      const parsed: unknown = JSON.parse(await file.text());
-                      if (
-                        parsed &&
-                        typeof parsed === 'object' &&
-                        !Array.isArray(parsed) &&
-                        'transactions' in parsed
-                      ) {
-                        const object = parsed as Record<string, unknown>;
-                        setTransactionJson(
-                          JSON.stringify(object.transactions, null, 2),
-                        );
-                        if (typeof object.name === 'string')
-                          setName(object.name);
-                        if (typeof object.sector === 'string')
-                          setSector(object.sector);
-                        if (typeof object.location === 'string')
-                          setLocation(object.location);
-                      } else
-                        setTransactionJson(JSON.stringify(parsed, null, 2));
+                      const text = await file.text();
+                      setImportFormat(format);
+                      setTransactionJson(text);
+                      const parsed = parseTransactionInput(text, format);
+                      if (parsed.profile?.name !== undefined)
+                        setName(parsed.profile.name);
+                      if (parsed.profile?.sector !== undefined)
+                        setSector(parsed.profile.sector);
+                      if (parsed.profile?.location !== undefined)
+                        setLocation(parsed.profile.location);
                       setImportError(null);
-                    } catch {
-                      setImportError('The uploaded file is not valid JSON.');
+                    } catch (error) {
+                      setImportError(
+                        error instanceof Error
+                          ? error.message
+                          : 'The uploaded file could not be read.',
+                      );
                     }
-                    event.target.value = '';
                   }}
                 />
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="import-transactions">Transaction data</Label>
               <Textarea
                 id="import-transactions"
                 value={transactionJson}
                 onChange={(event) => setTransactionJson(event.target.value)}
-                className="min-h-44 font-mono text-xs"
+                className="min-h-36 font-mono text-xs"
                 placeholder={
-                  '[\n  { "ts": "2026-09-01T10:00:00Z", "direction": "in",\n    "channel": "card", "amount_index": 100 }\n]'
+                  importFormat === 'csv'
+                    ? 'ts,direction,channel,amount'
+                    : 'Paste a JSON array of transactions, or a business object with a transactions array.'
                 }
                 required
                 disabled={importMutation.isPending}
+                aria-describedby="import-columns"
               />
-              <p className="text-xs text-muted-foreground">
-                Required keys: ts, direction (in/out), channel
-                (card/transfer/qr/cash_in/other), amount_index (positive
-                number). Up to 20,000 records.
+              <p
+                id="import-columns"
+                className="text-xs leading-relaxed text-muted-foreground"
+              >
+                {importFormat === 'csv'
+                  ? 'CSV requires a header with these four columns. '
+                  : 'Every transaction requires these four fields. '}
+                ts: ISO timestamp with timezone; direction: in or out; channel:
+                card, transfer, qr, cash_in, or other; amount: positive UZS
+                number without thousands separators. Up to 20,000 records and 3
+                MB including the business profile. Legacy amount_index data
+                cannot be imported as currency.
               </p>
             </div>
             {importError && (
@@ -949,11 +955,11 @@ function WorkspaceApp({
               </Alert>
             )}
             <Alert>
-              <FlaskConical />
+              <ShieldCheck />
               <AlertDescription>
-                Submitting this form declares that the business and all
-                transactions are synthetic. Do not upload real customer or bank
-                data.
+                Imports are recorded as user-provided UZS data in this
+                workspace. Upload only transaction records your team is
+                authorized to use. Every assessment and decision is audited.
               </AlertDescription>
             </Alert>
             <DialogFooter>

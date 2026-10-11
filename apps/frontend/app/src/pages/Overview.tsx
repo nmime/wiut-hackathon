@@ -6,7 +6,6 @@ import {
   ChartNoAxesCombined,
   ClipboardCheck,
   Clock3,
-  FlaskConical,
   Import,
   Info,
   ShieldCheck,
@@ -123,7 +122,7 @@ export function OverviewPage({
               </p>
             )}
             <p className="mt-2 text-xs text-muted-foreground">
-              Synthetic business profiles
+              Active business cases
             </p>
           </CardContent>
         </Card>
@@ -236,12 +235,13 @@ export function OverviewPage({
                   </EmptyMedia>
                   <EmptyTitle>No businesses yet</EmptyTitle>
                   <EmptyDescription>
-                    Import a synthetic business to start reviewing cash flow.
+                    Add a business and upload its transaction history in UZS to
+                    start a review.
                   </EmptyDescription>
                 </EmptyHeader>
                 <Button onClick={onImport}>
                   <Import />
-                  Import business
+                  Import first business
                 </Button>
               </Empty>
             ) : (
@@ -307,8 +307,7 @@ export function OverviewPage({
           </CardContent>
           {items.length > 0 && (
             <CardFooter className="border-t py-3 text-xs text-muted-foreground">
-              <FlaskConical className="mr-2 size-3.5" />
-              All {items.length} cases contain synthetic data.
+              {items.length} active business cases in this workspace.
             </CardFooter>
           )}
         </Card>

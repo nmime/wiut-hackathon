@@ -12,15 +12,13 @@ import type {
 import type { AppConfig } from './config.js';
 import { ApiProblem } from './problem.js';
 import type { AuthContext } from './auth-types.js';
-import {
-  generateSyntheticBusinesses,
-  type StoredBusiness,
-} from './synthetic.js';
+import type { StoredBusiness } from './business.js';
 
 interface AssessmentRow {
   id: string;
   business_id: string;
   requested_amount: number | null;
+  amount_unit: 'UZS' | 'index';
   as_of_date: string;
   status: 'pending' | 'completed' | 'failed';
   created_at: Date;
@@ -31,10 +29,10 @@ interface AssessmentRow {
   decision: (Omit<Decision, 'created_at'> & { created_at: string }) | null;
 }
 const selection = `SELECT a.id, a.business_id, a.requested_amount, to_char(a.as_of_date, 'YYYY-MM-DD') AS as_of_date,
-  a.status, a.created_at, a.request_id, a.input_hash, a.result, a.error,
+  a.amount_unit, a.status, a.created_at, a.request_id, a.input_hash, a.result, a.error,
   CASE WHEN d.id IS NULL THEN NULL ELSE jsonb_build_object('id', d.id, 'assessment_id', d.assessment_id,
     'decision', d.decision, 'reviewer_name', d.reviewer_name, 'reviewer_user_id', d.reviewer_user_id, 'notes', d.notes, 'created_at', d.created_at) END AS decision
-  FROM assessments a LEFT JOIN decisions d ON d.assessment_id = a.id`;
+  FROM assessments a JOIN businesses b ON b.id=a.business_id AND b.tenant_id=a.tenant_id LEFT JOIN decisions d ON d.assessment_id = a.id AND d.tenant_id=a.tenant_id`;
 
 @Injectable()
 export class Database implements OnModuleInit, OnModuleDestroy {
@@ -94,12 +92,21 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           event_type text NOT NULL, request_id text NOT NULL, metadata jsonb NOT NULL DEFAULT '{}',
           created_at timestamptz NOT NULL DEFAULT now()
         );
-        CREATE TABLE IF NOT EXISTS synthetic_businesses (
+        CREATE TABLE IF NOT EXISTS schema_migrations(name text PRIMARY KEY,applied_at timestamptz NOT NULL DEFAULT now());
+        DO $$ BEGIN
+          IF to_regclass('public.synthetic_businesses') IS NOT NULL AND to_regclass('public.businesses') IS NOT NULL THEN
+            RAISE EXCEPTION 'Both legacy and current business tables exist; preserve data and reconcile before startup';
+          END IF;
+          IF to_regclass('public.synthetic_businesses') IS NOT NULL THEN
+            ALTER TABLE synthetic_businesses RENAME TO businesses;
+          END IF;
+        END $$;
+        CREATE TABLE IF NOT EXISTS businesses (
           id text PRIMARY KEY, name text NOT NULL, sector text NOT NULL, location text NOT NULL,
           archetype text NOT NULL, transactions jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS assessments (
-          id uuid PRIMARY KEY, business_id text NOT NULL REFERENCES synthetic_businesses(id),
+          id uuid PRIMARY KEY, business_id text NOT NULL REFERENCES businesses(id),
           requested_amount double precision, as_of_date date NOT NULL,
           status text NOT NULL CHECK (status IN ('pending', 'completed', 'failed')),
           request_id text NOT NULL, input_hash text NOT NULL, request_input jsonb NOT NULL,
@@ -112,56 +119,83 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           reviewer_name text NOT NULL, notes text NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS audit_events (
-          id uuid PRIMARY KEY, business_id text NOT NULL REFERENCES synthetic_businesses(id),
+          id uuid PRIMARY KEY, business_id text NOT NULL REFERENCES businesses(id),
           assessment_id uuid REFERENCES assessments(id), event_type text NOT NULL, request_id text NOT NULL,
           actor text NOT NULL, metadata jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
         );
         CREATE INDEX IF NOT EXISTS audit_events_business_created_idx ON audit_events(business_id, created_at DESC);
-        ALTER TABLE synthetic_businesses ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS data_source text NOT NULL DEFAULT 'synthetic' CHECK(data_source IN ('user_provided','synthetic'));
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS amount_unit text NOT NULL DEFAULT 'index' CHECK(amount_unit IN ('UZS','index'));
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS archived_at timestamptz;
+        ALTER TABLE assessments ADD COLUMN IF NOT EXISTS amount_unit text NOT NULL DEFAULT 'index' CHECK(amount_unit IN ('UZS','index'));
+        ALTER TABLE businesses ALTER COLUMN data_source DROP DEFAULT;
+        ALTER TABLE businesses ALTER COLUMN amount_unit DROP DEFAULT;
+        ALTER TABLE businesses ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
         ALTER TABLE assessments ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
         ALTER TABLE decisions ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
         ALTER TABLE decisions ADD COLUMN IF NOT EXISTS reviewer_user_id uuid REFERENCES app_users(id);
         ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES tenants(id);
         ALTER TABLE audit_events ADD COLUMN IF NOT EXISTS actor_user_id uuid REFERENCES app_users(id);
-        UPDATE synthetic_businesses SET tenant_id='00000000-0000-4000-8000-000000000001' WHERE tenant_id IS NULL;
-        UPDATE assessments a SET tenant_id=b.tenant_id FROM synthetic_businesses b WHERE a.business_id=b.id AND a.tenant_id IS NULL;
+        UPDATE businesses SET tenant_id='00000000-0000-4000-8000-000000000001' WHERE tenant_id IS NULL;
+        UPDATE assessments a SET tenant_id=b.tenant_id FROM businesses b WHERE a.business_id=b.id AND a.tenant_id IS NULL;
         UPDATE decisions d SET tenant_id=a.tenant_id FROM assessments a WHERE d.assessment_id=a.id AND d.tenant_id IS NULL;
-        UPDATE audit_events e SET tenant_id=b.tenant_id FROM synthetic_businesses b WHERE e.business_id=b.id AND e.tenant_id IS NULL;
-        ALTER TABLE synthetic_businesses ALTER COLUMN tenant_id SET NOT NULL;
+        UPDATE audit_events e SET tenant_id=b.tenant_id FROM businesses b WHERE e.business_id=b.id AND e.tenant_id IS NULL;
+        ALTER TABLE businesses ALTER COLUMN tenant_id SET NOT NULL;
         ALTER TABLE assessments ALTER COLUMN tenant_id SET NOT NULL;
         ALTER TABLE decisions ALTER COLUMN tenant_id SET NOT NULL;
         ALTER TABLE audit_events ALTER COLUMN tenant_id SET NOT NULL;
-        CREATE INDEX IF NOT EXISTS businesses_tenant_created_idx ON synthetic_businesses(tenant_id,created_at DESC);
+        CREATE INDEX IF NOT EXISTS businesses_tenant_created_idx ON businesses(tenant_id,created_at DESC);
         CREATE INDEX IF NOT EXISTS assessments_tenant_business_idx ON assessments(tenant_id,business_id,created_at DESC);
         CREATE INDEX IF NOT EXISTS audit_tenant_created_idx ON audit_events(tenant_id,created_at DESC);
-        CREATE UNIQUE INDEX IF NOT EXISTS businesses_tenant_id_unique ON synthetic_businesses(tenant_id,id);
+        CREATE UNIQUE INDEX IF NOT EXISTS businesses_tenant_id_unique ON businesses(tenant_id,id);
         CREATE UNIQUE INDEX IF NOT EXISTS assessments_tenant_id_unique ON assessments(tenant_id,id);
         DO $$ BEGIN
           IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='assessments_tenant_business_fk') THEN
-            ALTER TABLE assessments ADD CONSTRAINT assessments_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES synthetic_businesses(tenant_id,id);
+            ALTER TABLE assessments ADD CONSTRAINT assessments_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES businesses(tenant_id,id);
           END IF;
           IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='decisions_tenant_assessment_fk') THEN
             ALTER TABLE decisions ADD CONSTRAINT decisions_tenant_assessment_fk FOREIGN KEY(tenant_id,assessment_id) REFERENCES assessments(tenant_id,id);
           END IF;
           IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='audit_tenant_business_fk') THEN
-            ALTER TABLE audit_events ADD CONSTRAINT audit_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES synthetic_businesses(tenant_id,id);
+            ALTER TABLE audit_events ADD CONSTRAINT audit_tenant_business_fk FOREIGN KEY(tenant_id,business_id) REFERENCES businesses(tenant_id,id);
           END IF;
           IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='audit_tenant_assessment_fk') THEN
             ALTER TABLE audit_events ADD CONSTRAINT audit_tenant_assessment_fk FOREIGN KEY(tenant_id,assessment_id) REFERENCES assessments(tenant_id,id);
           END IF;
         END $$;
       `);
-      for (const business of generateSyntheticBusinesses()) {
+      const archivedMigration = await client.query(
+        "SELECT 1 FROM schema_migrations WHERE name='archive-synthetic-portfolio-v2'",
+      );
+      if (!archivedMigration.rowCount) {
+        const archived = await client.query<{
+          id: string;
+          tenant_id: string;
+          archived_at: Date;
+        }>(
+          "UPDATE businesses SET archived_at=now() WHERE data_source='synthetic' AND archived_at IS NULL RETURNING id,tenant_id,archived_at",
+        );
+        for (const row of archived.rows)
+          await this.audit(
+            {
+              business_id: row.id,
+              assessment_id: null,
+              event_type: 'business_archived',
+              request_id: 'migration:archive-synthetic-portfolio-v2',
+              actor: 'system',
+              metadata: {
+                reason: 'legacy_synthetic_portfolio',
+                migration: 'archive-synthetic-portfolio-v2',
+                data_source: 'synthetic',
+                amount_unit: 'index',
+                archived_at: row.archived_at.toISOString(),
+              },
+            },
+            row.tenant_id,
+            client,
+          );
         await client.query(
-          "INSERT INTO synthetic_businesses(id, name, sector, location, archetype, transactions,tenant_id) VALUES($1,$2,$3,$4,$5,$6::jsonb,'00000000-0000-4000-8000-000000000001') ON CONFLICT(id) DO NOTHING",
-          [
-            business.id,
-            business.name,
-            business.sector,
-            business.location,
-            business.archetype,
-            JSON.stringify(business.transactions),
-          ],
+          "INSERT INTO schema_migrations(name) VALUES('archive-synthetic-portfolio-v2')",
         );
       }
       // A single API process is supported. Pending attempts left by an interrupted process remain auditable.
@@ -209,7 +243,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
   async businesses(tenantId: string): Promise<StoredBusiness[]> {
     return (
       await this.pool.query<StoredBusiness>(
-        'SELECT id,name,sector,location,archetype,transactions FROM synthetic_businesses WHERE tenant_id=$1 ORDER BY created_at DESC,id LIMIT 200',
+        'SELECT id,name,sector,location,archetype,transactions,data_source,amount_unit,archived_at FROM businesses WHERE tenant_id=$1 AND archived_at IS NULL ORDER BY created_at DESC,id LIMIT 200',
         [tenantId],
       )
     ).rows;
@@ -218,7 +252,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     return (
       (
         await this.pool.query<StoredBusiness>(
-          'SELECT id,name,sector,location,archetype,transactions FROM synthetic_businesses WHERE id=$1 AND tenant_id=$2',
+          'SELECT id,name,sector,location,archetype,transactions,data_source,amount_unit,archived_at FROM businesses WHERE id=$1 AND tenant_id=$2',
           [id, tenantId],
         )
       ).rows[0] ?? null
@@ -234,7 +268,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     try {
       await client.query('BEGIN');
       await client.query(
-        'INSERT INTO synthetic_businesses(id,name,sector,location,archetype,transactions,tenant_id) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7)',
+        'INSERT INTO businesses(id,name,sector,location,archetype,transactions,tenant_id,data_source,amount_unit) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9)',
         [
           business.id,
           business.name,
@@ -243,6 +277,8 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           business.archetype,
           JSON.stringify(business.transactions),
           auth.tenant.id,
+          business.data_source,
+          business.amount_unit,
         ],
       );
       await this.audit(
@@ -253,7 +289,12 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           request_id: requestId,
           actor: auth.user.display_name,
           metadata: {
-            data_source: 'synthetic',
+            data_source: business.data_source,
+            amount_unit: business.amount_unit,
+            amount_conversion:
+              business.amount_unit === 'UZS'
+                ? '1 amount_index = 1 UZS'
+                : 'No currency conversion declared',
             transaction_count: business.transactions.length,
             actor_user_id: auth.user.id,
           },
@@ -280,8 +321,8 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      await client.query(
-        "INSERT INTO assessments(id,business_id,requested_amount,as_of_date,status,request_id,input_hash,request_input,tenant_id) SELECT $1,$2,$3,$4,'pending',$5,$6,$7::jsonb,$8 WHERE EXISTS(SELECT 1 FROM synthetic_businesses WHERE id=$2 AND tenant_id=$8)",
+      const inserted = await client.query(
+        "INSERT INTO assessments(id,business_id,requested_amount,as_of_date,status,request_id,input_hash,request_input,tenant_id,amount_unit) SELECT $1,$2,$3,$4,'pending',$5,$6,$7::jsonb,$8,amount_unit FROM businesses WHERE id=$2 AND tenant_id=$8 AND archived_at IS NULL",
         [
           id,
           request.business_id,
@@ -293,6 +334,12 @@ export class Database implements OnModuleInit, OnModuleDestroy {
           auth.tenant.id,
         ],
       );
+      if (!inserted.rowCount)
+        throw new ApiProblem(
+          404,
+          'Business not found',
+          'The business is unavailable for a new assessment.',
+        );
       await this.audit(
         {
           business_id: request.business_id,
@@ -420,7 +467,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     businessId?: string,
   ): Promise<Assessment[]> {
     const rows = await this.pool.query<AssessmentRow>(
-      `${selection} WHERE a.tenant_id=$1 AND a.status <> 'pending' ${businessId ? 'AND a.business_id=$2' : ''} ORDER BY a.created_at DESC,a.id LIMIT 100`,
+      `${selection} WHERE a.tenant_id=$1 AND a.status <> 'pending' ${businessId ? 'AND a.business_id=$2' : 'AND b.archived_at IS NULL'} ORDER BY a.created_at DESC,a.id LIMIT 100`,
       businessId ? [tenantId, businessId] : [tenantId],
     );
     return rows.rows.map((row) => this.mapAssessment(row));
@@ -556,7 +603,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     client?: PoolClient,
   ) {
     await (client ?? this.pool).query(
-      'INSERT INTO audit_events(id,business_id,assessment_id,event_type,request_id,actor,metadata,tenant_id,actor_user_id) SELECT $1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9 WHERE EXISTS(SELECT 1 FROM synthetic_businesses WHERE id=$2 AND tenant_id=$8)',
+      'INSERT INTO audit_events(id,business_id,assessment_id,event_type,request_id,actor,metadata,tenant_id,actor_user_id) SELECT $1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9 WHERE EXISTS(SELECT 1 FROM businesses WHERE id=$2 AND tenant_id=$8)',
       [
         randomUUID(),
         event.business_id,
@@ -577,7 +624,7 @@ export class Database implements OnModuleInit, OnModuleDestroy {
     const result = await this.pool.query<
       Omit<AuditEvent, 'created_at'> & { created_at: Date }
     >(
-      `SELECT id,business_id,assessment_id,event_type,request_id,actor,actor_user_id,metadata,created_at FROM audit_events WHERE tenant_id=$1 ${businessId ? 'AND business_id=$2' : ''} ORDER BY created_at DESC,id LIMIT 500`,
+      `SELECT e.id,e.business_id,e.assessment_id,e.event_type,e.request_id,e.actor,e.actor_user_id,e.metadata,e.created_at FROM audit_events e JOIN businesses b ON b.id=e.business_id AND b.tenant_id=e.tenant_id WHERE e.tenant_id=$1 ${businessId ? 'AND e.business_id=$2' : 'AND b.archived_at IS NULL'} ORDER BY e.created_at DESC,e.id LIMIT 500`,
       businessId ? [tenantId, businessId] : [tenantId],
     );
     return result.rows.map((row) => ({

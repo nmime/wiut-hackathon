@@ -11,6 +11,7 @@ import {
   AuthLoginSchema,
   InvitationCreateSchema,
   AuthSessionSchema,
+  UserTransactionSchema,
 } from './index.js';
 
 test('transaction input rejects invalid dates, unsupported amounts and unknown fields', () => {
@@ -191,6 +192,46 @@ test('authentication and invitations reject privilege fields and malformed secre
     }).success,
     false,
   );
+});
+
+test('user transaction imports declare UZS, preserve amounts and reject ambiguous index or source fields', () => {
+  const transaction = {
+    ts: '2026-10-01T12:00:00Z',
+    direction: 'in',
+    channel: 'card',
+    amount: 1500000.25,
+  };
+  const input = {
+    name: 'Uploaded business',
+    sector: 'Retail',
+    location: 'Tashkent',
+    transactions: [transaction],
+  };
+  const result = BusinessImportSchema.parse(input);
+  assert.equal(result.data_source, 'user_provided');
+  assert.equal(result.amount_unit, 'UZS');
+  assert.equal(result.transactions[0]!.amount, 1500000.25);
+  assert.equal(
+    BusinessImportSchema.safeParse({ ...input, data_source: 'synthetic' })
+      .success,
+    false,
+  );
+  assert.equal(
+    BusinessImportSchema.safeParse({ ...input, amount_unit: 'index' }).success,
+    false,
+  );
+  assert.equal(
+    UserTransactionSchema.safeParse({
+      ...transaction,
+      amount_index: 1500000.25,
+    }).success,
+    false,
+  );
+  for (const amount of [0, -1, Number.NaN, Number.POSITIVE_INFINITY, 1e12 + 1])
+    assert.equal(
+      UserTransactionSchema.safeParse({ ...transaction, amount }).success,
+      false,
+    );
 });
 
 function responseFixture() {
@@ -374,4 +415,89 @@ test('loan payments agree with principal while allowing declared interest and fl
   ]) {
     assert.equal(ScoreResponseSchema.safeParse(valid).success, true);
   }
+});
+
+test('optional loan terms preserve a declared APR and require financially coherent totals', () => {
+  const response = responseFixture();
+  const candidate = {
+    ...response,
+    recommended_loan: {
+      ...response.recommended_loan,
+      suggested_principal_index: 100,
+    },
+    adaptive_schedule: Array.from({ length: 12 }, (_, i) => ({
+      month_offset: i + 1,
+      installment_index: 124 / 12,
+      note: 'normal',
+    })),
+    loan_terms: {
+      annual_rate: 0.24,
+      schedule_type: 'adaptive',
+      total_interest_index: 24,
+      total_repayment_index: 124,
+      requested_amount_policy: 'capacity_checked',
+    },
+  };
+  const parsed = ScoreResponseSchema.parse(candidate);
+  assert.equal(parsed.loan_terms?.annual_rate, 0.24);
+  assert.equal(parsed.loan_terms?.total_interest_index, 24);
+  assert.equal(parsed.loan_terms?.total_repayment_index, 124);
+  assert.equal(ScoreResponseSchema.safeParse(response).success, true);
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...candidate,
+      loan_terms: {
+        ...candidate.loan_terms,
+        schedule_type: 'annuity',
+        requested_amount_policy: 'context_only',
+        total_repayment_index: 124 + 1e-9,
+      },
+    }).success,
+    true,
+  );
+  for (const loan_terms of [
+    { ...candidate.loan_terms, annual_rate: 24 },
+    { ...candidate.loan_terms, annual_rate: -0.01 },
+    { ...candidate.loan_terms, total_interest_index: -24 },
+    { ...candidate.loan_terms, total_repayment_index: 120 },
+    { ...candidate.loan_terms, total_interest_index: 20 },
+    {
+      ...candidate.loan_terms,
+      total_repayment_index: Number.POSITIVE_INFINITY,
+    },
+    { ...candidate.loan_terms, schedule_type: 'unknown' },
+    { ...candidate.loan_terms, requested_amount_policy: 'approved' },
+    { ...candidate.loan_terms, undisclosed_fee: 5 },
+    null,
+  ]) {
+    assert.equal(
+      ScoreResponseSchema.safeParse({ ...candidate, loan_terms }).success,
+      false,
+    );
+  }
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...candidate,
+      adaptive_schedule: candidate.adaptive_schedule.map((row) => ({
+        ...row,
+        installment_index: row.installment_index + 0.01,
+      })),
+    }).success,
+    false,
+  );
+  assert.equal(
+    ScoreResponseSchema.safeParse({
+      ...candidate,
+      recommended_loan: {
+        ...candidate.recommended_loan,
+        suggested_principal_index: 1e308,
+      },
+      loan_terms: {
+        ...candidate.loan_terms,
+        total_repayment_index: 1e308,
+        total_interest_index: 1e308,
+      },
+    }).success,
+    false,
+  );
 });

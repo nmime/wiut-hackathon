@@ -14,7 +14,7 @@ with ML disconnected. See `ml-service/README.md` for training and evaluation.
 
 ```json
 {
-  "business_id": "synthetic-business-id",
+  "business_id": "business-id",
   "requested_amount": null,
   "currency": "UZS",
   "as_of_date": "2026-10-10",
@@ -30,9 +30,12 @@ with ML disconnected. See `ml-service/README.md` for training and evaluation.
 ```
 
 `requested_amount` is optional, nullable, nonnegative, and is in UZS as specified
-in the supplied brief. The transactions use standardized amount indices.
-No currency conversion is assumed. The ML team must clarify how a currency
-request constrains an indexed recommendation before using that comparison.
+in the supplied brief. The ML transport retains standardized `amount_index` fields. For user-provided
+UZS imports, NestJS explicitly maps one UZS to one internal unit, and snapshots
+`amount_unit` on the business and assessment. Historical synthetic records retain
+index units. This declaration is not yet passed through `/score`; the included
+scorer flags a currency request and does not use it to cap its recommendation.
+A replacement service must specify its conversion and request-cap behavior.
 The default analysis omits the requested amount by sending `null`.
 
 Allowed channels: `card`, `transfer`, `qr`, `cash_in`, `other`. Transaction amounts
@@ -212,9 +215,9 @@ are human actions, do not originate loans, and cannot be made on failed assessme
 | Method | Route                              | Purpose                                     |
 | ------ | ---------------------------------- | ------------------------------------------- |
 | GET    | `/api/health`                      | Database health and ML configuration status |
-| GET    | `/api/businesses`                  | Synthetic business summaries                |
+| GET    | `/api/businesses`                  | Active business summaries                   |
 | GET    | `/api/businesses/:id`              | History and transactions                    |
-| POST   | `/api/businesses`                  | Import explicitly synthetic history         |
+| POST   | `/api/businesses`                  | Import user-provided UZS history            |
 | POST   | `/api/assessments`                 | Analyze stored business history             |
 | GET    | `/api/assessments?business_id=...` | Assessment history                          |
 | GET    | `/api/assessments/:id`             | Full assessment and latest decision         |

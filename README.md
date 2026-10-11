@@ -1,6 +1,6 @@
 # FlowCredit · WIUT Hackathon
 
-A bank/team workspace for reviewing synthetic business cash flow,
+A bank/team workspace for importing business transactions and reviewing cash flow,
 explainable payment-capacity recommendations, and seasonal repayment schedules.
 An officer records the final decision. The capacity score is not a default
 probability.
@@ -24,14 +24,15 @@ pnpm dev
 
 Open http://localhost:5173. The API listens on http://127.0.0.1:3000/api,
 with Swagger documentation at `/api/docs`. PostgreSQL uses localhost:55432.
-Tables and synthetic businesses are initialized automatically. Existing records
-and review decisions survive restarts.
+Tables are initialized automatically. New workspaces start empty; records and
+review decisions survive restarts. Legacy demo businesses are archived once
+without deleting their saved assessments or decisions.
 
 Create an account with a bank/team workspace name at the sign-up screen, or use
 an administrator's invitation link. Accounts use email and a password of at least
-12 characters. Each workspace has its own synthetic portfolio. The first account
-on an upgraded installation adopts the existing demo workspace and its saved
-assessments; later workspaces receive separate synthetic seeds.
+12 characters. Each workspace has an isolated portfolio. Import a business to
+begin. An upgraded installation retains its existing workspace and saved history;
+new registrations and additional workspaces receive no seeded businesses.
 
 The ML service is optional during frontend/backend development. With
 `ML_SERVICE_URL` empty, business histories, imports, and audit views work;
@@ -43,7 +44,7 @@ No fabricated score or recommendation is substituted.
 The repository includes a local FastAPI service that trains its revenue forecast
 on licensed Uzbekistan, Australian, Canadian and European turnover data. Borrower expense
 projections and synthetic net-flow forecasts are validated separately. To run
-the complete demo:
+the complete application locally:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build -d
@@ -119,7 +120,7 @@ rationale and `/health`, and visible in the review workspace.
 Fully inactive histories return zero without estimator provenance; expense-only
 histories disclose their zero-revenue guard instead of claiming learned revenue.
 The included repayment model uses explicitly declared **0% interest**;
-recommendations remain indices and require human review.
+recommendations use the imported business's declared units and require human review.
 Python and NestJS validate payment totals against the recommended principal;
 contradictory schedules fail the assessment rather than being saved as results.
 The ML health endpoint and durable audit identify the exact loaded artifact by
@@ -134,14 +135,15 @@ The adapter posts to `${ML_SERVICE_URL}/score`. The contract is documented in
 [ML integration](docs/ml-integration.md) and enforced by the shared schemas in
 `libs/common/api-contracts/src/index.ts`. The default timeout is 8 seconds.
 
-Only synthetic input is accepted by the import flow. Real bank data is outside
-the scope of this prototype. Core scoring belongs to the bank-local Python
-service and does not require external AI calls.
+Imports accept user-provided transactions in UZS. Core scoring runs in the local
+Python service and does not require external AI calls. Public-data training and
+synthetic model components remain explicitly disclosed; accepting actual inputs
+does not establish real borrower accuracy.
 
 ## Main workflow
 
-1. Sign in and select your bank/team workspace. Select a synthetic business or
-   import a synthetic transaction JSON file.
+1. Sign in and select your bank/team workspace. Import business transactions
+   from CSV or JSON, then select the business.
 2. Review the historical cash-flow chart and transaction records.
 3. Choose an assessment date and optionally enter the requested amount in UZS.
 4. Analyze using the connected ML service.
@@ -151,9 +153,13 @@ service and does not require external AI calls.
    immutable; reassess for a new review.
 7. View assessment history and its audit trail, or download the result as JSON.
 
-Transaction sizes, historical flows, and recommendation amounts are **indices**.
-They are never relabeled as UZS. `requested_amount` is forwarded in UZS according
-to the teammate's contract; the API does not invent an index conversion.
+User-provided histories declare `amount_unit: "UZS"`; the API maps one UZS to
+one internal `amount_index` unit. Cash flows and assessment amounts preserve
+that unit snapshot. Legacy synthetic histories retain **index** units and are
+never relabeled as currency. The current scorer does not receive this unit
+declaration: an optional UZS `requested_amount` remains context only, is flagged,
+and does not cap its recommendation. Officers must check the requested amount
+when reviewing. See [transaction imports](docs/imports.md).
 
 ## Accounts and workspaces
 
@@ -196,7 +202,8 @@ pnpm test:e2e
 git diff --check
 ```
 
-Tests cover transport validation, synthetic generation, authentication, roles,
+Tests cover transport validation, test-fixture generation, empty workspaces,
+UZS CSV/JSON imports and exports, legacy migration preservation, authentication, roles,
 invitations, CSRF, tenant isolation, ML failures, durable human review, and the
 browser workflow. The browser-test ML fixture is exclusively
 test infrastructure and is never started by the product's dev or Docker commands.
@@ -225,26 +232,25 @@ NestJS; PostgreSQL stores the audit and case records in a named volume. Local
 ports bind to loopback. Set a strong `POSTGRES_PASSWORD` before hosting.
 For an ML container, set `ML_SERVICE_URL` to an address reachable from the API
 container (a Compose service name or `host.docker.internal`, not its localhost).
-Public hosting is not provisioned by this repository.
+For HTTPS hosting with persistent storage and secure cookies, see
+[production deployment](docs/deployment.md).
 
 ## Data declaration and limitations
 
-All seed businesses, names, locations, and transactions are synthetic. The
-deterministic generator models monthly inflows with archetype-specific seasonality,
-trend, volatility, and channel mixes, then samples transactions within each month.
-It uses no customer records or external datasets. Imported data must explicitly
-declare `data_source: "synthetic"`.
+New workspaces contain no demo businesses. Imports must contain the business's
+actual UZS amounts and declare `data_source: "user_provided"`. This declaration
+records provenance supplied by the importer; the application cannot verify that
+a bank export is authentic. Historical synthetic cases remain directly accessible
+to their tenant from saved links, with their original indexed results and audits.
+They are excluded from active portfolio, review and audit lists. The deterministic
+business generator remains test infrastructure; it never runs during registration,
+workspace creation, development startup or production startup.
 
-The seed generator is `apps/backend/user/user-app-api/src/synthetic.ts`. It uses
-seeds `7261 + business_index × 919` and a fixed October 2025–September 2026
-history window; the cold-start florist has only June–September 2026. Seeding is
-idempotent. Generator and transport tests verify reproducibility.
-
-This is a synthetic-data hackathon MVP with authenticated tenant access. It has
-no email verification, password recovery, MFA, banking connector, or credit
-origination integration. Public revenues do not supply borrower default or
-repayment ground truth. Real banking deployment requires additional account
-and operational controls.
+This MVP has authenticated tenant access, role administration and human review.
+It has no email verification, password recovery, MFA, banking connector, or credit
+origination integration. Public revenue data supplies neither borrower default
+nor repayment ground truth. Real banking use requires additional account and
+operational controls.
 Run one API process per database; startup recovers interrupted pending assessments
 as failed attempts. Use the separate `wiut_test` database for browser tests.
 List views show the newest 200 businesses, 100 assessment attempts, and 500 audit

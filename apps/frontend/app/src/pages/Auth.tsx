@@ -5,7 +5,6 @@ import {
   ArrowRight,
   Building2,
   FileCheck2,
-  FlaskConical,
   Landmark,
   Loader2,
   ShieldCheck,
@@ -88,7 +87,7 @@ export function AuthPage({
             className="border-emerald-600/50 bg-emerald-900/60 text-emerald-100"
             variant="outline"
           >
-            WIUT Hackathon 2026
+            For banks and credit teams
           </Badge>
           <div className="space-y-4">
             <h2 className="text-4xl leading-tight font-semibold tracking-tight xl:text-5xl">
@@ -135,8 +134,8 @@ export function AuthPage({
           </div>
         </div>
         <p className="flex items-center gap-2 text-xs text-emerald-200/70">
-          <FlaskConical className="size-4" /> Borrower cases and transactions
-          are synthetic.
+          <ShieldCheck className="size-4" /> Your team's evidence. Your team's
+          decision.
         </p>
       </section>
       <section className="flex min-w-0 flex-col items-center justify-center px-5 py-10 sm:px-10">
@@ -344,8 +343,8 @@ export function AuthPage({
           </CardContent>
         </Card>
         <p className="mt-6 max-w-md text-center text-xs leading-relaxed text-muted-foreground">
-          This hackathon workspace uses synthetic borrower data. Amount indices
-          are separate from currency. Every final review is made by a person.
+          Start with an empty portfolio, import transaction history in UZS, and
+          invite your team. Every final review is made by a person.
         </p>
       </section>
     </main>

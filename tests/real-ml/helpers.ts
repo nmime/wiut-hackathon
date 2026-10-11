@@ -26,25 +26,26 @@ export function realBusinessInput(
           ts: `${calendarDate}T10:00:00Z`,
           direction: 'in',
           channel: 'card',
-          amount_index:
-            strength === 'positive'
+          amount:
+            (strength === 'positive'
               ? 10 + month * 0.5
-              : Math.max(1, 9 - month * 0.4),
+              : Math.max(1, 9 - month * 0.4)) * 100_000,
         },
         {
           ts: `${calendarDate}T16:00:00Z`,
           direction: 'out',
           channel: 'transfer',
-          amount_index: strength === 'positive' ? 6 : 11,
+          amount: (strength === 'positive' ? 6 : 11) * 100_000,
         },
       );
     }
   }
   return {
-    name: `Real ML ${strength} synthetic ${randomUUID().slice(0, 8)}`,
-    sector: 'Synthetic model integration retail',
-    location: 'Synthetic Tashkent district',
-    data_source: 'synthetic',
+    name: `Test-only model ${strength} ${randomUUID().slice(0, 8)}`,
+    sector: 'Test model integration retail',
+    location: 'Test Tashkent district',
+    data_source: 'user_provided',
+    amount_unit: 'UZS',
     transactions,
   };
 }
@@ -56,7 +57,7 @@ export async function importRealBusiness(
 ) {
   const input = realBusinessInput(strength);
   for (const transaction of input.transactions)
-    transaction.amount_index *= amountScale;
+    transaction.amount *= amountScale;
   const response = await request.post(`${REAL_API_URL}/businesses`, {
     data: input,
   });

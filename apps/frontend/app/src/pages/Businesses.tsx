@@ -48,6 +48,7 @@ import {
 } from '@/components/ui/table';
 import { api } from '@/lib/api';
 import {
+  amountLabel,
   assessmentLabel,
   compactNumber,
   dateLabel,
@@ -124,7 +125,7 @@ export function BusinessesPage({
             Businesses
           </h1>
           <p className="text-sm text-muted-foreground">
-            Your synthetic business portfolio, ready for a closer look.
+            Manage business histories and the credit reviews that follow.
           </p>
         </div>
         <Button onClick={onImport}>
@@ -238,12 +239,12 @@ export function BusinessesPage({
                   </EmptyTitle>
                   <EmptyDescription>
                     {items.length === 0
-                      ? 'Import synthetic transactions to create your first case.'
+                      ? 'Add a business and upload its transaction history in UZS.'
                       : 'Try another search or reset your filters.'}
                   </EmptyDescription>
                 </EmptyHeader>
                 {items.length === 0 ? (
-                  <Button onClick={onImport}>Import business</Button>
+                  <Button onClick={onImport}>Import first business</Button>
                 ) : (
                   <Button
                     variant="outline"
@@ -299,7 +300,7 @@ export function BusinessesPage({
                         onClick={() => sort('inflow')}
                         aria-label="Sort businesses by average monthly inflow"
                       >
-                        Monthly inflow index
+                        Monthly inflow
                         {sortBy !== 'inflow' ? (
                           <ArrowUpDown aria-hidden="true" />
                         ) : sortDirection === 'ascending' ? (
@@ -366,10 +367,10 @@ export function BusinessesPage({
                         {compactNumber(business.transaction_count)}
                       </TableCell>
                       <TableCell className="tabular-nums">
-                        {indexNumber(business.avg_monthly_inflow_index)}
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          idx
-                        </span>
+                        {amountLabel(
+                          business.avg_monthly_inflow_index,
+                          business.amount_unit,
+                        )}
                       </TableCell>
                       <TableCell>
                         <span className="inline-flex items-center gap-1.5 text-xs capitalize">
@@ -442,7 +443,7 @@ export function BusinessesPage({
               ? 'Portfolio unavailable'
               : `${filtered.length} of ${items.length} businesses`}
           </span>
-          <span>Synthetic data only</span>
+          <span>Active portfolio</span>
         </CardFooter>
       </Card>
     </>

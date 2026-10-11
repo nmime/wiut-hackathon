@@ -5,7 +5,7 @@ import {
   type ScoreRequest,
   type ScoreResponse,
 } from '@wiut/contracts';
-import { MAX_ML_RESPONSE_BYTES, MlClient } from './ml.js';
+import { MAX_ML_ERROR_BYTES, MAX_ML_RESPONSE_BYTES, MlClient } from './ml.js';
 import { ApiProblem } from './problem.js';
 
 const request: ScoreRequest = {
@@ -213,4 +213,144 @@ test('timeout aborts a slow upstream and reports504', async () => {
       }),
   );
   await assert.rejects(ml.score(request, 'request'), status(504));
+});
+
+test('known candidate refusals retain a safe month-end explanation with HTTP502', async () => {
+  const detail =
+    'The teammate candidate requires a completed calendar month-end assessment date. Select the latest completed month-end or use the real-data blend.';
+  await assert.rejects(
+    client(
+      async () =>
+        new Response(JSON.stringify({ code: 'month_end_required', detail }), {
+          status: 422,
+          headers: {
+            'content-type': 'application/problem+json; charset=utf-8',
+          },
+        }),
+    ).score(request, 'request'),
+    (error: unknown) =>
+      error instanceof ApiProblem &&
+      error.status === 502 &&
+      error.detail.includes(detail) &&
+      error.detail.includes('This attempt has been saved.'),
+  );
+  for (const code of [
+    'insufficient_history',
+    'unsupported_calendar',
+    'invalid_input',
+  ]) {
+    await assert.rejects(
+      client(
+        async () =>
+          new Response(
+            JSON.stringify({ code, detail: 'Candidate refused this input.' }),
+            {
+              status: 422,
+              headers: { 'content-type': 'application/json' },
+            },
+          ),
+      ).score(request, 'request'),
+      (error: unknown) =>
+        status(502)(error) &&
+        !(error as ApiProblem).detail.includes('Candidate refused this input.'),
+    );
+  }
+});
+
+test('malformed, unknown and unsafe upstream refusal diagnostics remain generic', async () => {
+  for (const body of [
+    'not JSON',
+    JSON.stringify({ code: 'new_unsafe_code', detail: 'do not expose this' }),
+    JSON.stringify({
+      code: 'month_end_required',
+      detail: 'Traceback /app/vendor/private.py password secret',
+    }),
+    JSON.stringify({
+      code: 'month_end_required',
+      detail: 'Error',
+      stack: 'private diagnostic',
+    }),
+    JSON.stringify({
+      code: 'month_end_required',
+      detail: '<script>alert(1)</script>',
+    }),
+    JSON.stringify({ code: 'month_end_required', detail: 'x'.repeat(501) }),
+    JSON.stringify({ code: 'month_end_required', detail: 42 }),
+  ]) {
+    await assert.rejects(
+      client(
+        async () =>
+          new Response(body, {
+            status: 422,
+            headers: { 'content-type': 'application/json' },
+          }),
+      ).score(request, 'request'),
+      (error: unknown) =>
+        error instanceof ApiProblem &&
+        error.status === 502 &&
+        error.detail ===
+          'The ML service returned HTTP 422. This attempt has been saved.',
+    );
+  }
+});
+
+test('declared and streamed error bodies stop at their smaller byte limit and cancel', async () => {
+  for (const declared of [true, false]) {
+    let canceled = false;
+    let reads = 0;
+    const stream = new ReadableStream<Uint8Array>(
+      {
+        pull(controller) {
+          reads += 1;
+          controller.enqueue(new Uint8Array(MAX_ML_ERROR_BYTES + 1));
+        },
+        cancel() {
+          canceled = true;
+        },
+      },
+      { highWaterMark: 0 },
+    );
+    await assert.rejects(
+      client(
+        async () =>
+          new Response(stream, {
+            status: 422,
+            headers: {
+              'content-type': 'application/json',
+              ...(declared
+                ? { 'content-length': String(MAX_ML_ERROR_BYTES + 1) }
+                : {}),
+            },
+          }),
+      ).score(request, 'request'),
+      (error: unknown) =>
+        error instanceof ApiProblem &&
+        error.status === 502 &&
+        !error.detail.includes('month-end'),
+    );
+    assert.equal(canceled, true);
+    assert.equal(reads, declared ? 0 : 1);
+  }
+});
+
+test('a stalled refusal body is canceled by the existing request timeout', async () => {
+  let canceled = false;
+  const stream = new ReadableStream<Uint8Array>(
+    {
+      cancel() {
+        canceled = true;
+      },
+    },
+    { highWaterMark: 0 },
+  );
+  const ml = new MlClient(
+    { ML_SERVICE_URL: 'http://localhost:8000', ML_TIMEOUT_MS: 10 },
+    async () =>
+      new Response(stream, {
+        status: 422,
+        headers: { 'content-type': 'application/json' },
+      }),
+  );
+  await assert.rejects(ml.score(request, 'request'), status(504));
+  assert.equal(canceled, true);
 });

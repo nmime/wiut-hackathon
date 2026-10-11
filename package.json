@@ -10,7 +10,7 @@
     "dev": "pnpm --filter @wiut/contracts build && concurrently -k -n api,web 'pnpm --filter @wiut/api dev' 'pnpm --filter @wiut/web dev'",
     "build": "pnpm --filter @wiut/contracts build && pnpm --filter @wiut/api build && pnpm --filter @wiut/web build",
     "typecheck": "pnpm --filter @wiut/contracts build && pnpm -r typecheck && tsc -p tests/tsconfig.json",
-    "test": "pnpm --filter @wiut/contracts build && pnpm --filter @wiut/contracts test && pnpm --filter @wiut/api test",
+    "test": "pnpm --filter @wiut/contracts build && pnpm --filter @wiut/contracts test && pnpm --filter @wiut/api test && pnpm --filter @wiut/web test:import",
     "test:e2e": "playwright test",
     "test:real-ml": "playwright test --config tests/playwright.real-ml.config.ts",
     "check": "pnpm typecheck && pnpm test && pnpm build && pnpm format:check",

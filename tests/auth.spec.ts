@@ -17,6 +17,41 @@ import {
 } from './auth-fixtures';
 import { API_URL, AS_OF_DATE, importBusiness, importInput } from './helpers';
 
+test('registration and additional workspaces start empty with only their creator on the team', async ({
+  request,
+}) => {
+  const original = AuthSessionSchema.parse(
+    await (await request.get(`${API_URL}/auth/session`)).json(),
+  );
+  const assertEmpty = async () => {
+    expect(
+      BusinessListSchema.parse(
+        await (await request.get(`${API_URL}/businesses`)).json(),
+      ).items,
+    ).toEqual([]);
+    for (const path of ['/assessments', '/audit']) {
+      expect(
+        (await (await request.get(`${API_URL}${path}`)).json()).items,
+      ).toEqual([]);
+    }
+    const team = TeamSchema.parse(
+      await (await request.get(`${API_URL}/team`)).json(),
+    );
+    expect(team.invitations).toEqual([]);
+    expect(team.members).toHaveLength(1);
+    expect(team.members[0]?.id).toBe(original.user.id);
+    expect(team.members[0]?.role).toBe('admin');
+  };
+  await assertEmpty();
+  const response = await request.post(`${API_URL}/tenants`, {
+    data: { name: 'Empty additional test workspace' },
+  });
+  expect(response.status()).toBe(201);
+  const created = AuthSessionSchema.parse(await response.json());
+  expect(created.tenant.id).not.toBe(original.tenant.id);
+  await assertEmpty();
+});
+
 test('anonymous callers cannot access or mutate tenant data', async ({
   playwright,
 }) => {

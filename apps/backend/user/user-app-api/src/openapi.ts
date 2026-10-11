@@ -71,7 +71,7 @@ export function setupDocumentation(app: INestApplication, config: AppConfig) {
     successStatus: number = input ? 201 : 200,
   ) => ({
     summary,
-    tags: ['Synthetic credit review'],
+    tags: ['Capacity review'],
     security: [
       input ? { sessionCookie: [], csrfToken: [] } : { sessionCookie: [] },
     ],
@@ -133,7 +133,7 @@ export function setupDocumentation(app: INestApplication, config: AppConfig) {
       title: 'WIUT capacity review API',
       version: '0.1.0',
       description:
-        'Synthetic-data demonstration only. Scores express payment capacity; a human records each final decision. Requested amounts are UZS; transactions, cash flow and recommendations remain amount indices without a declared currency conversion. Opaque HttpOnly sessions select a workspace; every domain resource is tenant-scoped. Authenticated mutations require a trusted application Origin and x-csrf-token from /auth/session; login/register also require a trusted Origin. Administrators manage team invitations; admins and officers review synthetic businesses. Decision identities come from the session; reviewer_name input is deprecated and ignored. Lists are bounded to 200 businesses, 100 assessments, 500 domain audit events, 500 members and 100 invitations. Invitations expire after seven days and require the matching email; email ownership is not independently verified. No email delivery, password reset, MFA or external identity provider is included.',
+        'Import user-provided transactions in UZS into an initially empty workspace. Scores estimate payment capacity; a human records each final decision. Imported amount values map explicitly 1:1 to the unchanged ML amount_index transport: one index equals one UZS for a business or assessment with amount_unit=UZS. Archived legacy synthetic records keep original indices with amount_unit=index and no currency conversion. The configured model requires borrower-level validation before relying on its forecasts or recommendations. Opaque HttpOnly sessions select a tenant; all domain resources are tenant-scoped. Mutations require a trusted application Origin and x-csrf-token; x-tenant-id optionally rejects stale workspace state. Administrators manage invitations; admins and officers review businesses. Decision identities come from the session; reviewer_name input is deprecated and ignored. Default lists omit archived businesses and their history; direct IDs and explicit business_id history filters preserve historical access. Lists are bounded to 200 businesses, 100 assessments, 500 domain audit events, 500 members and 100 invitations. Invitations expire after seven days; email ownership is not independently verified. No email delivery, password reset, MFA or external identity provider is included.',
     },
     paths: {
       '/api/health': {
@@ -226,9 +226,12 @@ export function setupDocumentation(app: INestApplication, config: AppConfig) {
         },
       },
       '/api/businesses': {
-        get: operation('List synthetic businesses', 'Businesses'),
+        get: operation(
+          'List active businesses in the current workspace',
+          'Businesses',
+        ),
         post: operation(
-          'Import explicitly synthetic transactions (maximum 240 months)',
+          'Import user-provided UZS transactions (maximum 240 months)',
           'Business',
           'BusinessImport',
         ),
