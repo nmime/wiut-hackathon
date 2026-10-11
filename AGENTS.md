@@ -14,8 +14,12 @@ capability machinery, and tooling.
 - Keep product work on a topic branch. Do not merge or deploy without a user request.
 - Use official shadcn/ui components and Tailwind. Do not create custom reusable
   UI primitives or a second design system. Compose product pages from shadcn.
-- Borrower profiles and demo transactions must be synthetic. The maintainer also
-  authorizes licensed real public revenue data for direct forecast training,
+- New workspaces start empty. The maintainer authorizes importing actual business
+  transactions into authenticated, isolated workspaces. Declare data provenance
+  and monetary units; never seed fabricated customers into an active portfolio.
+  Keep synthetic borrower fixtures restricted to tests and disclosed model work.
+  Archive legacy demo cases without deleting accounts, assessments or decisions.
+  The maintainer also authorizes licensed real public revenue data for forecast training,
   generator calibration, and separate benchmarks. Attribute sources, preserve
   temporal holdouts, and disclose transfer limitations. Revenue observations do
   not supply expense, repayment, or default labels. Never invent model outputs
@@ -26,5 +30,9 @@ capability machinery, and tooling.
 - Validate both incoming API data and responses from the ML service.
 - Every assessment attempt and officer decision must be audited and persisted.
 - Keep secrets and runtime data ignored. Document operational limitations honestly.
+- Preserve frozen model evidence when evaluating a replacement. The maintainer
+  authorizes reviewing and integrating the teammate's ML service; compare actual
+  contracts and validation before choosing a default. Never claim synthetic
+  holdout performance establishes real borrower accuracy.
 - Before finishing, run the type checks, builds, focused API/integration and browser
   tests, formatting check, and `git diff --check`.

@@ -52,7 +52,7 @@ async function bootstrap() {
   setupDocumentation(app, config);
   await app.listen(config.API_PORT, config.API_HOST);
   console.log(
-    `WIUT synthetic-data API ready at http://${config.API_HOST}:${config.API_PORT}/api; ML ${config.ML_SERVICE_URL ? 'configured' : 'not configured'}.`,
+    `WIUT capacity review API ready at http://${config.API_HOST}:${config.API_PORT}/api; ML ${config.ML_SERVICE_URL ? 'configured' : 'not configured'}.`,
   );
 }
 

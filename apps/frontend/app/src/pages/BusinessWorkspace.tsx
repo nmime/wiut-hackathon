@@ -30,7 +30,6 @@ import {
   ClipboardCheck,
   Download,
   FileClock,
-  FlaskConical,
   Info,
   Loader2,
   Play,
@@ -98,6 +97,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { api, ApiError } from '@/lib/api';
 import {
+  amountLabel,
+  amountUnitLabel,
+  businessExport,
   assessmentLabel,
   compactNumber,
   calendarMonthLabel,
@@ -182,6 +184,8 @@ export function BusinessWorkspace({
       null)
     : (assessments[0] ?? business?.latest_assessment ?? null);
   const result = assessmentError ? null : assessment?.result;
+  const businessUnit = business?.amount_unit ?? 'index';
+  const assessmentUnit = assessment?.amount_unit ?? 'index';
   const filteredTransactions = (business?.transactions ?? []).filter(
     (transaction) =>
       (direction === 'all' || transaction.direction === direction) &&
@@ -368,14 +372,15 @@ export function BusinessWorkspace({
               {business.name}
             </h1>
             <Badge variant="outline" className="gap-1.5 font-normal">
-              <FlaskConical className="size-3" />
-              Synthetic
+              {business.archived_at ? 'Archived case' : 'Transaction history'}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             {business.sector} · {business.location}
             <span className="mx-2 text-border">/</span>
-            {business.archetype}
+            {business.amount_unit === 'UZS'
+              ? 'Amounts in UZS'
+              : 'Legacy amount indices'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -383,23 +388,30 @@ export function BusinessWorkspace({
             variant="outline"
             size="sm"
             onClick={() =>
-              downloadJson(`${business.id}-synthetic-business.json`, {
-                name: business.name,
-                sector: business.sector,
-                location: business.location,
-                data_source: 'synthetic',
-                transactions: business.transactions,
-              })
+              downloadJson(
+                `${business.id}-business-${business.amount_unit}.json`,
+                businessExport(business),
+              )
             }
           >
             <Download />
-            Download sample JSON
+            Download business JSON
           </Button>
           <Badge variant="secondary" className="h-8 font-normal">
             {assessmentLabel(business.latest_assessment)}
           </Badge>
         </div>
       </div>
+      {business.archived_at && (
+        <Alert>
+          <Info />
+          <AlertTitle>Archived case</AlertTitle>
+          <AlertDescription>
+            This case is retained for its transaction history, assessments and
+            audit trail. New assessments are unavailable.
+          </AlertDescription>
+        </Alert>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="gap-3 shadow-none">
           <CardHeader>
@@ -409,7 +421,8 @@ export function BusinessWorkspace({
             <p className="text-2xl font-semibold tabular-nums">
               {indexNumber(business.avg_monthly_inflow_index)}
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                index
+                {' '}
+                {amountUnitLabel(businessUnit)}
               </span>
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -425,7 +438,8 @@ export function BusinessWorkspace({
             <p className="text-2xl font-semibold tabular-nums">
               {indexNumber(business.avg_monthly_surplus_index)}
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                index
+                {' '}
+                {amountUnitLabel(businessUnit)}
               </span>
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -494,7 +508,8 @@ export function BusinessWorkspace({
                 <CardTitle className="text-base">Observed cash flow</CardTitle>
                 <CardDescription>
                   Monthly inflows and outflows from {business.history_months}{' '}
-                  months of synthetic history.
+                  months of transaction history in{' '}
+                  {amountUnitLabel(businessUnit)}.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -556,7 +571,7 @@ export function BusinessWorkspace({
                                 {name === 'inflow_index' ? 'Inflow' : 'Outflow'}
                               </span>
                               <span className="font-mono font-medium">
-                                {indexNumber(Number(value))} idx
+                                {amountLabel(Number(value), businessUnit)}
                               </span>
                             </div>
                           )}
@@ -584,8 +599,9 @@ export function BusinessWorkspace({
                 </ChartContainer>
               </CardContent>
               <CardFooter className="border-t py-3 text-xs text-muted-foreground">
-                All values are amount indices. A currency conversion has not
-                been declared.
+                {businessUnit === 'UZS'
+                  ? 'Amounts are UZS. The declared conversion is 1 internal amount index = 1 UZS.'
+                  : 'Legacy values are amount indices. No currency conversion has been declared.'}
               </CardFooter>
             </Card>
             <Card className="min-w-0 shadow-none">
@@ -627,7 +643,13 @@ export function BusinessWorkspace({
                     <ReferenceLine y={0} stroke="var(--border)" />
                     <ChartTooltip
                       cursor={false}
-                      content={<ChartTooltipContent />}
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) =>
+                            `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? 'Adaptive payment' : 'Equal payment'}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
+                          }
+                        />
+                      }
                     />
                     <Bar
                       isAnimationActive={false}
@@ -649,8 +671,8 @@ export function BusinessWorkspace({
                       Transaction history
                     </CardTitle>
                     <CardDescription>
-                      {business.transaction_count} synthetic transactions.
-                      Amounts are indices.
+                      {business.transaction_count} transactions in{' '}
+                      {amountUnitLabel(businessUnit)}.
                     </CardDescription>
                   </div>
                   <Button
@@ -760,7 +782,7 @@ export function BusinessWorkspace({
                 ) : (
                   <Table
                     id="transaction-history-table"
-                    aria-label="Synthetic transaction history"
+                    aria-label="Transaction history"
                     tabIndex={0}
                   >
                     <TableHeader>
@@ -769,7 +791,7 @@ export function BusinessWorkspace({
                         <TableHead>Direction</TableHead>
                         <TableHead>Channel</TableHead>
                         <TableHead className="pr-6 text-right">
-                          Amount index
+                          Amount ({amountUnitLabel(businessUnit)})
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -795,7 +817,10 @@ export function BusinessWorkspace({
                             {transaction.channel.replace('_', ' ')}
                           </TableCell>
                           <TableCell className="pr-6 text-right text-sm tabular-nums">
-                            {indexNumber(transaction.amount_index)}
+                            {amountLabel(
+                              transaction.amount_index,
+                              businessUnit,
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -1052,6 +1077,7 @@ export function BusinessWorkspace({
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
+                if (business.archived_at) return;
                 setAssessmentError(null);
                 setAssessmentRequestId(undefined);
                 const parsed = CreateAssessmentSchema.safeParse({
@@ -1088,11 +1114,12 @@ export function BusinessWorkspace({
                   value={requestedAmount}
                   onChange={(event) => setRequestedAmount(event.target.value)}
                   placeholder="No requested amount"
-                  disabled={assessMutation.isPending}
+                  disabled={assessMutation.isPending || !!business.archived_at}
                 />
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Forwarded as UZS in the ML request. Returned recommendations
-                  remain amount indices.
+                  Request handling depends on the connected scorer. Check the
+                  saved recommendation and model flags; the current real-data
+                  scorer records this amount as context only.
                 </p>
               </div>
               <div className="space-y-2">
@@ -1103,7 +1130,7 @@ export function BusinessWorkspace({
                   value={assessmentDate}
                   onChange={(event) => setAssessmentDate(event.target.value)}
                   required
-                  disabled={assessMutation.isPending}
+                  disabled={assessMutation.isPending || !!business.archived_at}
                 />
                 <p className="text-xs text-muted-foreground">
                   The service considers history on or before this date.
@@ -1140,7 +1167,7 @@ export function BusinessWorkspace({
             <Button
               type="submit"
               form="assessment-form"
-              disabled={assessMutation.isPending}
+              disabled={assessMutation.isPending || !!business.archived_at}
             >
               {assessMutation.isPending ? (
                 <Loader2 className="animate-spin" />
@@ -1295,8 +1322,9 @@ export function BusinessWorkspace({
                   Recommended loan structure
                 </CardTitle>
                 <CardDescription>
-                  Amount indices are not currency amounts. No UZS conversion is
-                  assumed.
+                  {assessmentUnit === 'UZS'
+                    ? 'Amounts in UZS, using the assessment’s declared conversion: 1 internal amount index = 1 UZS. Recommendations are subject to human review.'
+                    : 'Legacy results are amount indices. No currency conversion is declared.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -1311,7 +1339,7 @@ export function BusinessWorkspace({
                       )}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      amount index
+                      {amountUnitLabel(assessmentUnit)}
                     </p>
                   </div>
                   <div>
@@ -1325,7 +1353,7 @@ export function BusinessWorkspace({
                       )}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      amount index / month
+                      {amountUnitLabel(assessmentUnit)} / month
                     </p>
                   </div>
                   <div>
@@ -1339,6 +1367,50 @@ export function BusinessWorkspace({
                   </div>
                 </div>
                 <Separator />
+                {result.loan_terms && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-medium">Loan terms</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">
+                        Annual interest{' '}
+                        {indexNumber(result.loan_terms.annual_rate * 100)}%
+                      </Badge>
+                      <Badge variant="outline" className="capitalize">
+                        {result.loan_terms.schedule_type} schedule
+                      </Badge>
+                    </div>
+                    <dl className="grid gap-3 text-xs sm:grid-cols-2">
+                      <div>
+                        <dt className="text-muted-foreground">
+                          Total interest
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                          {amountLabel(
+                            result.loan_terms.total_interest_index,
+                            assessmentUnit,
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-muted-foreground">
+                          Total repayment
+                        </dt>
+                        <dd className="mt-1 font-medium tabular-nums">
+                          {amountLabel(
+                            result.loan_terms.total_repayment_index,
+                            assessmentUnit,
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="text-xs text-muted-foreground">
+                      {result.loan_terms.requested_amount_policy ===
+                      'capacity_checked'
+                        ? 'The requested amount is checked against model capacity. Review any request warning before deciding.'
+                        : 'The requested amount is context only and does not cap this recommendation.'}
+                    </p>
+                  </div>
+                )}
                 {result.forecast_provenance && (
                   <div className="space-y-2">
                     <p className="text-xs font-medium">Forecast evidence</p>
@@ -1404,7 +1476,7 @@ export function BusinessWorkspace({
                   )}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  amount index
+                  {amountUnitLabel(assessmentUnit)}
                 </p>
               </div>
               <div>
@@ -1417,7 +1489,7 @@ export function BusinessWorkspace({
                   )}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  amount index
+                  {amountUnitLabel(assessmentUnit)}
                 </p>
               </div>
               <div>
@@ -1470,8 +1542,9 @@ export function BusinessWorkspace({
                   12-month surplus forecast
                 </CardTitle>
                 <CardDescription>
-                  Net cash flow forecast in amount indices, starting the
-                  calendar month after {dateLabel(result.as_of_date)}.
+                  Net cash flow forecast in {amountUnitLabel(assessmentUnit)},
+                  starting the calendar month after{' '}
+                  {dateLabel(result.as_of_date)}.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1503,7 +1576,15 @@ export function BusinessWorkspace({
                       tickFormatter={compactNumber}
                     />
                     <ReferenceLine y={0} stroke="var(--border)" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value, name) =>
+                            `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? 'Adaptive payment' : 'Equal payment'}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
+                          }
+                        />
+                      }
+                    />
                     <Line
                       isAnimationActive={false}
                       type="monotone"
@@ -1545,7 +1626,8 @@ export function BusinessWorkspace({
                 </CardTitle>
                 <CardDescription>
                   Adaptive payments versus an equal-payment comparison with the
-                  same total and term. No interest rate is assumed.
+                  same total and term. The comparison divides total scheduled
+                  payments equally; it does not calculate a separate loan offer.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1593,7 +1675,13 @@ export function BusinessWorkspace({
                         />
                         <ChartTooltip
                           cursor={false}
-                          content={<ChartTooltipContent />}
+                          content={
+                            <ChartTooltipContent
+                              formatter={(value, name) =>
+                                `${name === 'surplus_index' || name === 'surplus' ? 'Net surplus' : name === 'installment_index' ? 'Adaptive payment' : 'Equal payment'}: ${amountLabel(Number(value), name === 'surplus_index' ? businessUnit : assessmentUnit)}`
+                              }
+                            />
+                          }
                         />
                         <Bar
                           isAnimationActive={false}
@@ -1619,7 +1707,7 @@ export function BusinessWorkspace({
                           <TableRow>
                             <TableHead>Payment month</TableHead>
                             <TableHead className="text-right">
-                              Installment index
+                              Installment ({amountUnitLabel(assessmentUnit)})
                             </TableHead>
                             <TableHead>Adjustment</TableHead>
                           </TableRow>
@@ -1634,7 +1722,10 @@ export function BusinessWorkspace({
                                 </span>
                               </TableCell>
                               <TableCell className="text-right text-xs tabular-nums">
-                                {indexNumber(row.installment_index)}
+                                {amountLabel(
+                                  row.installment_index,
+                                  assessmentUnit,
+                                )}
                               </TableCell>
                               <TableCell>
                                 <Badge

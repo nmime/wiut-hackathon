@@ -7,6 +7,7 @@ import {
   BusinessDetailSchema,
   BusinessImportSchema,
   BusinessListSchema,
+  LegacySyntheticBusinessImportSchema,
   CreateAssessmentSchema,
   DecisionInputSchema,
   HealthSchema,
@@ -19,7 +20,7 @@ import type { AppConfig } from './config.js';
 import { Database } from './database.js';
 import { MlClient } from './ml.js';
 import { ApiProblem, errorMessage, validate } from './problem.js';
-import { businessDetail } from './synthetic.js';
+import { businessDetail, type StoredBusiness } from './business.js';
 import type { AuthContext } from './auth-types.js';
 
 function knownBusinessId(body: unknown): string | undefined {
@@ -48,7 +49,7 @@ export class ProductService {
       status: 'ok',
       database: 'connected',
       ml_configured: Boolean(this.config.ML_SERVICE_URL),
-      synthetic_data: true,
+      synthetic_data: false,
     });
   }
 
@@ -69,7 +70,10 @@ export class ProductService {
         latest_assessment: latest.get(business.id) ?? null,
       };
     });
-    return BusinessListSchema.parse({ items, synthetic: true });
+    return BusinessListSchema.parse({
+      items,
+      synthetic: items.some((item) => item.data_source === 'synthetic'),
+    });
   }
   async business(id: string, auth: AuthContext) {
     const stored = await this.database.business(id, auth.tenant.id);
@@ -77,7 +81,7 @@ export class ProductService {
       throw new ApiProblem(
         404,
         'Business not found',
-        'The requested synthetic business does not exist.',
+        'The requested business does not exist.',
       );
     return BusinessDetailSchema.parse({
       ...businessDetail(stored),
@@ -88,10 +92,27 @@ export class ProductService {
     });
   }
   async importBusiness(body: unknown, requestId: string, auth: AuthContext) {
-    const input = validate(BusinessImportSchema, body);
-    const transactions = [...input.transactions].sort((a, b) =>
-      a.ts.localeCompare(b.ts),
-    );
+    const legacy =
+      this.config.NODE_ENV === 'test' &&
+      typeof body === 'object' &&
+      body !== null &&
+      'data_source' in body &&
+      body.data_source === 'synthetic';
+    const input = legacy
+      ? validate(LegacySyntheticBusinessImportSchema, body)
+      : validate(BusinessImportSchema, body);
+    const transactions = input.transactions
+      .map((row) =>
+        'amount' in row
+          ? {
+              ts: row.ts,
+              direction: row.direction,
+              channel: row.channel,
+              amount_index: row.amount,
+            }
+          : row,
+      )
+      .sort((a, b) => a.ts.localeCompare(b.ts));
     const first = new Date(`${transactions[0]!.ts.slice(0, 7)}-01T00:00:00Z`);
     const last = new Date(
       `${transactions.at(-1)!.ts.slice(0, 7)}-01T00:00:00Z`,
@@ -105,14 +126,17 @@ export class ProductService {
       throw new ApiProblem(
         400,
         'Invalid transaction history',
-        'Synthetic imports support at most 240 calendar months of transaction history.',
+        'Imports support at most 240 calendar months of transaction history.',
       );
-    const business = {
-      id: `synthetic-${randomUUID()}`,
+    const business: StoredBusiness = {
+      id: `business-${randomUUID()}`,
       name: input.name,
       sector: input.sector,
       location: input.location,
-      archetype: 'Imported synthetic data',
+      archetype: legacy ? 'Test fixture' : 'Uploaded transaction history',
+      data_source: legacy ? 'synthetic' : 'user_provided',
+      amount_unit: legacy ? 'index' : 'UZS',
+      archived_at: null,
       transactions,
     };
     await this.database.importBusiness(business, requestId, auth);
@@ -132,7 +156,13 @@ export class ProductService {
         throw new ApiProblem(
           404,
           'Business not found',
-          'The requested synthetic business does not exist.',
+          'The requested business does not exist.',
+        );
+      if (business.archived_at)
+        throw new ApiProblem(
+          409,
+          'Business archived',
+          'Archived businesses retain their history and cannot receive new assessments.',
         );
       const transactions = business.transactions.filter(
         (transaction) => transaction.ts.slice(0, 10) <= input.as_of_date,
@@ -141,7 +171,7 @@ export class ProductService {
         throw new ApiProblem(
           400,
           'No eligible transactions',
-          'Choose an assessment date on or after the first synthetic transaction.',
+          'Choose an assessment date on or after the first transaction.',
         );
       scoringInput = validate(ScoreRequestSchema, {
         ...input,

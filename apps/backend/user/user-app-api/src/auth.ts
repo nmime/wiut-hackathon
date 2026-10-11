@@ -33,7 +33,6 @@ import type { AppConfig } from './config.js';
 import type { AuthContext } from './auth-types.js';
 import { Database } from './database.js';
 import { ApiProblem, validate } from './problem.js';
-import { generateSyntheticBusinesses } from './synthetic.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -305,21 +304,6 @@ export class AuthService {
     );
     return { token, context: (await this.loadContext(hash, client))! };
   }
-  private async seedTenant(client: PoolClient, tenantId: string) {
-    for (const business of generateSyntheticBusinesses())
-      await client.query(
-        'INSERT INTO synthetic_businesses(id,name,sector,location,archetype,transactions,tenant_id) VALUES($1,$2,$3,$4,$5,$6::jsonb,$7)',
-        [
-          `${tenantId}:${business.id}`,
-          business.name,
-          business.sector,
-          business.location,
-          business.archetype,
-          JSON.stringify(business.transactions),
-          tenantId,
-        ],
-      );
-  }
   private invitationUnavailable(): never {
     throw new ApiProblem(
       400,
@@ -447,7 +431,6 @@ export class AuthService {
             tenantId,
             input.tenant_name,
           ]);
-          await this.seedTenant(client, tenantId);
         }
         await client.query(
           "INSERT INTO memberships(user_id,tenant_id,role) VALUES($1,$2,'admin')",
@@ -577,7 +560,6 @@ export class AuthService {
         "INSERT INTO memberships(user_id,tenant_id,role) VALUES($1,$2,'admin')",
         [auth.user.id, id],
       );
-      await this.seedTenant(client, id);
       await client.query(
         'UPDATE auth_sessions SET tenant_id=$2,csrf_token=$3 WHERE token_hash=$1',
         [auth.session_hash, id, secretToken()],

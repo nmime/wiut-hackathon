@@ -13,3 +13,6 @@ __pycache__
 **/.venv
 ml-service/runtime
 ml-service/.pytest_cache
+teammate-ml-service/runtime
+**/.pytest_cache
+**/__pycache__

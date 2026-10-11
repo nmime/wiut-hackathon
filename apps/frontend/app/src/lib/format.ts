@@ -1,5 +1,28 @@
 import type { Assessment, BusinessDetail } from '@wiut/contracts';
 
+export type AmountUnit = 'UZS' | 'index';
+export const amountUnitLabel = (unit: AmountUnit) =>
+  unit === 'UZS' ? 'UZS' : 'amount index';
+export const amountLabel = (value: number, unit: AmountUnit) =>
+  `${indexNumber(value)} ${unit === 'UZS' ? 'UZS' : 'idx'}`;
+export function businessExport(business: BusinessDetail) {
+  return {
+    name: business.name,
+    sector: business.sector,
+    location: business.location,
+    data_source: business.data_source,
+    amount_unit: business.amount_unit,
+    transactions: business.transactions.map(
+      ({ amount_index, ...transaction }) => ({
+        ...transaction,
+        ...(business.amount_unit === 'UZS'
+          ? { amount: amount_index }
+          : { amount_index }),
+      }),
+    ),
+  };
+}
+
 export const indexNumber = (value: number) =>
   new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
 export const compactNumber = (value: number) =>
@@ -69,7 +92,7 @@ export function downloadJson(filename: string, value: unknown) {
 
 export function downloadTransactions(business: BusinessDetail) {
   const rows = [
-    'ts,direction,channel,amount_index',
+    `ts,direction,channel,${business.amount_unit === 'UZS' ? 'amount' : 'amount_index'}`,
     ...business.transactions.map(
       (t) => `${t.ts},${t.direction},${t.channel},${t.amount_index}`,
     ),
@@ -79,7 +102,7 @@ export function downloadTransactions(business: BusinessDetail) {
   );
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `${business.id}-transactions.csv`;
+  anchor.download = `${business.id}-transactions-${business.amount_unit}.csv`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

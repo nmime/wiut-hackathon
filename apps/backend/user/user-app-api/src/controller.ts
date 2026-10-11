@@ -16,7 +16,7 @@ function filterBusinessId(value: unknown): string | undefined {
   return value;
 }
 
-@ApiTags('Synthetic credit review')
+@ApiTags('Capacity review')
 @Controller()
 export class ProductController {
   constructor(private readonly product: ProductService) {}

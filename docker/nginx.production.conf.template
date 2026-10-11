@@ -1,0 +1,36 @@
+server {
+  listen 80;
+  server_name _;
+  root /usr/share/nginx/html;
+  index index.html;
+  client_max_body_size 3m;
+  # The host nginx is the sole trusted proxy; never trust the whole subnet.
+  set_real_ip_from ${TRUSTED_PROXY_IP};
+  real_ip_header X-Forwarded-For;
+  real_ip_recursive off;
+  add_header X-Content-Type-Options nosniff always;
+  add_header Referrer-Policy no-referrer always;
+  add_header X-Frame-Options DENY always;
+  location = /healthz {
+    access_log off;
+    default_type text/plain;
+    return 200 'OK\n';
+  }
+  location /api/ {
+    proxy_pass http://api:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $http_host;
+    # Overwrite any incoming chain after trusting only the host gateway.
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_read_timeout 65s;
+  }
+  location / {
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+    add_header X-Frame-Options DENY always;
+    try_files $uri $uri/ /index.html;
+  }
+}

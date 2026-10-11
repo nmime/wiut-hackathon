@@ -30,6 +30,7 @@ test('portfolio summaries use one batch lookup while preserving each business la
   const attempt: Assessment = {
     id: 'ea7f3623-d512-4b51-8653-e6b9be38dd09',
     business_id: businesses[0]!.id,
+    amount_unit: 'index',
     requested_amount: null,
     as_of_date: '2026-09-27',
     status: 'failed',
@@ -258,4 +259,132 @@ test('audit hashes use SHA-256 and change when inputs change', () => {
     inputHash({ business_id: 'synthetic-bakery' }),
     inputHash({ business_id: 'synthetic-textile' }),
   );
+});
+
+test('user-provided UZS amounts preserve exact 1:1 internal values and declared units', async () => {
+  let imported = false;
+  const database = {
+    importBusiness: async (
+      business: import('./business.js').StoredBusiness,
+      _requestId: string,
+      context: AuthContext,
+    ) => {
+      imported = true;
+      assert.equal(context.user.id, auth.user.id);
+      assert.equal(business.data_source, 'user_provided');
+      assert.equal(business.amount_unit, 'UZS');
+      assert.equal(business.archived_at, null);
+      assert.equal(business.transactions[0]!.amount_index, 1000000.75);
+      assert.equal('amount' in business.transactions[0]!, false);
+    },
+  } as unknown as Database;
+  const result = await new ProductService(
+    database,
+    {} as MlClient,
+    loadConfig({ NODE_ENV: 'production' }),
+  ).importBusiness(
+    {
+      name: 'Uploaded business',
+      sector: 'Retail',
+      location: 'Tashkent',
+      transactions: [
+        {
+          ts: '2026-09-01T12:00:00Z',
+          direction: 'in',
+          channel: 'card',
+          amount: 1000000.75,
+        },
+      ],
+    },
+    'test-upload',
+    auth,
+  );
+  assert.equal(imported, true);
+  assert.equal(result.amount_unit, 'UZS');
+  assert.equal(result.data_source, 'user_provided');
+  assert.equal(result.avg_monthly_inflow_index, 1000000.75);
+});
+
+test('production rejects new synthetic imports while explicit test mode permits legacy fixtures', async () => {
+  const input = {
+    name: 'Test fixture',
+    sector: 'Retail',
+    location: 'Tashkent',
+    data_source: 'synthetic',
+    transactions: [
+      {
+        ts: '2026-09-01T12:00:00Z',
+        direction: 'in',
+        channel: 'card',
+        amount_index: 10,
+      },
+    ],
+  };
+  let calls = 0;
+  const database = {
+    importBusiness: async () => {
+      calls++;
+    },
+  } as unknown as Database;
+  await assert.rejects(
+    new ProductService(
+      database,
+      {} as MlClient,
+      loadConfig({ NODE_ENV: 'production' }),
+    ).importBusiness(input, 'test-upload', auth),
+    (error: unknown) => error instanceof ApiProblem && error.status === 400,
+  );
+  assert.equal(calls, 0);
+  const response = await new ProductService(
+    database,
+    {} as MlClient,
+    loadConfig({ NODE_ENV: 'test' }),
+  ).importBusiness(input, 'test-upload', auth);
+  assert.equal(calls, 1);
+  assert.equal(response.data_source, 'synthetic');
+  assert.equal(response.amount_unit, 'index');
+});
+
+test('an empty portfolio contains no automatically generated businesses or synthetic label', async () => {
+  const database = {
+    businesses: async () => [],
+    latestAssessments: async () => new Map(),
+  } as unknown as Database;
+  const response = await new ProductService(
+    database,
+    {} as MlClient,
+    loadConfig({}),
+  ).businesses(auth);
+  assert.deepEqual(response, { items: [], synthetic: false });
+});
+
+test('archived businesses retain historical access but new assessment rejection is audited', async () => {
+  const business = {
+    ...generateSyntheticBusinesses()[0]!,
+    archived_at: new Date('2026-10-10T00:00:00Z'),
+  };
+  let rejected = false;
+  const database = {
+    business: async () => business,
+    audit: async (event: {
+      event_type: string;
+      metadata: { status: number };
+    }) => {
+      assert.equal(event.event_type, 'assessment_rejected');
+      assert.equal(event.metadata.status, 409);
+      rejected = true;
+    },
+    beginAssessment: async () =>
+      assert.fail('Archived business must not create an ML attempt'),
+  } as unknown as Database;
+  const service = new ProductService(database, {} as MlClient, loadConfig({}));
+  await assert.rejects(
+    service.createAssessment(
+      { business_id: business.id, as_of_date: '2026-09-27' },
+      'test-archive',
+      auth,
+    ),
+    (error: unknown) => error instanceof ApiProblem && error.status === 409,
+  );
+  assert.equal(rejected, true);
 });

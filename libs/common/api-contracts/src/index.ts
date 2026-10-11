@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const nonnegative = z.number().finite().nonnegative();
+export const AmountUnitSchema = z.enum(['UZS', 'index']);
 export const DateSchema = z.iso
   .date()
   .refine(
@@ -51,6 +52,16 @@ export const ScoreRequestSchema = z
     }
   });
 
+export const LoanTermsSchema = z
+  .object({
+    annual_rate: z.number().finite().min(0).max(1),
+    schedule_type: z.enum(['annuity', 'adaptive']),
+    total_interest_index: nonnegative,
+    total_repayment_index: nonnegative,
+    requested_amount_policy: z.enum(['capacity_checked', 'context_only']),
+  })
+  .strict();
+
 export const ScoreResponseSchema = z
   .object({
     business_id: z.string().min(1).max(100),
@@ -96,6 +107,7 @@ export const ScoreResponseSchema = z
       advisory: z.array(z.string().max(10000)).max(100),
     }),
     confidence: z.number().finite().min(0).max(1),
+    loan_terms: LoanTermsSchema.optional(),
     forecast_provenance: z
       .object({
         real_revenue_weight: z.number().finite().min(0).max(1),
@@ -185,6 +197,30 @@ export const ScoreResponseSchema = z
         message: 'A zero-interest repayment schedule must sum to the principal',
       });
     }
+    if (value.loan_terms) {
+      const { total_repayment_index, total_interest_index } = value.loan_terms;
+      const principalAndInterest = principal + total_interest_index;
+      const agrees = (left: number, right: number) =>
+        Number.isFinite(left) &&
+        Number.isFinite(right) &&
+        Math.abs(left - right) <=
+          1e-12 + 1e-9 * Math.max(Math.abs(left), Math.abs(right));
+      if (!agrees(total_repayment_index, totalPayments)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['loan_terms', 'total_repayment_index'],
+          message: 'Declared total repayment must equal scheduled payments',
+        });
+      }
+      if (!agrees(total_repayment_index, principalAndInterest)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['loan_terms', 'total_interest_index'],
+          message:
+            'Declared total repayment must equal principal plus interest',
+        });
+      }
+    }
   });
 
 export const DecisionInputSchema = z
@@ -205,6 +241,7 @@ export const AssessmentSchema = z
   .object({
     id: z.string(),
     business_id: z.string(),
+    amount_unit: AmountUnitSchema.default('index'),
     requested_amount: nonnegative.nullable(),
     as_of_date: DateSchema,
     status: z.enum(['completed', 'failed']),
@@ -272,7 +309,9 @@ export const BusinessSchema = z.object({
   avg_monthly_surplus_index: z.number().finite(),
   trend: z.enum(['growing', 'stable', 'declining']),
   last_activity_date: DateSchema,
-  data_source: z.literal('synthetic'),
+  data_source: z.enum(['user_provided', 'synthetic']),
+  amount_unit: AmountUnitSchema,
+  archived_at: z.iso.datetime().nullable(),
   latest_assessment: AssessmentSchema.nullable(),
 });
 export const BusinessDetailSchema = BusinessSchema.extend({
@@ -281,15 +320,30 @@ export const BusinessDetailSchema = BusinessSchema.extend({
 });
 export const BusinessListSchema = z.object({
   items: z.array(BusinessSchema),
-  synthetic: z.literal(true),
+  synthetic: z.boolean(),
 });
-export const BusinessImportSchema = z
+export const LegacySyntheticBusinessImportSchema = z
   .object({
     name: z.string().trim().min(2).max(100),
     sector: z.string().trim().min(2).max(100),
     location: z.string().trim().min(2).max(100),
     data_source: z.literal('synthetic'),
     transactions: z.array(TransactionSchema).min(1).max(20000),
+  })
+  .strict();
+export const UserTransactionSchema = TransactionSchema.omit({
+  amount_index: true,
+})
+  .extend({ amount: z.number().finite().positive().max(1e12) })
+  .strict();
+export const BusinessImportSchema = LegacySyntheticBusinessImportSchema.omit({
+  data_source: true,
+  transactions: true,
+})
+  .extend({
+    data_source: z.literal('user_provided').default('user_provided'),
+    amount_unit: z.literal('UZS').default('UZS'),
+    transactions: z.array(UserTransactionSchema).min(1).max(20000),
   })
   .strict();
 export const CreateAssessmentSchema = z
@@ -308,6 +362,7 @@ export const AuditEventSchema = z.object({
   assessment_id: z.string().nullable(),
   event_type: z.enum([
     'business_imported',
+    'business_archived',
     'assessment_requested',
     'assessment_completed',
     'assessment_failed',
@@ -326,7 +381,7 @@ export const HealthSchema = z.object({
   status: z.literal('ok'),
   database: z.literal('connected'),
   ml_configured: z.boolean(),
-  synthetic_data: z.literal(true),
+  synthetic_data: z.boolean(),
 });
 export const ProblemSchema = z.object({
   type: z.string(),
@@ -340,8 +395,10 @@ export const ProblemSchema = z.object({
 });
 
 export type Transaction = z.infer<typeof TransactionSchema>;
+export type UserTransaction = z.infer<typeof UserTransactionSchema>;
 export type ScoreRequest = z.infer<typeof ScoreRequestSchema>;
 export type ScoreResponse = z.infer<typeof ScoreResponseSchema>;
+export type LoanTerms = z.infer<typeof LoanTermsSchema>;
 export type Business = z.infer<typeof BusinessSchema>;
 export type BusinessDetail = z.infer<typeof BusinessDetailSchema>;
 export type BusinessImport = z.infer<typeof BusinessImportSchema>;

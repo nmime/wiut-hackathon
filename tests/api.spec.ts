@@ -18,7 +18,7 @@ import {
   importInput,
 } from './helpers';
 
-test('health and synthetic portfolio comply with the shared API contract', async ({
+test('health and a newly registered empty portfolio comply with the shared API contract', async ({
   request,
 }) => {
   const health = await request.get(`${API_URL}/health`);
@@ -27,16 +27,18 @@ test('health and synthetic portfolio comply with the shared API contract', async
     status: 'ok',
     database: 'connected',
     ml_configured: true,
-    synthetic_data: true,
+    synthetic_data: false,
   });
   const response = await request.get(`${API_URL}/businesses`);
   const portfolio = BusinessListSchema.parse(await response.json());
   expect(response.status()).toBe(200);
-  expect(portfolio.synthetic).toBe(true);
-  expect(portfolio.items.length).toBeGreaterThanOrEqual(4);
-  expect(
-    portfolio.items.every((business) => business.data_source === 'synthetic'),
-  ).toBeTruthy();
+  expect(portfolio.synthetic).toBe(false);
+  expect(portfolio.items).toEqual([]);
+  for (const path of ['/assessments', '/audit']) {
+    const response = await request.get(`${API_URL}${path}`);
+    expect(response.status()).toBe(200);
+    expect((await response.json()).items).toEqual([]);
+  }
 });
 
 test.describe('unconfigured ML', () => {
@@ -90,7 +92,7 @@ test.describe('unconfigured ML', () => {
   });
 });
 
-test('import rejects malformed and impossible timestamps and real data provenance', async ({
+test('UZS imports reject malformed timestamps, invalid amounts, and incorrect units or provenance', async ({
   request,
 }) => {
   for (const timestamp of [
@@ -109,10 +111,36 @@ test('import rejects malformed and impossible timestamps and real data provenanc
       problem.errors?.some((error) => error.path.startsWith('transactions')),
     ).toBe(true);
   }
-  const response = await request.post(`${API_URL}/businesses`, {
-    data: { ...importInput(), data_source: 'bank' },
-  });
-  expect(response.status()).toBe(400);
+  for (const changes of [
+    { data_source: 'bank' },
+    { data_source: 'synthetic' },
+    { amount_unit: 'index' },
+    { amount_unit: 'USD' },
+  ]) {
+    const response = await request.post(`${API_URL}/businesses`, {
+      data: { ...importInput(), ...changes },
+    });
+    expect(response.status()).toBe(400);
+  }
+  for (const amount of [0, -1, 1_000_000_000_001, '1000', null]) {
+    const input = importInput();
+    const response = await request.post(`${API_URL}/businesses`, {
+      data: {
+        ...input,
+        transactions: [{ ...input.transactions[0], amount }],
+      },
+    });
+    expect(response.status(), String(amount)).toBe(400);
+    expect(
+      ProblemSchema.parse(await response.json()).errors?.some((error) =>
+        error.path.endsWith('amount'),
+      ),
+    ).toBe(true);
+  }
+  const portfolio = BusinessListSchema.parse(
+    await (await request.get(`${API_URL}/businesses`)).json(),
+  );
+  expect(portfolio.items).toEqual([]);
 });
 
 test('malformed and oversized HTTP bodies return structured problems', async ({
@@ -181,6 +209,10 @@ test('a completed assessment and human decision survive independent API reads', 
   expect(detail.transactions).toHaveLength(24);
   expect(detail.monthly_cashflow).toHaveLength(12);
   expect(detail.latest_assessment).toBeNull();
+  expect(detail.data_source).toBe('user_provided');
+  expect(detail.amount_unit).toBe('UZS');
+  expect(detail.archived_at).toBeNull();
+  expect(detail.transactions[0]?.amount_index).toBe(10_000_000);
 
   const scoreResponse = await request.post(`${API_URL}/assessments`, {
     data: {
@@ -198,6 +230,7 @@ test('a completed assessment and human decision survive independent API reads', 
   expect(assessment.input_hash).toMatch(/^[a-f0-9]{64}$/);
   expect(assessment.request_id).toBeTruthy();
   expect(assessment.decision).toBeNull();
+  expect(assessment.amount_unit).toBe('UZS');
 
   const incomplete = await request.post(
     `${API_URL}/assessments/${assessment.id}/decisions`,

@@ -20,9 +20,10 @@ export const TEST_PASSWORD = 'Test-Only-Strong-Passphrase-2026!';
 export const TEST_ORIGIN = 'http://127.0.0.1:5174';
 
 export function authOrigin(apiUrl: string) {
-  return new URL(apiUrl).port === '3010'
-    ? 'http://127.0.0.1:5176'
-    : TEST_ORIGIN;
+  const port = new URL(apiUrl).port;
+  if (port === '3010') return 'http://127.0.0.1:5176';
+  if (port === '3011') return 'http://127.0.0.1:5177';
+  return TEST_ORIGIN;
 }
 
 export async function registerAccount(

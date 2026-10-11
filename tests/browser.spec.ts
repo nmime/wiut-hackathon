@@ -1,7 +1,13 @@
 import { readFile } from 'node:fs/promises';
 import { type Page } from '@playwright/test';
 import { expect, test } from './auth-fixtures';
-import { AssessmentSchema } from '../libs/common/api-contracts/src/index';
+import {
+  AssessmentSchema,
+  BusinessDetailSchema,
+  BusinessImportSchema,
+  BusinessListSchema,
+} from '../libs/common/api-contracts/src/index';
+import { importFormat, openImport } from './ui-helpers';
 import {
   AS_OF_DATE,
   API_URL,
@@ -39,24 +45,169 @@ async function openBusiness(page: Page, name: string) {
   await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
 }
 
-test('an officer imports synthetic history, assesses, records a decision, and reopens the persisted review', async ({
+test('a fresh workspace displays an empty product without a sandbox or preloaded cases', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/');
+  await expect(
+    page.getByRole('button', { name: 'Import first business', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /synthetic sandbox|synthetic data only|synthetic transaction history/i,
+    ),
+  ).toHaveCount(0);
+  expect(
+    BusinessListSchema.parse(
+      await (await request.get(`${API_URL}/businesses`)).json(),
+    ).items,
+  ).toEqual([]);
+  await page.screenshot({
+    path: test.info().outputPath('empty-workspace-desktop.png'),
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth + 1,
+    ),
+  ).toBe(false);
+  await page.screenshot({
+    path: test.info().outputPath('empty-workspace-mobile.png'),
+    fullPage: true,
+  });
+});
+
+test('CSV currency imports preserve actual test amounts through reload and reimportable JSON and CSV exports', async ({
+  page,
+}) => {
+  const input = importInput('CSV round trip');
+  const csv = [
+    'ts,direction,channel,amount',
+    ...input.transactions.map(
+      (transaction) =>
+        `"${transaction.ts}",${transaction.direction},${transaction.channel},${transaction.amount}`,
+    ),
+  ].join('\n');
+  await page.goto('/');
+  const dialog = await openImport(page);
+  await importFormat(page, dialog, 'CSV');
+  await dialog.getByLabel('Business name').fill(input.name);
+  await dialog.getByLabel('Sector', { exact: true }).fill(input.sector);
+  await dialog.getByLabel('Location', { exact: true }).fill(input.location);
+  await dialog.getByLabel('Upload transaction file').setInputFiles({
+    name: 'test-only-transactions.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from(csv),
+  });
+  await expect(dialog.getByLabel('Transaction data')).toHaveValue(csv);
+  const responseEvent = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/businesses' &&
+      response.request().method() === 'POST',
+  );
+  await dialog
+    .getByRole('button', { name: 'Import business', exact: true })
+    .click();
+  const response = await responseEvent;
+  expect(response.status()).toBe(201);
+  const business = BusinessDetailSchema.parse(await response.json());
+  expect(business.amount_unit).toBe('UZS');
+  expect(business.data_source).toBe('user_provided');
+  expect(
+    business.transactions.map((transaction) => transaction.amount_index),
+  ).toEqual(input.transactions.map((transaction) => transaction.amount));
+  await expect(
+    page.getByRole('heading', { name: input.name, exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText(/^12,750,000\s*UZS$/).first()).toBeVisible();
+  await expect(
+    page.getByText(
+      /synthetic sandbox|synthetic data only|synthetic transaction history/i,
+    ),
+  ).toHaveCount(0);
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: input.name, exact: true }),
+  ).toBeVisible();
+  const jsonEvent = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Download business JSON', exact: true })
+    .click();
+  const jsonDownload = await jsonEvent;
+  const jsonPath = test.info().outputPath('currency-business.json');
+  await jsonDownload.saveAs(jsonPath);
+  const exported = BusinessImportSchema.parse(
+    JSON.parse(await readFile(jsonPath, 'utf8')),
+  );
+  expect(exported).toEqual(input);
+  await navigate(page, 'Businesses');
+  const repeatedDialog = await openImport(page);
+  await importFormat(page, repeatedDialog, 'JSON');
+  await repeatedDialog.getByLabel('Upload transaction file').setInputFiles({
+    name: 'test-only-business.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(exported)),
+  });
+  await expect(repeatedDialog.getByLabel('Business name')).toHaveValue(
+    input.name,
+  );
+  await expect(
+    repeatedDialog.getByLabel('Sector', { exact: true }),
+  ).toHaveValue(input.sector);
+  await expect(
+    repeatedDialog.getByLabel('Location', { exact: true }),
+  ).toHaveValue(input.location);
+  const repeatedEvent = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === '/api/businesses' &&
+      response.request().method() === 'POST',
+  );
+  await repeatedDialog
+    .getByRole('button', { name: 'Import business', exact: true })
+    .click();
+  const repeated = await repeatedEvent;
+  expect(repeated.status()).toBe(201);
+  const reimported = BusinessDetailSchema.parse(await repeated.json());
+  expect(reimported.id).not.toBe(business.id);
+  expect(reimported.transactions).toEqual(business.transactions);
+  await page.getByRole('tab', { name: 'Transactions', exact: true }).click();
+  const csvEvent = page.waitForEvent('download');
+  await page
+    .getByRole('button', { name: 'Download transactions', exact: true })
+    .click();
+  const csvDownload = await csvEvent;
+  const csvPath = test.info().outputPath('currency-transactions.csv');
+  await csvDownload.saveAs(csvPath);
+  const lines = (await readFile(csvPath, 'utf8')).trim().split(/\r?\n/);
+  expect(lines[0]).toBe('ts,direction,channel,amount');
+  expect(lines.slice(1).map((line) => Number(line.split(',')[3]))).toEqual(
+    input.transactions.map((transaction) => transaction.amount),
+  );
+  await expect(
+    page.getByRole('table', { name: 'Transaction history' }),
+  ).toContainText('10,000,000');
+  await page.screenshot({
+    path: test.info().outputPath('currency-transactions-desktop.png'),
+    fullPage: true,
+  });
+});
+
+test('an officer imports UZS history, assesses, records a decision, and reopens the persisted review', async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   const input = importInput('Browser flow');
   await page.goto('/');
-  await page
-    .getByRole('button', { name: 'Import business', exact: true })
-    .click();
-  const dialog = page.getByRole('dialog', {
-    name: 'Import synthetic business',
-  });
+  const dialog = await openImport(page);
+  await importFormat(page, dialog, 'JSON');
   await dialog.getByLabel('Business name').fill(input.name);
   await dialog.getByLabel('Sector', { exact: true }).fill(input.sector);
   await dialog.getByLabel('Location', { exact: true }).fill(input.location);
   await dialog
-    .getByLabel('Transaction JSON')
+    .getByLabel('Transaction data')
     .fill(JSON.stringify(input.transactions));
   await dialog
     .getByRole('button', { name: 'Import business', exact: true })
@@ -130,6 +281,7 @@ test('an officer imports synthetic history, assesses, records a decision, and re
   expect(exported.decision?.reviewer_name).toBe('Integration Officer');
   expect(exported.decision?.decision).toBe('needs_information');
   expect(exported.result?.model_version).toBe('test-only-fixture-v1');
+  expect(exported.amount_unit).toBe('UZS');
 
   await page.reload();
   await openBusiness(page, input.name);
@@ -238,37 +390,57 @@ test('opening an older reviewed assessment preserves its identity through reload
   expect(exported.decision?.reviewer_name).toBe('Integration Officer');
 });
 
-test('invalid imports stay editable and show a useful validation error', async ({
+test('invalid JSON, CSV headers, and amounts stay editable without creating a business', async ({
   page,
+  request,
 }) => {
   await page.goto('/');
-  await page
-    .getByRole('button', { name: 'Import business', exact: true })
-    .click();
-  const dialog = page.getByRole('dialog', {
-    name: 'Import synthetic business',
-  });
+  const dialog = await openImport(page);
+  await importFormat(page, dialog, 'JSON');
   await dialog
     .getByLabel('Business name')
-    .fill('Synthetic Invalid Browser Case');
+    .fill('Test-only invalid browser case');
   await dialog.getByLabel('Sector', { exact: true }).fill('Retail');
   await dialog.getByLabel('Location', { exact: true }).fill('Tashkent');
-  await dialog.getByLabel('Transaction JSON').fill('{invalid json');
+  await dialog.getByLabel('Transaction data').fill('{invalid json');
   await dialog
     .getByRole('button', { name: 'Import business', exact: true })
     .click();
   await expect(
     dialog.getByText('Import could not be completed', { exact: true }),
   ).toBeVisible();
-  await expect(
-    dialog.getByText(
-      'Transaction JSON is invalid. Paste a JSON array of transactions.',
-      { exact: true },
-    ),
-  ).toBeVisible();
-  await expect(dialog.getByLabel('Transaction JSON')).toHaveValue(
+  await expect(dialog.getByLabel('Transaction data')).toHaveValue(
     '{invalid json',
   );
+  const input = importInput('Invalid currency amount');
+  await dialog
+    .getByLabel('Transaction data')
+    .fill(JSON.stringify([{ ...input.transactions[0], amount: -10 }]));
+  await dialog
+    .getByRole('button', { name: 'Import business', exact: true })
+    .click();
+  await expect(
+    dialog.getByText('Import could not be completed', { exact: true }),
+  ).toBeVisible();
+  await importFormat(page, dialog, 'CSV');
+  for (const csv of [
+    'ts,direction,channel,amount_index\n2025-01-15T10:00:00Z,in,card,100',
+    'ts,direction,channel,amount\n2025-01-15T10:00:00Z,in,card,not-a-number',
+  ]) {
+    await dialog.getByLabel('Transaction data').fill(csv);
+    await dialog
+      .getByRole('button', { name: 'Import business', exact: true })
+      .click();
+    await expect(
+      dialog.getByText('Import could not be completed', { exact: true }),
+    ).toBeVisible();
+    await expect(dialog.getByLabel('Transaction data')).toHaveValue(csv);
+  }
+  expect(
+    BusinessListSchema.parse(
+      await (await request.get(`${API_URL}/businesses`)).json(),
+    ).items,
+  ).toEqual([]);
   await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(dialog).toBeHidden();
 });
