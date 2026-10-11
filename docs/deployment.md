@@ -8,7 +8,7 @@ On the Ubuntu server, after cloning this repository, run:
 bash scripts/deploy.sh
 ```
 
-Install Docker Engine with the Compose plugin first. The script also requires `openssl`, `curl`, `awk` and `flock`, which are standard Ubuntu packages. Node and Python run inside the images. The ML image uses the repository's existing fixed training recipe; the deploy script does not run evaluation or rewrite committed reports.
+Install Docker Engine with the Compose plugin first. The script also requires `openssl`, `curl`, `awk` and `flock`, which are standard Ubuntu packages. Node and Python run inside the images. The ML image loads the committed accepted final model bundle using `hybrid-runtime/Dockerfile`; builds and startup never retrain the measured forecast. The deploy script does not run evaluation or rewrite committed reports.
 
 The first run generates a 256-bit random database password and a separate 256-bit `AUTH_ENCRYPTION_KEY` in `.env.production`, sets its permissions to `600`, and uses `wiut-hackathon.dehqonhub.uz`. Existing deployments receive an encryption key only when the variable is absent; an empty, duplicate or malformed value stops deployment. Subsequent runs preserve the key. Losing it makes stored authenticator secrets unreadable; changing it requires a deliberate migration. Keep it with database backups. To choose another domain on the first run, use `FLOWCREDIT_DOMAIN=example.com bash scripts/deploy.sh`. Subsequent runs preserve `.env.production`; edit its unquoted `DOMAIN` value deliberately when changing the hostname. `.env.production.example` documents the format and contains placeholders, not usable credentials. Changing the environment password does not rotate an existing PostgreSQL user's password: rotate it in the database and update the private environment file together.
 
@@ -18,13 +18,13 @@ If Cloudflare proxies the hostname, the host nginx must first trust only Cloudfl
 
 The stack owns subnet `172.30.84.0/24` with gateway `172.30.84.1`. The script rejects overlaps with other Docker networks before building. The nginx template uses the official image's entrypoint and substitutes only `TRUSTED_PROXY_IP`, preserving nginx variables such as `$remote_addr` and `$http_host`.
 
-The bundled real-revenue blend is the default endpoint, `http://ml:8000`. The optional teammate candidate is packaged in the `teammate` Compose profile. To build and start it privately while keeping the default scorer selected:
+The [final combined scorer](final-model-runtime.md) is the default endpoint, `http://ml:8000`. The optional historical teammate candidate is packaged in the `teammate` Compose profile. To build and start it privately while keeping the final scorer selected:
 
 ```sh
 docker compose --project-name flowcredit --env-file .env.production -f docker-compose.production.yml up -d --build --wait teammate-ml
 ```
 
-To select it for Nest scoring, add `ML_SERVICE_URL=http://teammate-ml:8000` to the private `.env.production` and rerun `bash scripts/deploy.sh`. The script then builds and starts all five services, including the candidate, and backs up the database before restarting the app. To return to the real-revenue blend, set `ML_SERVICE_URL=http://ml:8000` and rerun the script. The candidate stays private, with a separate durable `flowcredit_teammate-ml-audit` volume; its original public demo, records and decision routes are absent. Other reachable scorer URLs do not automatically create a service.
+To select it for Nest scoring, add `ML_SERVICE_URL=http://teammate-ml:8000` to the private `.env.production` and rerun `bash scripts/deploy.sh`. The script then builds and starts all five services, including the candidate, and backs up the database before restarting the app. To return to the final scorer, set `ML_SERVICE_URL=http://ml:8000` and rerun the script. The candidate stays private, with a separate durable `flowcredit_teammate-ml-audit` volume; its original public demo, records and decision routes are absent. Other reachable scorer URLs do not automatically create a service.
 
 The candidate uses frozen synthetic-trained artifacts, 24% annual interest and actual annuity/adaptive repayment plans. It requires a completed month-end with at least six complete history months and a supported calendar cutoff. Do not select it on the assumption that its synthetic evaluations prove superior actual borrower accuracy. See the [independent review](teammate-ml-review.md) and [candidate limitations](../teammate-ml-service/README.md).
 

@@ -11,6 +11,14 @@ coverage/
 playwright-report/
 test-results/
 artifacts/
+# Reviewed, public-data-only components required by the final local scorer.
+!/ml-service/final_model/artifacts/
+/ml-service/final_model/artifacts/*
+!/ml-service/final_model/artifacts/baseline.joblib
+!/ml-service/final_model/artifacts/bundle.json
+!/ml-service/final_model/artifacts/calibration.json
+!/ml-service/final_model/artifacts/fresh-evidence.json
+!/ml-service/final_model/artifacts/upgrade.txt
 __pycache__/
 .venv/
 .pytest_cache/

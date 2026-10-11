@@ -1,11 +1,25 @@
 # ML model comparison
 
-Reviewed 11 October 2026. Both frozen models are deployed privately. The
-real-revenue blend is selected for the app; the teammate candidate can be selected
-through the deployment configuration. Neither model predicts borrower default or
-automatically makes a lending decision.
+The product now exposes one [final combined scorer](final-model-runtime.md).
+The financial assembly uses real-revenue forecasting and calibration, observed
+costs, verified teammate financial primitives, 24% annual interest, seasonal
+affordability, and three advisory verdicts. A revenue replacement is admitted only
+through the separately frozen fresh-data gates.
 
-## What changes for an officer
+The [completed fresh experiment](../ml-service/reports/revenue-upgrade-fresh.md)
+keeps the incumbent revenue component: the improved third model's frozen blend
+reduced fresh error by 2.181%, below the predeclared 5% threshold. The final
+scorer uses **100% real-trained revenue and 0% synthetic net forecast**; observed
+costs and real residual bounds replace the earlier mixed cash-flow branch.
+The native synthetic payment buffers remain disclosed policy. Its financial
+upgrade is separately authorized and tested, rather than inferred from a revenue
+accuracy result.
+
+The historical comparison below was reviewed on 11 October 2026 before that
+assembly. Both frozen endpoints remain available for explicit research and
+regression. Neither model predicts borrower default or makes the final decision.
+
+## Historical scorers: what changed for an officer
 
 | Question                                     | Default real-revenue blend                                                                                                                                     | Teammate candidate                                                                                                                                                                    |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

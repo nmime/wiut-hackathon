@@ -23,6 +23,7 @@ export function authOrigin(apiUrl: string) {
   const port = new URL(apiUrl).port;
   if (port === '3010') return 'http://127.0.0.1:5176';
   if (port === '3011') return 'http://127.0.0.1:5177';
+  if (port === '3012') return 'http://127.0.0.1:5178';
   return TEST_ORIGIN;
 }
 

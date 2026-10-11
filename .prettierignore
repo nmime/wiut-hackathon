@@ -6,6 +6,7 @@ test-results
 artifacts
 ml-service/uv.lock
 ml-service/runtime
+ml-service/final_model/artifacts
 ml-service/.venv
 ml-service/.pytest_cache
 teammate-ml-service/vendor
@@ -13,3 +14,7 @@ teammate-ml-service/uv.lock
 teammate-ml-service/runtime
 teammate-ml-service/.venv
 teammate-ml-service/.pytest_cache
+hybrid-runtime/uv.lock
+hybrid-runtime/runtime
+hybrid-runtime/.venv
+hybrid-runtime/.pytest_cache

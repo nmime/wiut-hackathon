@@ -5,10 +5,13 @@ service. Set `ML_SERVICE_URL` to the service base URL; the adapter appends `/sco
 `ML_TIMEOUT_MS` defaults to 8000. Scoring, forecasting, and model inference must
 operate locally within the bank perimeter in a production implementation.
 
-The optional service in `ml-service` implements this contract locally. Run the
-complete stack with the `docker-compose.ml.yml` override, or point the adapter
-at the teammate's service. Default frontend/backend development still works
-with ML disconnected. See `ml-service/README.md` for training and evaluation.
+The product's [final local scorer](final-model-runtime.md) implements this contract
+through `final_model.api:app` in the pinned `hybrid-runtime` environment. Run the
+complete stack with the `docker-compose.ml.yml` override or start
+`scripts/serve_final_model.sh`. Its loan policy uses 24% annual interest, actual
+seasonal schedule capacity, real-revenue intervals and three advisory verdicts.
+Frontend/backend development still works with ML disconnected. Historical
+`capacity_ml` and teammate bridge endpoints remain explicit research options.
 
 ## Request
 
@@ -33,9 +36,10 @@ with ML disconnected. See `ml-service/README.md` for training and evaluation.
 in the supplied brief. The ML transport retains standardized `amount_index` fields. For user-provided
 UZS imports, NestJS explicitly maps one UZS to one internal unit, and snapshots
 `amount_unit` on the business and assessment. Historical synthetic records retain
-index units. This declaration is not yet passed through `/score`; the included
-scorer flags a currency request and does not use it to cap its recommendation.
-A replacement service must specify its conversion and request-cap behavior.
+index units. The final scorer declares 1 amount index = 1 UZS for actual UZS
+imports and capacity-checks the requested principal against its offered schedule.
+Its `loan_terms.requested_amount_policy` is `capacity_checked`. The historical
+0% scorer has no such conversion and treats a requested amount as context only.
 The default analysis omits the requested amount by sending `null`.
 
 Allowed channels: `card`, `transfer`, `qr`, `cash_in`, `other`. Transaction amounts
@@ -44,7 +48,11 @@ ISO timestamps with `Z`, timezone offset, or no offset (interpreted as UTC).
 NestJS selects transactions on or before the assessment date. An empty selected
 history is rejected. The business and date in the result must match the request.
 
-## Optional local service limits
+## Historical local scorer limits
+
+The following section documents the frozen `capacity_ml.api` endpoint. The final
+assembled model's current policy and operational limits are documented in
+[final model runtime](final-model-runtime.md).
 
 The teammate's transport contract remains the source of truth. The optional
 implementation in `ml-service` supports a narrower calendar window: at most

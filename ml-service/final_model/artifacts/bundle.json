@@ -1,0 +1,92 @@
+{
+  "baseline_file": "baseline.joblib",
+  "baseline_sha256": "31693530f17dbd481752d0996b0d4131c65ee0af859346a8f83aea7f17283b96",
+  "baseline_source_hashes": {
+    "ml-service/capacity_ml/__init__.py": "dbacc0a65d9cbbdf0dc97a5f87034346b8077823f18a50db3bfcafe61fd43cbe",
+    "ml-service/capacity_ml/api.py": "57d84b6b52c16337bfb68050c16f7faa9025bf94ddb69dafb14cdc83e262945d",
+    "ml-service/capacity_ml/evaluate.py": "6313dd4d9a2e4aba9c3a409eca2cd3e378f13fc4070c3e0ea9669ca17d1cae32",
+    "ml-service/capacity_ml/evaluate_engineering.py": "de1b90f3060edcb6915b9f2c23e2299bc5ce0048e97e224d2258a5d74cc3c5f0",
+    "ml-service/capacity_ml/evaluate_external.py": "0c94a2956db8fc42b9fc01fa2b2da2dd4886a13b95eba708dcff100ae80849c5",
+    "ml-service/capacity_ml/evaluate_fresh.py": "9138f77a07f0b5113ab42e70e91db6b3221ae7546543d4593ac7f39d64f34c86",
+    "ml-service/capacity_ml/evaluate_international.py": "6e176bd181213c5ed522c3a73b2b90c2474634d1b05690ee339a3233c371f01c",
+    "ml-service/capacity_ml/evaluate_public.py": "80b008220b89fca115bdce4a07d12152ddea2b609f165c09e4c0e11cb5c65586",
+    "ml-service/capacity_ml/evaluate_revenue.py": "ab460bb6377086f9a1259d1b48d2718ac39c3fbf32aba9ee9f03bf9c81dbad55",
+    "ml-service/capacity_ml/external_data.py": "a5d2c5dcc3291b44c7bb9196bf995dce554a676b02443ecc9fba1e9b0fc1ce1b",
+    "ml-service/capacity_ml/forecasting.py": "08e57e9e12e736d62a3926f8695b771085c64058e6c173114fa4c94a65d54939",
+    "ml-service/capacity_ml/generator.py": "c2ac3a3ed0aa4bc144a33db98391e3620fc3218595bbd0d9f7e98bd4476dcefb",
+    "ml-service/capacity_ml/international_data.py": "5b69a81531fda84d68fe9535116b90a135053a228eda3578becffaec1e663bf8",
+    "ml-service/capacity_ml/public_data.py": "23482e2b95503dc81536d3cd1b1761c787e02138338fc1e5b54846ffc1003624",
+    "ml-service/capacity_ml/public_revenue.py": "cb3ba3e8cb1fc26066fa5c94f0de58174b58351b725f7eae92c6c47f7f2c455f",
+    "ml-service/capacity_ml/revenue_data.py": "d22cb816430f5e92c6191e45d0af5dd72de46b45a9cfd2c774d22c72a15671cb",
+    "ml-service/capacity_ml/revenue_features.py": "4996701b108e7d89857797b3724c929eac22b1da210b60c3c566b5f6aab3b94c",
+    "ml-service/capacity_ml/schemas.py": "39c1b6c937423d9038bd4a096c7be6d3556429aa3da2c76ec787e2784e77620a",
+    "ml-service/capacity_ml/scoring.py": "01ab2a60afe704abd609620f939eefec278a52038e92e9397ab3af717ba0df62",
+    "ml-service/capacity_ml/train.py": "d5005b44496a085e88ebafcd6b6d74de3e68900eb140c62f610938cb239df5f3"
+  },
+  "calibration_file": "calibration.json",
+  "calibration_sha256": "63b1f6b0649849d1f803a59e6d74e86883b518bebcb49a20ffca13cc48728e68",
+  "calibration_source_sha256": "b77696c269323024b4feee3b52b8df157165f3be237d723672e32f90751325e6",
+  "calibration_support": "Development history views >=3 months; no real expense/repayment/default labels; below-3-month grid extrapolation is disclosed and financial offer is zero.",
+  "decision_scope": "Fresh revenue gate decides point forecast only; final 24% APR seasonal financial policy was separately authorized and behavior tested.",
+  "format": 1,
+  "fresh_report_file": "fresh-evidence.json",
+  "fresh_report_sha256": "1314878f9fa1edc6daa647582234f82907067488babbfd563c28a66f1aa51b88",
+  "fresh_revenue_gates_passed": false,
+  "native_financial_artifact_sha256": "51091e827f0b9d768878bd8e414e2c10dd18c7e3dee884acb3680b722bfa8d1a",
+  "real_training_targets": 86976,
+  "real_training_unique_targets": 43705,
+  "revenue_candidate": "adaptive_revenue_10",
+  "revenue_component": "current",
+  "revenue_version": "local-v4-bf33fb45ddc3-gradient_boosting-public65",
+  "sources": [
+    {
+      "landing_url": "https://siat.stat.uz/data/2699/?lang=en",
+      "license": "CC BY 4.0",
+      "publisher": "National Statistics Committee of the Republic of Uzbekistan",
+      "title": "Retail trade volume (by month)",
+      "units_as_published": "million sums (UZS)"
+    },
+    {
+      "landing_url": "https://siat.stat.uz/data/964/?lang=en",
+      "license": "CC BY 4.0",
+      "publisher": "National Statistics Committee of the Republic of Uzbekistan",
+      "title": "Wholesale trade volume (by month)",
+      "units_as_published": "million sums"
+    },
+    {
+      "landing_url": "https://siat.stat.uz/data/3409/?lang=en",
+      "license": "CC BY 4.0",
+      "publisher": "National statistics committee  of the Republic of Uzbekistan",
+      "title": "Volume of market services rendered (monthly, by districts and cities)",
+      "units_as_published": "in bln. Soums"
+    },
+    {
+      "landing_url": "https://siat.stat.uz/data/3227/?lang=en",
+      "license": "CC BY 4.0",
+      "publisher": "National statistics committee  of the Republic of Uzbekistan",
+      "title": "Volume of accommodation and food services (monthly)",
+      "units_as_published": "in bln. Soums"
+    },
+    {
+      "landing_url": "https://www.abs.gov.au/statistics/industry/retail-and-wholesale-trade/retail-trade-australia/jun-2025",
+      "license": "CC BY 4.0",
+      "publisher": "Australian Bureau of Statistics",
+      "title": "Retail Trade, Australia, June 2025; Table 11 original turnover by state and industry subgroup",
+      "units": "million AUD, current prices"
+    },
+    {
+      "landing_url": "https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=2010005601",
+      "license": "Statistics Canada Open Licence",
+      "publisher": "Statistics Canada",
+      "title": "Table 20-10-0056-01 Monthly retail trade sales by province and territory",
+      "units": "thousand CAD, current prices"
+    },
+    {
+      "license": "Eurostat reuse policy (Decision 2011/833/EU)",
+      "publisher": "European Commission, Eurostat",
+      "title": "Turnover and volume of sales in wholesale and retail trade - monthly data (sts_trtu_m), NETTUR only",
+      "units": "nominal net turnover index, 2021=100 (I21), unadjusted (NSA)"
+    }
+  ],
+  "vendor_manifest_sha256": "d10d06e95441f380b821bad2aba3a7044014acaa9a73e25f7e7e69ac1c5906f1"
+}

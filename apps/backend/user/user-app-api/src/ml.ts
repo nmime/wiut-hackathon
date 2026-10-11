@@ -116,7 +116,7 @@ export class MlClient {
       throw new ApiProblem(
         503,
         'ML service not configured',
-        'Connect the teammate’s ML service to generate a capacity assessment. This attempt has been saved.',
+        'Connect the final local scoring service to generate a capacity assessment. This attempt has been saved.',
       );
     const controller = new AbortController();
     const timer = setTimeout(

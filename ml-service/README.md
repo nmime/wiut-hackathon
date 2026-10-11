@@ -1,5 +1,12 @@
 # Local payment capacity service
 
+The product now serves the [final combined model](../docs/final-model-runtime.md)
+through `final_model.api:app` in the separate `hybrid-runtime` environment. It
+retains the selected real-revenue forecast, adds real-calibrated uncertainty,
+24% annual interest, seasonal affordability and three advisory verdicts.
+The original `capacity_ml` implementation and evidence below remain frozen for
+explicit reproduction and regression; its original 0% policy is historical.
+
 This FastAPI module blends a licensed real-data revenue forecast with separately validated borrower expense and synthetic net-flow models, then calculates an explainable payment capacity recommendation. Demonstration borrower transactions remain synthetic. It does not predict default or approve credit. NestJS persists every assessment and human officer decision; Python maintains a durable local audit for direct `/score` calls.
 
 ## Reproduce, test and run
