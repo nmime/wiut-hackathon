@@ -81,7 +81,7 @@ def run(arguments: list[str], *, stdout=None, stdin=None, timeout: int = 60) -> 
             arguments,
             cwd=ROOT,
             env=process_environment,
-            stdin=stdin,
+            stdin=stdin if stdin is not None else subprocess.DEVNULL,
             stdout=stdout or subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,

@@ -320,6 +320,17 @@ class ProductionOperationsTests(unittest.TestCase):
         ):
             check_health.http_status("https://example.com/api/health")
 
+    def test_commands_cannot_consume_operator_stdin_except_explicit_restore_stream(
+        self,
+    ):
+        result = subprocess.CompletedProcess(["docker"], 0, stdout=b"ok", stderr=b"")
+        with patch.object(common.subprocess, "run", return_value=result) as command:
+            self.assertEqual(common.run(["docker", "ps"]), b"ok")
+            self.assertEqual(command.call_args.kwargs["stdin"], subprocess.DEVNULL)
+            with io.BytesIO(b"PGDMP-test-only") as source:
+                common.run(["docker", "exec", "pg_restore"], stdin=source)
+                self.assertIs(command.call_args.kwargs["stdin"], source)
+
     def test_certificate_hostname_requires_positive_output_even_on_exit_zero(self):
         # common.run returns stdout when the subprocess exit status is zero.
         # Both positive and negative `openssl x509 -checkhost` responses can

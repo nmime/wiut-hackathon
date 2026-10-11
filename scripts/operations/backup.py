@@ -153,6 +153,7 @@ def snapshot_audit(image: str, volume: str, target: Path) -> dict:
             ],
             cwd=ROOT,
             env=process_environment,
+            stdin=subprocess.DEVNULL,
             stdout=output,
             stderr=subprocess.PIPE,
             timeout=300,
