@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
-import type { AuditEvent, Business } from '@wiut/contracts';
+import type { AuthSession, AuditEvent, Business } from '@wiut/contracts';
 import { Download, FileClock, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -49,10 +49,12 @@ export function AuditPage({
   audit,
   businesses,
   onOpen,
+  workspace,
 }: {
   audit: UseQueryResult<Awaited<ReturnType<typeof api.audit>>, Error>;
   businesses: Business[];
   onOpen: (id: string) => void;
+  workspace: AuthSession['tenant'];
 }) {
   const [businessId, setBusinessId] = useState('all');
   const [eventType, setEventType] = useState('all');
@@ -132,7 +134,21 @@ export function AuditPage({
               variant="outline"
               size="sm"
               className="ml-auto"
-              onClick={() => downloadJson('flowcredit-audit.json', filtered)}
+              onClick={() =>
+                downloadJson(
+                  workspace.kind === 'showcase'
+                    ? 'showcase-synthetic-audit.json'
+                    : 'flowcredit-audit.json',
+                  workspace.kind === 'showcase'
+                    ? {
+                        workspace,
+                        data_source: 'synthetic',
+                        purpose: 'showcase_practice_reviews',
+                        audit_events: filtered,
+                      }
+                    : filtered,
+                )
+              }
               disabled={!filtered.length}
             >
               <Download />

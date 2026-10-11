@@ -75,6 +75,19 @@ jobs:
         env:
           PGPASSWORD: wiut_dev
       - run: pnpm test:teammate-ml
+      - run: uv sync --frozen
+        working-directory: hybrid-runtime
+      - run: uv run ruff check . && uv run ruff format --check .
+        working-directory: hybrid-runtime
+      - run: uv run pytest -q
+        working-directory: hybrid-runtime
+        env:
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+      - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_final_ml'
+        env:
+          PGPASSWORD: wiut_dev
+      - run: pnpm test:final-ml
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

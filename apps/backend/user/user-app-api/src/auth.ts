@@ -37,6 +37,7 @@ import {
   type AuthSession,
   type Invitation,
   type TenantRole,
+  type TenantKind,
 } from '@wiut/contracts';
 import type { AppConfig } from './config.js';
 import type { AuthContext } from './auth-types.js';
@@ -132,6 +133,7 @@ interface SessionRow {
   display_name: string;
   tenant_id: string;
   tenant_name: string;
+  tenant_kind: TenantKind;
   role: TenantRole;
   csrf_token: string;
 }
@@ -281,7 +283,7 @@ export class AuthService {
     const database = client ?? this.database.pool;
     const row = (
       await database.query<SessionRow>(
-        `SELECT u.id,u.email,u.display_name,s.tenant_id,t.name AS tenant_name,m.role,s.csrf_token
+        `SELECT u.id,u.email,u.display_name,s.tenant_id,t.name AS tenant_name,t.kind AS tenant_kind,m.role,s.csrf_token
       FROM auth_sessions s JOIN app_users u ON u.id=s.user_id JOIN tenants t ON t.id=s.tenant_id
       JOIN memberships m ON m.user_id=u.id AND m.tenant_id=t.id WHERE s.token_hash=$1 AND s.expires_at>now()`,
         [hash],
@@ -289,15 +291,25 @@ export class AuthService {
     ).rows[0];
     if (!row) return null;
     const tenants = (
-      await database.query<{ id: string; name: string; role: TenantRole }>(
-        'SELECT t.id,t.name,m.role FROM memberships m JOIN tenants t ON t.id=m.tenant_id WHERE m.user_id=$1 ORDER BY t.created_at,t.id',
+      await database.query<{
+        id: string;
+        name: string;
+        role: TenantRole;
+        kind: TenantKind;
+      }>(
+        'SELECT t.id,t.name,m.role,t.kind FROM memberships m JOIN tenants t ON t.id=m.tenant_id WHERE m.user_id=$1 ORDER BY t.created_at,t.id',
         [row.id],
       )
     ).rows;
     return {
       ...AuthSessionSchema.parse({
         user: { id: row.id, email: row.email, display_name: row.display_name },
-        tenant: { id: row.tenant_id, name: row.tenant_name, role: row.role },
+        tenant: {
+          id: row.tenant_id,
+          name: row.tenant_name,
+          role: row.role,
+          kind: row.tenant_kind,
+        },
         tenants,
         csrf_token: row.csrf_token,
       }),
@@ -1032,12 +1044,27 @@ export class AuthService {
     ).rows.map(invitationView);
     return TeamSchema.parse({ members, invitations });
   }
-  async createTenant(body: unknown, auth: AuthContext, requestId: string) {
+  async createTenant(
+    body: unknown,
+    auth: AuthContext,
+    requestId: string,
+    kind: TenantKind = 'bank',
+  ) {
     const input = validate(TenantCreateSchema, body);
     await this.transaction(async (client) => {
       await client.query('SELECT 1 FROM app_users WHERE id=$1 FOR UPDATE', [
         auth.user.id,
       ]);
+      const currentSession = await client.query(
+        'SELECT 1 FROM auth_sessions WHERE token_hash=$1 AND user_id=$2 AND tenant_id=$3 AND csrf_token=$4 AND expires_at>now() FOR UPDATE',
+        [auth.session_hash, auth.user.id, auth.tenant.id, auth.csrf_token],
+      );
+      if (!currentSession.rowCount)
+        throw new ApiProblem(
+          409,
+          'Session changed',
+          'Refresh your session before creating a workspace.',
+        );
       if (
         (
           await client.query('SELECT 1 FROM memberships WHERE user_id=$1', [
@@ -1051,9 +1078,10 @@ export class AuthService {
           'An account can belong to at most 20 workspaces.',
         );
       const id = randomUUID();
-      await client.query('INSERT INTO tenants(id,name) VALUES($1,$2)', [
+      await client.query('INSERT INTO tenants(id,name,kind) VALUES($1,$2,$3)', [
         id,
         input.name,
+        kind,
       ]);
       await client.query(
         "INSERT INTO memberships(user_id,tenant_id,role) VALUES($1,$2,'admin')",
@@ -1065,10 +1093,13 @@ export class AuthService {
       );
       await this.security(
         client,
-        'workspace_created',
+        kind === 'showcase'
+          ? 'showcase_workspace_created'
+          : 'workspace_created',
         requestId,
         auth.user.id,
         id,
+        { kind },
       );
     });
     return this.session((await this.loadContext(auth.session_hash))!);

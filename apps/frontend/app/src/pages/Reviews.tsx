@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
-import type { Business } from '@wiut/contracts';
+import type { AuthSession, Business } from '@wiut/contracts';
 import { ArrowUpRight, ClipboardCheck, Download } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +47,7 @@ export function ReviewsPage({
   assessments,
   businesses,
   onOpen,
+  workspace,
 }: {
   assessments: UseQueryResult<
     Awaited<ReturnType<typeof api.assessments>>,
@@ -54,6 +55,7 @@ export function ReviewsPage({
   >;
   businesses: Business[];
   onOpen: (id: string, assessmentId?: string) => void;
+  workspace: AuthSession['tenant'];
 }) {
   const [status, setStatus] = useState('all');
   const [businessId, setBusinessId] = useState('all');
@@ -127,7 +129,29 @@ export function ReviewsPage({
               size="sm"
               className="ml-auto"
               onClick={() =>
-                downloadJson('flowcredit-assessments.json', filtered)
+                downloadJson(
+                  workspace.kind === 'showcase'
+                    ? 'showcase-synthetic-assessments.json'
+                    : 'flowcredit-assessments.json',
+                  workspace.kind === 'showcase'
+                    ? {
+                        workspace,
+                        data_source: 'synthetic',
+                        purpose: 'showcase_practice_reviews',
+                        assessments: filtered.map((assessment) => ({
+                          ...assessment,
+                          input_provenance: {
+                            data_source: 'synthetic',
+                            showcase_provenance:
+                              businesses.find(
+                                (business) =>
+                                  business.id === assessment.business_id,
+                              )?.showcase_provenance ?? null,
+                          },
+                        })),
+                      }
+                    : filtered,
+                )
               }
               disabled={!filtered.length}
             >

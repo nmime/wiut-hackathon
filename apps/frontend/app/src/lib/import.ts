@@ -131,6 +131,18 @@ export function parseTransactionInput(
     const header =
       rows.shift()?.map((column) => column.trim().toLowerCase()) ?? [];
     if (
+      header.includes('generator_version') ||
+      (header.includes('data_source') &&
+        rows.some(
+          (row) =>
+            row[header.indexOf('data_source')]?.trim().toLowerCase() ===
+            'synthetic',
+        ))
+    )
+      throw new ImportError(
+        'This file contains generated showcase data. Use it for sandbox testing; bank workspaces accept actual business transactions only.',
+      );
+    if (
       header.length !== columns.length ||
       new Set(header).size !== header.length ||
       columns.some((column) => !header.includes(column))
@@ -169,6 +181,13 @@ export function parseTransactionInput(
       'JSON must be an array of transactions or an object with a transactions array.',
     );
   const object = parsed as Record<string, unknown>;
+  if (
+    object.data_source === 'synthetic' ||
+    object.showcase_provenance !== undefined
+  )
+    throw new ImportError(
+      'This file contains generated showcase data. Use it for sandbox testing; bank workspaces accept actual business transactions only.',
+    );
   const unknown = Object.keys(object).filter(
     (key) =>
       ![

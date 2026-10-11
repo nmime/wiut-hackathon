@@ -168,7 +168,12 @@ test('legacy migration archives once without reseeding or losing accounts, asses
         email: 'legacy@example.test',
         display_name: 'Legacy Test Officer',
       },
-      tenant: { id: tenantId, name: 'Legacy test bank', role: 'admin' },
+      tenant: {
+        id: tenantId,
+        name: 'Legacy test bank',
+        role: 'admin',
+        kind: 'bank',
+      },
       tenants: [],
       csrf_token: 'a'.repeat(43),
       session_hash: 'test-only-legacy-session',
@@ -312,6 +317,61 @@ test('legacy migration archives once without reseeding or losing accounts, asses
       service.assessment(assessmentIds[0], foreign),
     ).rejects.toMatchObject({ status: 404 });
     expect(await snapshot()).toEqual(original);
+
+    expect(
+      (
+        await database.pool.query('SELECT kind FROM tenants WHERE id=$1', [
+          tenantId,
+        ])
+      ).rows[0].kind,
+    ).toBe('bank');
+    const labId = randomUUID();
+    const labBusinessId = `showcase-${randomUUID()}`;
+    const provenance = {
+      generator_version: 'showcase-v1',
+      seed: 7261,
+      scenario: 'stable',
+      months: 12,
+      end_month: '2025-12',
+      monthly_revenue_uzs: 30_000_000,
+      batch_index: 0,
+    };
+    await database.pool.query(
+      "INSERT INTO tenants(id,name,kind) VALUES($1,'Test-only intentional showcase','showcase')",
+      [labId],
+    );
+    await database.pool.query(
+      "INSERT INTO businesses(id,name,sector,location,archetype,transactions,tenant_id,data_source,amount_unit,showcase_provenance) VALUES($1,'[SHOWCASE] Test-only migration case','Test retail','Illustrative scenario','showcase',$2::jsonb,$3,'synthetic','UZS',$4::jsonb)",
+      [
+        labBusinessId,
+        JSON.stringify(transactions),
+        labId,
+        JSON.stringify(provenance),
+      ],
+    );
+    // Simulate a restored database where the one-time archive marker is absent.
+    // Replay must still preserve intentionally isolated showcase histories.
+    await database.pool.query(
+      "DELETE FROM schema_migrations WHERE name='archive-synthetic-portfolio-v2'",
+    );
+    for (let startup = 0; startup < 2; startup++) {
+      await database.onModuleInit();
+      expect(await database.businesses(labId)).toHaveLength(1);
+      expect(await database.business(labBusinessId, labId)).toMatchObject({
+        data_source: 'synthetic',
+        amount_unit: 'UZS',
+        archived_at: null,
+        showcase_provenance: provenance,
+      });
+      expect(await database.businesses(tenantId)).toEqual([]);
+      expect(
+        (
+          await database.pool.query(
+            "SELECT count(*)::int AS count FROM schema_migrations WHERE name='showcase-workspaces-v1'",
+          )
+        ).rows[0].count,
+      ).toBe(1);
+    }
   } finally {
     if (database) await database.onModuleDestroy();
     if (created)

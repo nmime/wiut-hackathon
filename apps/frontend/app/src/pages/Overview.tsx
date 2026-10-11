@@ -9,6 +9,7 @@ import {
   Import,
   Info,
   ShieldCheck,
+  FlaskConical,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -54,6 +55,7 @@ export function OverviewPage({
   onOpen,
   onViewBusinesses,
   onImport,
+  showcase = false,
 }: {
   businesses: UseQueryResult<Awaited<ReturnType<typeof api.businesses>>, Error>;
   assessments: UseQueryResult<
@@ -64,6 +66,7 @@ export function OverviewPage({
   onOpen: (id: string) => void;
   onViewBusinesses: () => void;
   onImport: () => void;
+  showcase?: boolean;
 }) {
   const items = businesses.data?.items ?? [];
   const history = assessments.data?.items ?? [];
@@ -81,7 +84,7 @@ export function OverviewPage({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-2">
           <p className="text-xs font-medium tracking-widest text-primary uppercase">
-            Portfolio overview
+            {showcase ? 'Showcase overview' : 'Portfolio overview'}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
             A clearer view of business cash flow.
@@ -92,8 +95,8 @@ export function OverviewPage({
           </p>
         </div>
         <Button onClick={onImport} variant="outline">
-          <Import />
-          Import business
+          {showcase ? <FlaskConical /> : <Import />}
+          {showcase ? 'Generate showcase cases' : 'Import business'}
         </Button>
       </div>
       {mlConfigured === false && (
@@ -147,7 +150,9 @@ export function OverviewPage({
               </p>
             )}
             <p className="mt-2 text-xs text-muted-foreground">
-              Observed inflows and outflows
+              {showcase
+                ? 'Generated inflows and outflows'
+                : 'Observed inflows and outflows'}
             </p>
           </CardContent>
         </Card>
@@ -235,13 +240,16 @@ export function OverviewPage({
                   </EmptyMedia>
                   <EmptyTitle>No businesses yet</EmptyTitle>
                   <EmptyDescription>
-                    Add a business and upload its transaction history in UZS to
-                    start a review.
+                    {showcase
+                      ? 'Generate a scenario pack in the Showcase lab to practice a review.'
+                      : 'Add a business and upload its transaction history in UZS to start a review.'}
                   </EmptyDescription>
                 </EmptyHeader>
                 <Button onClick={onImport}>
-                  <Import />
-                  Import first business
+                  {showcase ? <FlaskConical /> : <Import />}
+                  {showcase
+                    ? 'Generate showcase cases'
+                    : 'Import first business'}
                 </Button>
               </Empty>
             ) : (
