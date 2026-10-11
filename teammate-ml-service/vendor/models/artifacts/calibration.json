@@ -1,0 +1,363 @@
+{
+  "buffer_k": 0.95,
+  "buffer_k_risk": 1.0,
+  "target_coverage_risk": 0.8,
+  "risk_curve": [
+    {
+      "k": 0.3,
+      "coverage": 0.9494,
+      "utilization": 0.285,
+      "share_within_gt": 0.864,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.35,
+      "coverage": 0.9451,
+      "utilization": 0.3325,
+      "share_within_gt": 0.861,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.4,
+      "coverage": 0.9421,
+      "utilization": 0.38,
+      "share_within_gt": 0.855,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.45,
+      "coverage": 0.9366,
+      "utilization": 0.4275,
+      "share_within_gt": 0.8399,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.5,
+      "coverage": 0.9325,
+      "utilization": 0.475,
+      "share_within_gt": 0.8308,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.55,
+      "coverage": 0.9257,
+      "utilization": 0.5225,
+      "share_within_gt": 0.8006,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.6,
+      "coverage": 0.9189,
+      "utilization": 0.57,
+      "share_within_gt": 0.7825,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.65,
+      "coverage": 0.9119,
+      "utilization": 0.6175,
+      "share_within_gt": 0.7553,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.7,
+      "coverage": 0.8985,
+      "utilization": 0.665,
+      "share_within_gt": 0.719,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.75,
+      "coverage": 0.8837,
+      "utilization": 0.7125,
+      "share_within_gt": 0.6767,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.8,
+      "coverage": 0.8726,
+      "utilization": 0.76,
+      "share_within_gt": 0.6435,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.85,
+      "coverage": 0.8598,
+      "utilization": 0.8075,
+      "share_within_gt": 0.6073,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.9,
+      "coverage": 0.8467,
+      "utilization": 0.855,
+      "share_within_gt": 0.5801,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 0.95,
+      "coverage": 0.8316,
+      "utilization": 0.9025,
+      "share_within_gt": 0.5378,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.0,
+      "coverage": 0.8134,
+      "utilization": 0.95,
+      "share_within_gt": 0.5045,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.05,
+      "coverage": 0.7946,
+      "utilization": 0.9975,
+      "share_within_gt": 0.4894,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.1,
+      "coverage": 0.7764,
+      "utilization": 1.045,
+      "share_within_gt": 0.4471,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.15,
+      "coverage": 0.7533,
+      "utilization": 1.0925,
+      "share_within_gt": 0.4139,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.2,
+      "coverage": 0.7326,
+      "utilization": 1.14,
+      "share_within_gt": 0.3837,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.25,
+      "coverage": 0.7137,
+      "utilization": 1.1875,
+      "share_within_gt": 0.3474,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.3,
+      "coverage": 0.6898,
+      "utilization": 1.2349,
+      "share_within_gt": 0.3233,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.35,
+      "coverage": 0.6722,
+      "utilization": 1.2824,
+      "share_within_gt": 0.2991,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.4,
+      "coverage": 0.6516,
+      "utilization": 1.3299,
+      "share_within_gt": 0.2719,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.45,
+      "coverage": 0.6337,
+      "utilization": 1.3774,
+      "share_within_gt": 0.2477,
+      "share_with_offer": 0.8665
+    },
+    {
+      "k": 1.5,
+      "coverage": 0.6151,
+      "utilization": 1.4249,
+      "share_within_gt": 0.2326,
+      "share_with_offer": 0.8665
+    }
+  ],
+  "ref_load": 0.295,
+  "target_coverage": 0.9,
+  "val_curve": [
+    {
+      "k": 0.3,
+      "coverage": 0.9713,
+      "utilization": 0.1755,
+      "share_within_gt": 0.9262,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.35,
+      "coverage": 0.9696,
+      "utilization": 0.2047,
+      "share_within_gt": 0.9221,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.4,
+      "coverage": 0.9682,
+      "utilization": 0.234,
+      "share_within_gt": 0.9221,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.45,
+      "coverage": 0.9652,
+      "utilization": 0.2632,
+      "share_within_gt": 0.9221,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.5,
+      "coverage": 0.9624,
+      "utilization": 0.2925,
+      "share_within_gt": 0.9139,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.55,
+      "coverage": 0.9597,
+      "utilization": 0.3217,
+      "share_within_gt": 0.9057,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.6,
+      "coverage": 0.957,
+      "utilization": 0.351,
+      "share_within_gt": 0.8893,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.65,
+      "coverage": 0.9546,
+      "utilization": 0.3802,
+      "share_within_gt": 0.877,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.7,
+      "coverage": 0.9498,
+      "utilization": 0.4095,
+      "share_within_gt": 0.8648,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.75,
+      "coverage": 0.9433,
+      "utilization": 0.4387,
+      "share_within_gt": 0.8484,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.8,
+      "coverage": 0.9375,
+      "utilization": 0.468,
+      "share_within_gt": 0.8361,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.85,
+      "coverage": 0.9283,
+      "utilization": 0.4972,
+      "share_within_gt": 0.8033,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.9,
+      "coverage": 0.9187,
+      "utilization": 0.5265,
+      "share_within_gt": 0.7582,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 0.95,
+      "coverage": 0.9122,
+      "utilization": 0.5557,
+      "share_within_gt": 0.7336,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.0,
+      "coverage": 0.8999,
+      "utilization": 0.585,
+      "share_within_gt": 0.7131,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.05,
+      "coverage": 0.8907,
+      "utilization": 0.6142,
+      "share_within_gt": 0.6885,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.1,
+      "coverage": 0.8794,
+      "utilization": 0.6435,
+      "share_within_gt": 0.6762,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.15,
+      "coverage": 0.8658,
+      "utilization": 0.6727,
+      "share_within_gt": 0.6598,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.2,
+      "coverage": 0.8545,
+      "utilization": 0.702,
+      "share_within_gt": 0.6148,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.25,
+      "coverage": 0.8385,
+      "utilization": 0.7312,
+      "share_within_gt": 0.5902,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.3,
+      "coverage": 0.8193,
+      "utilization": 0.7605,
+      "share_within_gt": 0.5656,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.35,
+      "coverage": 0.805,
+      "utilization": 0.7897,
+      "share_within_gt": 0.5369,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.4,
+      "coverage": 0.79,
+      "utilization": 0.819,
+      "share_within_gt": 0.5082,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.45,
+      "coverage": 0.7681,
+      "utilization": 0.8482,
+      "share_within_gt": 0.4959,
+      "share_with_offer": 0.6387
+    },
+    {
+      "k": 1.5,
+      "coverage": 0.7527,
+      "utilization": 0.8775,
+      "share_within_gt": 0.4672,
+      "share_with_offer": 0.6387
+    }
+  ],
+  "n_val_backtest": 382,
+  "calibration_set": "val + out-of-fold train, \u0431\u044d\u043a\u0442\u0435\u0441\u0442 \u0432\u043d\u0443\u0442\u0440\u0438 \u0432\u0438\u0434\u0438\u043c\u043e\u0439 \u0438\u0441\u0442\u043e\u0440\u0438\u0438"
+}

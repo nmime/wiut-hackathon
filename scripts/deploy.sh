@@ -40,7 +40,7 @@ fi
 chmod 600 "$environment_file"
 # Read values as data; never execute an environment file with source/eval.
 env_value() {
-  awk -v prefix="$1=" 'index($0,prefix)==1 {sub(/^[^=]*=/,""); sub(/\r$/,""); value=$0; count++} END {if(count!=1)exit 1; print value}' "$environment_file"
+  awk -v prefix="$1=" -v optional="${2:-false}" 'index($0,prefix)==1 {sub(/^[^=]*=/,""); sub(/\r$/,""); value=$0; count++} END {if(count>1 || (count==0 && optional!="true"))exit 1; print value}' "$environment_file"
 }
 domain=$(env_value DOMAIN)
 valid_domain "$domain" || { printf 'Invalid DOMAIN in .env.production.\n' >&2; exit 1; }
@@ -49,6 +49,14 @@ database_password=$(env_value POSTGRES_PASSWORD)
 unset database_password
 trusted_proxy=$(env_value TRUSTED_PROXY_IP)
 [[ "$trusted_proxy" == 172.30.84.1 ]] || { printf 'TRUSTED_PROXY_IP must match the dedicated network gateway 172.30.84.1.\n' >&2; exit 1; }
+
+model_endpoint=$(env_value ML_SERVICE_URL true)
+services=(db ml api web)
+build_targets=(api web ml)
+if [[ "${model_endpoint%/}" == http://teammate-ml:8000 ]]; then
+  services+=(teammate-ml)
+  build_targets+=(teammate-ml)
+fi
 
 compose() {
   # The private file is authoritative, even if this shell has dev values exported.
@@ -77,7 +85,7 @@ if [[ -n "$network_ids" ]]; then
 fi
 
 printf 'Building production API, web and local ML images.\n'
-compose build --pull api web ml
+compose build --pull "${build_targets[@]}"
 had_database=false
 if docker volume inspect flowcredit_postgres-data >/dev/null 2>&1; then had_database=true; fi
 if [[ "$had_database" == true ]]; then
@@ -96,7 +104,7 @@ if [[ "$had_database" == true ]]; then
   chmod 600 "$backup"
   printf 'Pre-migration database backup saved to %s\n' "$backup"
 fi
-compose up -d --wait --wait-timeout 300 db ml api web
+compose up -d --wait --wait-timeout 300 "${services[@]}"
 curl --fail --silent --show-error --connect-timeout 3 --max-time 15 \
   --header "Host: $domain" --header "Origin: https://$domain" \
   http://127.0.0.1:18080/api/health >/dev/null
@@ -104,4 +112,4 @@ rejected_origin=$(curl --silent --show-error --output /dev/null --write-out '%{h
   --request POST --header "Host: $domain" --header 'Origin: https://example.invalid' \
   --header 'Content-Type: application/json' --data '{}' http://127.0.0.1:18080/api/auth/login)
 [[ "$rejected_origin" == 403 ]] || { printf 'Production origin policy check failed.\n' >&2; exit 1; }
-printf 'All four services are healthy on loopback. HTTPS host nginx must proxy %s to 127.0.0.1:18080.\n' "$domain"
+printf 'Selected services are healthy on loopback. HTTPS host nginx must proxy %s to 127.0.0.1:18080.\n' "$domain"

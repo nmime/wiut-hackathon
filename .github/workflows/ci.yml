@@ -60,6 +60,19 @@ jobs:
         env:
           PGPASSWORD: wiut_dev
       - run: pnpm test:real-ml
+      - run: uv sync --frozen
+        working-directory: teammate-ml-service
+      - run: uv run ruff check teammate_bridge tests && uv run ruff format --check teammate_bridge tests
+        working-directory: teammate-ml-service
+      - run: uv run pytest -q
+        working-directory: teammate-ml-service
+        env:
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+      - run: psql -h 127.0.0.1 -p 55432 -U wiut -d postgres -c 'CREATE DATABASE wiut_teammate_ml'
+        env:
+          PGPASSWORD: wiut_dev
+      - run: pnpm test:teammate-ml
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

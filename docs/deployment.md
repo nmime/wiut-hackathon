@@ -18,7 +18,15 @@ If Cloudflare proxies the hostname, the host nginx must first trust only Cloudfl
 
 The stack owns subnet `172.30.84.0/24` with gateway `172.30.84.1`. The script rejects overlaps with other Docker networks before building. The nginx template uses the official image's entrypoint and substitutes only `TRUSTED_PROXY_IP`, preserving nginx variables such as `$remote_addr` and `$http_host`.
 
-The bundled model is the default endpoint, `http://ml:8000`. A qualified replacement can be configured with `ML_SERVICE_URL` in the private environment file when its service or reachable endpoint is available. The default four-service stack and bundled model remain available; changing the URL alone does not create a replacement service.
+The bundled real-revenue blend is the default endpoint, `http://ml:8000`. The optional teammate candidate is packaged in the `teammate` Compose profile. To build and start it privately while keeping the default scorer selected:
+
+```sh
+docker compose --project-name flowcredit --env-file .env.production -f docker-compose.production.yml up -d --build --wait teammate-ml
+```
+
+To select it for Nest scoring, add `ML_SERVICE_URL=http://teammate-ml:8000` to the private `.env.production` and rerun `bash scripts/deploy.sh`. The script then builds and starts all five services, including the candidate, and backs up the database before restarting the app. To return to the real-revenue blend, set `ML_SERVICE_URL=http://ml:8000` and rerun the script. The candidate stays private, with a separate durable `flowcredit_teammate-ml-audit` volume; its original public demo, records and decision routes are absent. Other reachable scorer URLs do not automatically create a service.
+
+The candidate uses frozen synthetic-trained artifacts, 24% annual interest and actual annuity/adaptive repayment plans. It requires a completed month-end with at least six complete history months and a supported calendar cutoff. Do not select it on the assumption that its synthetic evaluations prove superior actual borrower accuracy. See the [independent review](teammate-ml-review.md) and [candidate limitations](../teammate-ml-service/README.md).
 
 Updates build images first. When a database volume already exists, the script stops web/API writes, starts PostgreSQL alone, and creates a consistent custom-format dump under `artifacts/production-backups/` before starting the API's migrations. Backups have permissions `600`; the directory has permissions `700` and is ignored by Git. Startup archives legacy synthetic portfolios without deleting accounts, model results, decisions or audit events. A backup failure stops the update before application startup. Updates can cause a brief maintenance interruption.
 
