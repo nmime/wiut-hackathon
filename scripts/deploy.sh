@@ -3,7 +3,7 @@ set -euo pipefail
 umask 077
 
 cd "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-for binary in docker openssl curl awk flock; do
+for binary in docker openssl curl awk flock python3 git; do
   command -v "$binary" >/dev/null || { printf 'Required command missing: %s\n' "$binary" >&2; exit 1; }
 done
 docker compose version >/dev/null
@@ -64,13 +64,8 @@ fi
 [[ "$encryption_key" =~ ^[a-fA-F0-9]{64}$ ]] || { printf 'AUTH_ENCRYPTION_KEY must contain 64 hex characters. Preserve the existing encryption key.\n' >&2; exit 1; }
 unset encryption_key key_lines
 
-model_endpoint=$(env_value ML_SERVICE_URL true)
 services=(db ml api web)
 build_targets=(api web ml)
-if [[ "${model_endpoint%/}" == http://teammate-ml:8000 ]]; then
-  services+=(teammate-ml)
-  build_targets+=(teammate-ml)
-fi
 
 compose() {
   # The private file is authoritative, even if this shell has dev values exported.
@@ -78,6 +73,21 @@ compose() {
     docker compose --project-name flowcredit --env-file "$environment_file" -f docker-compose.production.yml "$@"
 }
 compose config --quiet
+# Pin installed application image IDs before replacing mutable build tags.
+# This is a manual application rollback aid; database rollback is never automatic.
+rollback_stamp=$(date -u +%Y%m%dT%H%M%SZ)-$$
+rollback_file="artifacts/production-backups/images-$rollback_stamp.txt"
+for service in api web ml; do
+  current_container=$(compose ps --quiet "$service")
+  if [[ -n "$current_container" ]]; then
+    [[ "$current_container" =~ ^[a-f0-9]+$ ]] || exit 1
+    current_image=$(docker inspect --format '{{.Image}}' "$current_container")
+    [[ "$current_image" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+    rollback_tag="flowcredit-$service:rollback-$rollback_stamp"
+    docker image tag "$current_image" "$rollback_tag"
+    printf '%s %s %s\n' "$service" "$rollback_tag" "$current_image" >> "$rollback_file"
+  fi
+done
 # Reject overlapping IPv4 subnets, except the correctly configured project network.
 network_ids=$(docker network ls --quiet)
 if [[ -n "$network_ids" ]]; then
@@ -99,6 +109,9 @@ if [[ -n "$network_ids" ]]; then
 fi
 
 printf 'Building production API, web and local ML images.\n'
+mkdir -p artifacts/deployment
+chmod 755 artifacts/deployment
+python3 scripts/operations/release.py
 compose build --pull "${build_targets[@]}"
 had_database=false
 if docker volume inspect flowcredit_postgres-data >/dev/null 2>&1; then had_database=true; fi
@@ -119,6 +132,17 @@ if [[ "$had_database" == true ]]; then
   printf 'Pre-migration database backup saved to %s\n' "$backup"
 fi
 compose up -d --wait --wait-timeout 300 "${services[@]}"
+# Retire only the old scorer container. Its named audit volume and research
+# source remain available; no persistent data or unrelated services are removed.
+legacy_scorers=$(docker ps --all --quiet --filter label=com.docker.compose.project=flowcredit --filter label=com.docker.compose.service=teammate-ml)
+if [[ -n "$legacy_scorers" ]]; then
+  while IFS= read -r legacy_id; do
+    [[ "$legacy_id" =~ ^[a-f0-9]+$ ]] || exit 1
+    docker stop --time 30 "$legacy_id" >/dev/null
+    docker rm "$legacy_id" >/dev/null
+  done <<< "$legacy_scorers"
+fi
+python3 scripts/operations/release.py --serving
 curl --fail --silent --show-error --connect-timeout 3 --max-time 15 \
   --header "Host: $domain" --header "Origin: https://$domain" \
   http://127.0.0.1:18080/api/health >/dev/null
@@ -126,4 +150,6 @@ rejected_origin=$(curl --silent --show-error --output /dev/null --write-out '%{h
   --request POST --header "Host: $domain" --header 'Origin: https://example.invalid' \
   --header 'Content-Type: application/json' --data '{}' http://127.0.0.1:18080/api/auth/login)
 [[ "$rejected_origin" == 403 ]] || { printf 'Production origin policy check failed.\n' >&2; exit 1; }
+curl --fail --silent --show-error --max-time 15 --header "Host: $domain" \
+  http://127.0.0.1:18080/release.json >/dev/null
 printf 'Selected services are healthy on loopback. HTTPS host nginx must proxy %s to 127.0.0.1:18080.\n' "$domain"

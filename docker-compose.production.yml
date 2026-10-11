@@ -14,29 +14,6 @@ services:
       timeout: 3s
       retries: 24
     restart: unless-stopped
-  teammate-ml:
-    profiles: ['teammate']
-    build:
-      context: ./teammate-ml-service
-    environment:
-      ML_AUDIT_PATH: /data/audit/requests.jsonl
-      OMP_NUM_THREADS: '1'
-      OPENBLAS_NUM_THREADS: '1'
-    volumes:
-      - teammate-ml-audit:/data/audit
-    healthcheck:
-      test:
-        [
-          'CMD',
-          'python',
-          '-c',
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()",
-        ]
-      interval: 10s
-      timeout: 6s
-      retries: 12
-      start_period: 30s
-    restart: unless-stopped
   ml:
     build:
       context: .
@@ -70,7 +47,7 @@ services:
       API_HOST: 0.0.0.0
       API_PORT: '3000'
       DATABASE_URL: postgres://wiut:${POSTGRES_PASSWORD:?Production password is required}@db:5432/wiut
-      ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml:8000}
+      ML_SERVICE_URL: http://ml:8000
       ML_TIMEOUT_MS: ${ML_TIMEOUT_MS:-8000}
       CORS_ORIGINS: https://${DOMAIN:?Production domain is required}
       SESSION_COOKIE_SECURE: 'true'
@@ -109,6 +86,7 @@ services:
       NGINX_ENVSUBST_FILTER: '^TRUSTED_PROXY_IP$'
     volumes:
       - ./docker/nginx.production.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./artifacts/deployment:/data/release:ro
     depends_on:
       api:
         condition: service_healthy

@@ -7,7 +7,7 @@ cd /opt/flowcredit/repo
 bash scripts/install-operations.sh
 ```
 
-Run this as root. It requires the host's existing Docker/Compose installation, Python 3.11 or later, `openssl`, and systemd. It creates one verified private backup and accepts the currently healthy scorer identities before enabling four units belonging only to this application. It does not alter nginx, certificates, firewall rules, unrelated services, or other applications' schedules. Installation stops if the initial backup or health checks fail.
+Run this as root. It requires the host's existing Docker/Compose installation, Python 3.11 or later, `openssl`, and systemd. It creates one verified private backup and accepts the currently healthy final scorer identity before enabling four units belonging only to this application. It does not alter nginx, certificates, firewall rules, unrelated services, or other applications' schedules. Installation stops if the initial backup or health checks fail.
 
 `flowcredit-backup.timer` runs nightly at 02:15 Asia/Tashkent with up to 15 minutes of randomized delay. Missed scheduled backups run after the timer resumes. `flowcredit-health.timer` runs every five minutes, starting two minutes after boot, with up to 30 seconds of randomized delay. Both services are bounded oneshot operations, not additional public endpoints.
 
@@ -16,11 +16,11 @@ Run this as root. It requires the host's existing Docker/Compose installation, P
 Scheduled backups are stored in the ignored `artifacts/scheduled-backups/` directory. Directories have permissions `700`, and archives and status files have permissions `600`. Each archive contains:
 
 - A PostgreSQL custom-format dump of `wiut`, made with a transaction-consistent `pg_dump` without stopping application writes.
-- The exact complete JSONL prefix of each existing ML audit volume, including the optional teammate volume even if its container is stopped. The separate snapshot helper resolves the stack's already built `flowcredit-ml` image to its complete immutable image ID and uses read-only volumes, no network, no capabilities, and the audit owner's numeric UID. It runs only standard-library Python, without starting or evaluating a model, and does not depend on the running container's old image metadata remaining present.
+- The exact complete JSONL prefix of each existing ML audit volume, including the retained historical teammate volume after its container is retired. The separate snapshot helper resolves the stack's already built `flowcredit-ml` image to its complete immutable image ID and uses read-only volumes, no network, no capabilities, and the audit owner's numeric UID. It runs only standard-library Python, without starting or evaluating a model, and does not depend on the running container's old image metadata remaining present.
 - `.env.production`, including database and authentication-encryption credentials. These are secrets: the archive is private but is **not encrypted**.
 - A manifest with SHA-256 checksums and audit snapshot lengths/record counts. The script reads and verifies every archive member before atomically publishing the archive.
 
-Both scorer writers persist their records with `fsync`. The teammate writer and snapshot coordinate with a file lock. The default writer appends a record in one write; the snapshot fixes its initial file size and validates every complete JSON record. If it captures a concurrent incomplete final record, it retains the preceding complete bytes and reports the omitted tail length. An invalid complete record, truncated source, oversized record, database failure, or checksum failure aborts archive publication and prevents retention.
+The final scorer persists records with `fsync` and appends each record in one write. The historical teammate snapshot retains its file-lock coordination; the snapshot fixes its initial file size and validates every complete JSON record. If it captures a concurrent incomplete final record, it retains the preceding complete bytes and reports the omitted tail length. An invalid complete record, truncated source, oversized record, database failure, or checksum failure aborts archive publication and prevents retention.
 
 The database and the two logs have independent snapshot boundaries. This is not a single atomic snapshot spanning all three resources: an in-flight assessment may be present in one log before its related database attempt completes. Preserve the input/result hashes and correlate records when investigating. Snapshotting does not make a local audit log tamper-proof or externally anchored.
 
@@ -63,8 +63,8 @@ The monitor checks:
 
 - Loopback API/database health and public HTTPS API/database health, with normal TLS verification and the explicit `FlowCredit-Health/1.0` user agent. This avoids the host's Cloudflare rule rejecting Python's default user agent; blocked requests still fail the health check.
 - Anonymous business-list access remains protected by HTTP `401`.
-- Every installed FlowCredit container is running and healthy, and the selected scorer is available.
-- Scorer version and complete artifact SHA-256 match the accepted baseline. The teammate baseline additionally preserves its actual full source-archive and bridge-source SHA-256 values. No nonexistent source digest is invented for the default scorer.
+- The four production containers are running and healthy, and the API uses the fixed final scorer endpoint `http://ml:8000`. Historical scorer containers are outside the production configuration.
+- The final scorer reports `final_combined_model`, 24% annual interest and human review. Its complete component identity must hash to its reported assembly SHA-256; its version and assembly SHA-256 must match the explicitly accepted baseline. The assembly includes the real-revenue artifact, calibration, unchanged vendor source and final policy source.
 - At least 5 GiB disk headroom and less than 90% usage on the repository filesystem.
 - The origin certificate matches the configured hostname, remains valid for at least 14 days, and the host's existing `certbot.timer` is active.
 - A scheduled backup exists within the previous 26 hours and the most recent backup operation succeeded.
@@ -80,12 +80,12 @@ systemctl status flowcredit-backup.service flowcredit-health.service --no-pager
 journalctl -u flowcredit-backup.service -u flowcredit-health.service --since today --no-pager
 ```
 
-After a deliberately qualified model or bridge update, inspect the actual serving artifact against the frozen validation evidence, then accept its new identity:
+After a deliberately qualified final-model update, inspect `/release.json` and the private serving health against the frozen validation evidence, then accept the new assembly identity:
 
 ```sh
 python3 scripts/operations/check_health.py --accept-models
 ```
 
-Acceptance succeeds only when all other checks pass. Switching to the private teammate scorer or rebuilding an artifact does not automatically erase the previous identity baseline. The accepted baseline is operational evidence, not a new accuracy evaluation.
+Acceptance succeeds only when all other checks pass. Production has one scorer. Rebuilding its assembly does not automatically erase the previous identity baseline. A historical two-scorer baseline is deliberately replaced only after all final-stack checks pass. The accepted baseline is operational evidence, not a new accuracy evaluation.
 
 These are local monitoring and recovery controls. Someone must inspect failures; a host outage cannot report itself through its own journal. External uptime checks, paging delivery, an off-host backup destination, and a periodically rehearsed disaster recovery procedure still require operator-managed services. The app remains an MVP, not a claim of certified banking infrastructure.

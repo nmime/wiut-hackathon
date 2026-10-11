@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextlib
+import hashlib
 import io
 import json
 import os
@@ -17,10 +18,11 @@ from unittest.mock import patch
 
 OPERATIONS = Path(__file__).resolve().parents[2] / "scripts" / "operations"
 sys.path.insert(0, str(OPERATIONS))
-import backup
-import check_health
-import common
-import verify_backup
+import backup  # noqa: E402
+import check_health  # noqa: E402
+import common  # noqa: E402
+import release  # noqa: E402
+import verify_backup  # noqa: E402
 
 
 class ProductionOperationsTests(unittest.TestCase):
@@ -244,8 +246,13 @@ class ProductionOperationsTests(unittest.TestCase):
         current = {"model_version": "v2", "model_artifact_sha256": "b" * 64}
 
         def monitor_run(arguments, **kwargs):
+            if (
+                arguments[-1]
+                == "process.stdout.write(process.env.ML_SERVICE_URL || '')"
+            ):
+                return b"http://ml:8000"
             if "ps" in arguments:
-                return b"" if arguments[-1] == "teammate-ml" else b"a" * 64
+                return b"a" * 64
             if "inspect" in arguments:
                 return b"running healthy"
             if "is-active" in arguments:
@@ -352,39 +359,88 @@ class ProductionOperationsTests(unittest.TestCase):
                     expected,
                 )
 
-    def test_model_health_preserves_only_actual_validated_identity_fields(self):
+    def test_model_health_verifies_final_assembly_and_rejects_legacy_scorers(self):
+        components = {
+            "revenue": {"artifact": "a" * 64},
+            "financial_engine": {"annual_rate": 0.24},
+        }
+        artifact = hashlib.sha256(
+            json.dumps(components, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
         health = {
             "status": "ok",
-            "model_version": "teammate-v1",
-            "model_artifact_sha256": "a" * 64,
-            "source_archive_sha256": "b" * 64,
-            "bridge_source_sha256": "c" * 64,
-            "provenance": "No real borrower performance claim",
+            "model_version": f"final-v1-{artifact[:16]}",
+            "model_artifact_sha256": artifact,
+            "serving_mode": "final_combined_model",
+            "identity_scope": "complete_local_model_assembly",
+            "annual_interest_rate": 0.24,
+            "human_review_required": True,
+            "component_identity": components,
         }
         with patch.object(common, "run", return_value=json.dumps(health).encode()):
-            identity = common.model_health("teammate-ml")
+            identity = common.model_health("ml")
         self.assertEqual(
             set(identity),
             {
                 "model_version",
                 "model_artifact_sha256",
-                "source_archive_sha256",
-                "bridge_source_sha256",
+                "identity_scope",
+                "serving_mode",
             },
         )
-        del health["source_archive_sha256"]
-        del health["bridge_source_sha256"]
-        with patch.object(common, "run", return_value=json.dumps(health).encode()):
-            self.assertEqual(
-                set(common.model_health("ml")),
-                {"model_version", "model_artifact_sha256"},
-            )
-        health["bridge_source_sha256"] = "invalid"
-        with (
-            patch.object(common, "run", return_value=json.dumps(health).encode()),
-            self.assertRaises(common.OperationError),
+        for changed in (
+            {"serving_mode": "legacy"},
+            {"annual_interest_rate": 0},
+            {"component_identity": {"substituted": True}},
         ):
+            with (
+                self.subTest(changed=changed),
+                patch.object(
+                    common,
+                    "run",
+                    return_value=json.dumps({**health, **changed}).encode(),
+                ),
+                self.assertRaises(common.OperationError),
+            ):
+                common.model_health("ml")
+        with self.assertRaises(common.OperationError):
             common.model_health("teammate-ml")
+
+    def test_public_release_has_only_committed_identity_and_rejects_mid_build_changes(
+        self,
+    ):
+        bundle = self.root / "ml-service/final_model/artifacts/bundle.json"
+        bundle.parent.mkdir(parents=True)
+        bundle.write_text('{"test_only":true}')
+
+        def git_run(arguments):
+            return b"f" * 40 if "rev-parse" in arguments else b""
+
+        with (
+            patch.object(release, "ROOT", self.root),
+            patch.object(release, "run", side_effect=git_run),
+            patch.object(
+                release, "model_health", return_value={"model_version": "test-only"}
+            ),
+        ):
+            initial = release.publish()
+            serving = release.publish(serving=True)
+            self.assertEqual(serving["commit_sha"], "f" * 40)
+            self.assertEqual(
+                serving["model_bundle_sha256"], initial["model_bundle_sha256"]
+            )
+            self.assertEqual(serving["status"], "serving")
+            destination = self.root / "artifacts/deployment/release.json"
+            self.assertEqual(destination.stat().st_mode & 0o777, 0o644)
+            self.assertNotIn("POSTGRES_PASSWORD", destination.read_text())
+            bundle.write_text('{"test_only":"changed"}')
+            with self.assertRaises(common.OperationError):
+                release.publish(serving=True)
+            with (
+                patch.object(release, "run", return_value=b"M tracked-source"),
+                self.assertRaises(common.OperationError),
+            ):
+                release.publish()
 
     def test_restore_uses_generated_temporary_target_and_always_drops_it(self):
         calls = []

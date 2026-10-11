@@ -15,7 +15,6 @@ from urllib.request import Request, urlopen
 from backup import OWNED_ARCHIVE
 from common import (
     BACKUPS,
-    MODEL_SERVICES,
     ROOT,
     STATE,
     OperationError,
@@ -71,9 +70,7 @@ def certificate_hostname_matches(certificate: str, domain: str) -> bool:
 def observe(*, accept_models: bool = False) -> dict:
     values = environment()
     domain = values["DOMAIN"]
-    selected = MODEL_SERVICES.get(
-        values.get("ML_SERVICE_URL", "http://ml:8000").rstrip("/")
-    )
+    selected = "ml"
     checks: dict[str, str] = {}
     models = {}
 
@@ -101,14 +98,27 @@ def observe(*, accept_models: bool = False) -> dict:
         "anonymous_businesses_protected",
         lambda: http_status(f"https://{domain}/api/businesses")[0] == 401,
     )
-    checks["selected_scorer_supported"] = "ok" if selected else "failed"
-    for service in ("db", "api", "web", "ml", "teammate-ml"):
+    check(
+        "api_final_scorer_endpoint",
+        lambda: (
+            run(
+                compose(
+                    "exec",
+                    "-T",
+                    "api",
+                    "node",
+                    "-e",
+                    "process.stdout.write(process.env.ML_SERVICE_URL || '')",
+                )
+            ).strip()
+            == b"http://ml:8000"
+        ),
+    )
+    for service in ("db", "api", "web", "ml"):
         try:
             identifiers = (
                 run(compose("ps", "--all", "--quiet", service)).decode().split()
             )
-            if not identifiers and service == "teammate-ml" and selected != service:
-                continue
             if len(identifiers) != 1:
                 raise OperationError("Expected one container")
             state = (
@@ -127,7 +137,7 @@ def observe(*, accept_models: bool = False) -> dict:
             checks[f"container_{service}"] = (
                 "ok" if state == "running healthy" else "failed"
             )
-            if service in ("ml", "teammate-ml") and state == "running healthy":
+            if service == "ml" and state == "running healthy":
                 models[service] = model_health(service)
                 checks[f"scorer_{service}_identity_valid"] = "ok"
         except (
@@ -223,11 +233,12 @@ def publish(status: dict) -> None:
         previous = json.loads(path.read_text())
     except (OSError, ValueError):
         previous = {}
+
     # Only state/model changes generate our journal output. Timestamps refresh in
     # the private status file, and failures still return nonzero to systemd.
-    comparison = lambda data: {
-        key: value for key, value in data.items() if key != "observed_at"
-    }
+    def comparison(data):
+        return {key: value for key, value in data.items() if key != "observed_at"}
+
     atomic_json(path, status)
     if comparison(previous) != comparison(status):
         print(json.dumps(comparison(status), sort_keys=True))

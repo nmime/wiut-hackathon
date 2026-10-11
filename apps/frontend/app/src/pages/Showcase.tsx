@@ -479,9 +479,10 @@ export function ShowcasePage({
                         Limited-history cases are intentional
                       </AlertTitle>
                       <AlertDescription>
-                        Short histories may trigger warnings or be rejected by a
-                        scoring model. The short-history scenario uses at most
-                        four months. No successful result is forced.
+                        Fewer than six complete months receive an advisory
+                        decline with no positive loan offer. The short-history
+                        scenario uses at most four months. Generation does not
+                        force a positive verdict.
                       </AlertDescription>
                     </Alert>
                   )}
