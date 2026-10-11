@@ -38,7 +38,8 @@ jobs:
         with:
           version: '0.11.28'
           python-version: '3.12'
-      - run: uv sync --frozen
+      - name: Frozen incumbent research environment
+        run: uv sync --frozen
         working-directory: ml-service
       - run: uv run ruff check . && uv run ruff format --check .
         working-directory: ml-service
@@ -62,7 +63,8 @@ jobs:
         env:
           PGPASSWORD: wiut_dev
       - run: pnpm test:real-ml
-      - run: uv sync --frozen
+      - name: Frozen teammate research environment
+        run: uv sync --frozen
         working-directory: teammate-ml-service
       - run: uv run ruff check teammate_bridge tests && uv run ruff format --check teammate_bridge tests
         working-directory: teammate-ml-service
@@ -75,7 +77,8 @@ jobs:
         env:
           PGPASSWORD: wiut_dev
       - run: pnpm test:teammate-ml
-      - run: uv sync --frozen
+      - name: Final production scorer environment
+        run: uv sync --frozen
         working-directory: hybrid-runtime
       - run: uv run ruff check . && uv run ruff format --check .
         working-directory: hybrid-runtime
@@ -88,6 +91,10 @@ jobs:
         env:
           PGPASSWORD: wiut_dev
       - run: pnpm test:final-ml
+      - name: Final production image and offline inference smoke
+        run: |
+          docker build --file hybrid-runtime/Dockerfile --tag flowcredit-final-ci .
+          docker run --rm --network none -i flowcredit-final-ci python - < hybrid-runtime/container_smoke.py
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

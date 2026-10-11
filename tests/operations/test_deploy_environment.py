@@ -46,6 +46,9 @@ done
 exit 0
 """,
             "flock": "#!/bin/bash\nexit 0\n",
+            # Release publication is covered by the operations tests. Keep this
+            # environment migration fixture isolated from real Git/model calls.
+            "python3": "#!/bin/bash\nexit 0\n",
         }
         for name, content in scripts.items():
             target = self.bin / name
@@ -123,6 +126,21 @@ exit 0
         before = self.envfile.read_bytes()
         self.assertEqual(self.assert_success(self.deploy()), "b" * 64)
         self.assertEqual(self.envfile.read_bytes(), before)
+
+    def test_historical_endpoint_does_not_start_a_second_production_scorer(self):
+        self.existing(
+            f"AUTH_ENCRYPTION_KEY={'b' * 64}\nML_SERVICE_URL=http://teammate-ml:8000\n"
+        )
+        before = self.envfile.read_bytes()
+        self.assert_success(self.deploy())
+        self.assertEqual(self.envfile.read_bytes(), before)
+        commands = [
+            json.loads(row)["args"] for row in self.calls.read_text().splitlines()
+        ]
+        self.assertFalse(any("teammate-ml" in command for command in commands))
+        self.assertFalse(
+            any("--volumes" in command or "-v" in command for command in commands)
+        )
 
     def test_invalid_empty_or_duplicate_keys_stop_before_build(self):
         for suffix in (

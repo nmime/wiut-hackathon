@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parents[2]
 STATE = ROOT / "artifacts" / "operations"
 BACKUPS = ROOT / "artifacts" / "scheduled-backups"
 ENVIRONMENT = ROOT / ".env.production"
-MODEL_SERVICES = {"http://ml:8000": "ml", "http://teammate-ml:8000": "teammate-ml"}
 
 
 class OperationError(RuntimeError):
@@ -144,6 +143,8 @@ def checksum(path: Path) -> str:
 
 
 def model_health(service: str) -> dict[str, str]:
+    if service != "ml":
+        raise OperationError("Production supports only the final ml service")
     raw = run(
         compose(
             "exec",
@@ -169,11 +170,27 @@ def model_health(service: str) -> dict[str, str]:
         or not re.fullmatch(r"[a-f0-9]{64}", artifact)
     ):
         raise OperationError("Private scorer health identity is invalid")
-    identity = {"model_version": version, "model_artifact_sha256": artifact}
-    for key in ("source_archive_sha256", "bridge_source_sha256"):
-        if key in data:
-            value = data[key]
-            if not isinstance(value, str) or not re.fullmatch(r"[a-f0-9]{64}", value):
-                raise OperationError("Private scorer source identity is invalid")
-            identity[key] = value
-    return identity
+    components = data.get("component_identity")
+    try:
+        encoded = json.dumps(
+            components, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode()
+    except (TypeError, ValueError) as error:
+        raise OperationError("Final scorer component identity is invalid") from error
+    if (
+        data.get("serving_mode") != "final_combined_model"
+        or data.get("identity_scope") != "complete_local_model_assembly"
+        or data.get("annual_interest_rate") != 0.24
+        or data.get("human_review_required") is not True
+        or not isinstance(components, dict)
+        or not components
+        or hashlib.sha256(encoded).hexdigest() != artifact
+        or version != f"final-v1-{artifact[:16]}"
+    ):
+        raise OperationError("Private scorer is not the validated final assembly")
+    return {
+        "model_version": version,
+        "model_artifact_sha256": artifact,
+        "identity_scope": data["identity_scope"],
+        "serving_mode": data["serving_mode"],
+    }
