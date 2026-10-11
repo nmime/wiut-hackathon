@@ -18,6 +18,18 @@ a wide band alone does not automatically refuse a seasonal business whose median
 supports an offer. These rules express payment capacity, not default probability.
 An officer records every final decision.
 
+The first payment must cover the initial principal's monthly interest. The
+wrapper enforces the exact unscaled principal bound before accepting a native
+solver result. This prevents a numerical LP residual from creating a positive
+offer when the first-month budget is zero. It is an accounting constraint,
+not a learned minimum-loan rule; later zero-budget months still need their own
+feasibility/materiality checks. Automatic recommendations below 5% of a tier's
+discounted payment budget are treated as absent before selecting a verdict;
+the engine tries the next tier. A deliberately smaller positive requested
+amount may still fit an already selected material capacity. Zero means
+unspecified. The threshold is a disclosed policy, not a borrower-trained
+accuracy claim.
+
 The shared `/score` contract is preserved, including existing `loan_terms` and
 `forecast_provenance`. The frontend shows the advisory verdict, actual interest,
 principal, total repayment, and seasonal payments. Original stored assessments

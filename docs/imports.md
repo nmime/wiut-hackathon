@@ -53,7 +53,9 @@ end in `_index`.
 
 The importer declares the source; the MVP does not authenticate bank statements
 or deduplicate repeated uploads. Review the business history and file origin.
-The current local scorer treats an optional requested amount as context only;
-it explicitly flags the missing request conversion and does not cap principal.
-Forecasts include the disclosed real-revenue/synthetic blend. Capacity scores
-are neither default probabilities nor guarantees about future repayments.
+The final scorer checks an optional requested amount against the capacity of
+the seasonal schedule it actually offers. Its terms disclose 24% nominal annual
+interest, total interest and repayment. Forecast provenance identifies the
+real-trained revenue component and observed-cost projection; it uses no
+synthetic net forecast. Capacity scores are neither default probabilities nor
+guarantees about future repayments.
