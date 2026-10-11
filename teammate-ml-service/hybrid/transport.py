@@ -106,7 +106,8 @@ def build_response(
         "Revenue intervals use real aggregate development residual calibration. Expense, net-flow and borrower repayment outcomes were not observed in those datasets; revenue interval coverage does not validate net-flow or payment safety.",
         "Future costs are a projection of observed total outflows. Existing debt already present in those outflows is included without a second deduction. Categories, separate debt obligations, counterparties and own transfers remain unidentified.",
         "The inherited payment buffers were originally calibrated on synthetic data. Their use here is an explicit policy, with no promised 90% or 80% real-borrower payment coverage.",
-        "Wide intervals alone do not cause decline when a feasible positive median schedule exists: such an offer is marked elevated risk for an officer. Strong persistent observed decline and infeasible median cash flow suppress the main offer.",
+        "Automatic recommendations below 5% of the chosen tier's discounted payment budget are immaterial and rejected before trying the next tier. A smaller positive requested amount can still fit an already selected material capacity; a zero request is unspecified.",
+        "Wide intervals alone do not cause decline when a feasible material median offer exists: such an offer is marked elevated risk for an officer. Strong persistent observed decline and infeasible median cash flow suppress the main offer.",
         "Confidence is a history/interval evidence indicator, not a calibrated borrower probability. Monetary units are explicit: 1 amount_index = 1 UZS.",
     ]
     if assessment["requested_exceeds"]:
@@ -123,7 +124,7 @@ def build_response(
         )
     if assessment["tier"] == "p50":
         advisory.append(
-            "P10/P20 cannot support a positive genuine schedule; the positive amount uses buffered median cash flow and requires explicit elevated-risk human review."
+            "P10/P20 cannot support a material offer; the amount uses buffered median cash flow and requires explicit elevated-risk human review."
         )
     score = assessment["score"]
     return ScoreResponse.model_validate(
