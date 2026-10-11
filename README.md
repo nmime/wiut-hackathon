@@ -44,22 +44,35 @@ No fabricated score or recommendation is substituted.
 
 ## Run the included local ML service
 
-The repository includes a local FastAPI service that trains its revenue forecast
-on licensed Uzbekistan, Australian, Canadian and European turnover data. Borrower expense
-projections and synthetic net-flow forecasts are validated separately. To run
-the complete application locally:
+The repository includes one final local FastAPI scorer. It combines a revenue
+forecast trained on licensed public turnover observations, real-revenue interval
+calibration, observed business costs, seasonal affordability, 24% annual interest,
+and three advisory verdicts. To run the complete application locally:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build -d
 ```
 
-Open http://localhost:8080. The ML container builds its model locally and NestJS
+Open http://localhost:8080. The ML container loads the frozen final model and NestJS
 connects to `http://ml:8000`. The ML API listens on localhost:8000 and retains
 request hashes, responses, and model identifiers in the `ml-audit` volume.
 Inference and explanations make no external API calls.
 
 For Python development, install [uv](https://docs.astral.sh/uv/getting-started/installation/),
-then run:
+then run the final scorer:
+
+```bash
+uv sync --frozen --directory hybrid-runtime
+./scripts/serve_final_model.sh
+```
+
+Set `ML_SERVICE_URL=http://127.0.0.1:8110` for the local NestJS process.
+The [final model runtime](docs/final-model-runtime.md) documents the combined
+forecast, real-calibrated uncertainty, 24% annual interest, seasonal capacity,
+three advisory verdicts, component identities, and human review.
+
+The original forecast training and historical evaluations remain reproducible
+in their separate frozen environment:
 
 ```bash
 cd ml-service
@@ -75,7 +88,6 @@ uv run pytest
 uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
 ```
 
-Set `ML_SERVICE_URL=http://127.0.0.1:8000` for the local NestJS process.
 See [ML implementation and measured evaluation](ml-service/README.md) for the
 generator, split, forecast selection, capacity factors, and limitations.
 The [public dataset declaration](ml-service/data/README.md) documents official
@@ -137,8 +149,8 @@ The supplied teammate service is integrated in `teammate-ml-service/` as a priva
 optional candidate. Its LightGBM artifacts remain unchanged. It adds native
 forecast intervals, requested-amount checks and interest-bearing schedules at
 **24% annual interest**. It trained on synthetic businesses, so it does not
-establish an accuracy improvement on real borrowers. The real-revenue blend
-remains the default. See the [independent review](docs/teammate-ml-review.md) and
+establish an accuracy improvement on real borrowers. The assembled final scorer
+is the product default. See the [independent review](docs/teammate-ml-review.md) and
 [candidate setup](teammate-ml-service/README.md).
 
 Run the candidate on loopback port 8111 as documented there, set
@@ -244,8 +256,18 @@ test infrastructure and is never started by the product's dev or Docker commands
 `WIUT_TEST_DATABASE_URL` and `WIUT_NO_ML_DATABASE_URL` may override the browser-test
 connections. The second database verifies the actual disconnected-ML behavior.
 
-After preparing the Python environment and training the local model, test its
-real integration through NestJS and the browser:
+After preparing the final runtime, test the actual final scorer through NestJS
+and the browser in a separate test database:
+
+```bash
+docker compose exec -T db createdb -U wiut wiut_final_ml
+pnpm test:final-ml
+```
+
+This suite uses ports 8112/3012/5178. `WIUT_FINAL_ML_DATABASE_URL` may override
+its connection. Borrower inputs are disclosed synthetic integration fixtures.
+
+The original frozen scorer has a separate regression suite:
 
 ```bash
 docker compose exec -T db createdb -U wiut wiut_real_ml
@@ -306,8 +328,9 @@ events. Overview counts describe the returned records, not unbounded portfolio t
 The optional ML service has its own synthetic generator and measured held-out
 evaluation. Its report describes performance on unseen synthetic businesses and
 future months; it does not establish real borrower performance or default risk.
-The teammate candidate can be selected without changing the frontend; it remains
-optional pending a common, predeclared comparison on unseen actual outcomes.
+The historical teammate endpoint can be selected without changing the frontend.
+The final assembly uses its verified financial primitives and real-revenue
+forecasting; real borrower repayment accuracy remains unverified.
 
 ## Repository
 
@@ -315,7 +338,8 @@ optional pending a common, predeclared comparison on unseen actual outcomes.
 apps/frontend/app/                  React, Tailwind, official shadcn/ui
 apps/backend/user/user-app-api/      NestJS, PostgreSQL, ML adapter, audit
 libs/common/api-contracts/           Runtime schemas and shared TypeScript types
-ml-service/                         Optional local FastAPI model and evaluation
+ml-service/                         Final scorer, frozen forecast recipe and evidence
+hybrid-runtime/                     Pinned combined inference environment
 teammate-ml-service/                Frozen teammate candidate and private adapter
 tests/                              Isolated API and browser integration tests
 docs/                               ML contract and fork provenance

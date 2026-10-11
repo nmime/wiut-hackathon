@@ -184,6 +184,28 @@ export function BusinessWorkspace({
       null)
     : (assessments[0] ?? business?.latest_assessment ?? null);
   const result = assessmentError ? null : assessment?.result;
+  const modelVerdict = result?.flags.includes('verdict_affordable')
+    ? {
+        label: 'Affordable',
+        detail:
+          'The offered seasonal schedule fits the main capacity tier. An officer records the final decision.',
+        decline: false,
+      }
+    : result?.flags.includes('verdict_elevated_risk')
+      ? {
+          label: 'Affordable at elevated risk — officer decides',
+          detail:
+            'The main tier is not supported. Review the forecast uncertainty, observed costs and proposed schedule before deciding.',
+          decline: false,
+        }
+      : result?.flags.includes('verdict_decline')
+        ? {
+            label: 'Decline recommendation',
+            detail:
+              'The model does not recommend a loan under this policy. An officer records the final decision and may request additional evidence.',
+            decline: true,
+          }
+        : null;
   const annuitySchedule = result?.loan_terms?.schedule_type === 'annuity';
   const paymentLabel = annuitySchedule ? 'Annuity payment' : 'Adaptive payment';
   const businessUnit = business?.amount_unit ?? 'index';
@@ -1457,6 +1479,15 @@ export function BusinessWorkspace({
               </CardContent>
             </Card>
           </div>
+          {modelVerdict && (
+            <Alert variant={modelVerdict.decline ? 'destructive' : 'default'}>
+              {modelVerdict.decline ? <TriangleAlert /> : <ClipboardCheck />}
+              <AlertTitle className="line-clamp-none">
+                {modelVerdict.label}
+              </AlertTitle>
+              <AlertDescription>{modelVerdict.detail}</AlertDescription>
+            </Alert>
+          )}
           <Card className="shadow-none">
             <CardHeader>
               <CardTitle role="heading" aria-level={3} className="text-base">

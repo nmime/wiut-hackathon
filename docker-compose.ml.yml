@@ -1,9 +1,10 @@
 services:
   ml:
     build:
-      context: ./ml-service
+      context: .
+      dockerfile: hybrid-runtime/Dockerfile
     environment:
-      ML_MODEL_PATH: /app/runtime/model.joblib
+      FINAL_MODEL_BUNDLE: /app/ml-service/final_model/artifacts
       ML_AUDIT_PATH: /data/audit/requests.jsonl
     ports:
       - '127.0.0.1:8000:8000'
