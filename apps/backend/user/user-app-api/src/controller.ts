@@ -38,6 +38,12 @@ export class ProductController {
   ) {
     return this.product.importBusiness(body, request.id, request.auth!);
   }
+  @Post('showcase/generate') generateShowcase(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.product.generateShowcase(body, request.id, request.auth!);
+  }
   @Post('assessments') createAssessment(
     @Body() body: unknown,
     @Req() request: FastifyRequest,

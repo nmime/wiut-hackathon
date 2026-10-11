@@ -95,6 +95,12 @@ export class AuthController {
   ) {
     return this.auth.createTenant(body, request.auth!, request.id);
   }
+  @Post('auth/showcase-tenants') createShowcaseTenant(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ) {
+    return this.auth.createTenant(body, request.auth!, request.id, 'showcase');
+  }
   @HttpCode(200) @Post('tenants/switch') switchTenant(
     @Body() body: unknown,
     @Req() request: FastifyRequest,

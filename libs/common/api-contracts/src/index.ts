@@ -297,6 +297,47 @@ export const MonthlyCashflowSchema = z.object({
   outflow_index: nonnegative,
   surplus_index: z.number().finite(),
 });
+export const ShowcaseScenarioSchema = z.enum([
+  'mixed',
+  'stable',
+  'seasonal',
+  'growing',
+  'declining',
+  'volatile',
+  'short_history',
+]);
+export const ShowcaseMonthSchema = z
+  .string()
+  .regex(
+    /^(?:20\d{2})-(?:0[1-9]|1[0-2])$/,
+    'Use a calendar month from 2000 through 2099',
+  );
+export const ShowcaseGenerateSchema = z
+  .object({
+    scenario: ShowcaseScenarioSchema.default('mixed'),
+    seed: z.number().int().min(0).max(4294967295).default(7261),
+    months: z.number().int().min(3).max(36).default(24),
+    count: z.number().int().min(1).max(6).default(6),
+    monthly_revenue_uzs: z
+      .number()
+      .finite()
+      .min(1000000)
+      .max(1000000000)
+      .default(30000000),
+    end_month: ShowcaseMonthSchema.optional(),
+  })
+  .strict();
+export const ShowcaseProvenanceSchema = z
+  .object({
+    generator_version: z.literal('showcase-v1'),
+    seed: z.number().int().min(0).max(4294967295),
+    scenario: ShowcaseScenarioSchema.exclude(['mixed']),
+    months: z.number().int().min(3).max(36),
+    end_month: ShowcaseMonthSchema,
+    monthly_revenue_uzs: z.number().finite().min(1000000).max(1000000000),
+    batch_index: z.number().int().min(0).max(5),
+  })
+  .strict();
 export const BusinessSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -311,6 +352,7 @@ export const BusinessSchema = z.object({
   last_activity_date: DateSchema,
   data_source: z.enum(['user_provided', 'synthetic']),
   amount_unit: AmountUnitSchema,
+  showcase_provenance: ShowcaseProvenanceSchema.nullable().default(null),
   archived_at: z.iso.datetime().nullable(),
   latest_assessment: AssessmentSchema.nullable(),
 });
@@ -318,6 +360,31 @@ export const BusinessDetailSchema = BusinessSchema.extend({
   transactions: z.array(TransactionSchema),
   monthly_cashflow: z.array(MonthlyCashflowSchema),
 });
+export const ShowcaseGenerationSchema = z
+  .object({
+    items: z.array(BusinessDetailSchema).min(1).max(6),
+    provenance: ShowcaseGenerateSchema.extend({
+      end_month: ShowcaseMonthSchema,
+      generator_version: z.literal('showcase-v1'),
+    }),
+  })
+  .superRefine((value, ctx) => {
+    if (
+      value.items.length !== value.provenance.count ||
+      value.items.some(
+        (item) =>
+          item.data_source !== 'synthetic' ||
+          item.amount_unit !== 'UZS' ||
+          !item.showcase_provenance,
+      )
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'Generated cases must have synthetic UZS provenance and match the requested count',
+      });
+    }
+  });
 export const BusinessListSchema = z.object({
   items: z.array(BusinessSchema),
   synthetic: z.boolean(),
@@ -363,6 +430,7 @@ export const AuditEventSchema = z.object({
   event_type: z.enum([
     'business_imported',
     'business_archived',
+    'showcase_business_generated',
     'assessment_requested',
     'assessment_completed',
     'assessment_failed',
@@ -409,6 +477,9 @@ export type DecisionInput = z.infer<typeof DecisionInputSchema>;
 export type Decision = z.infer<typeof DecisionSchema>;
 export type AuditEvent = z.infer<typeof AuditEventSchema>;
 export type MonthlyCashflow = z.infer<typeof MonthlyCashflowSchema>;
+export type ShowcaseGenerate = z.input<typeof ShowcaseGenerateSchema>;
+export type ShowcaseGeneration = z.infer<typeof ShowcaseGenerationSchema>;
+export type ShowcaseProvenance = z.infer<typeof ShowcaseProvenanceSchema>;
 
 export const EmailSchema = z
   .string()
@@ -417,6 +488,7 @@ export const EmailSchema = z
   .pipe(z.email().max(254));
 export const PasswordSchema = z.string().min(12).max(128);
 export const TenantRoleSchema = z.enum(['admin', 'officer']);
+export const TenantKindSchema = z.enum(['bank', 'showcase']);
 export const TotpCodeSchema = z
   .string()
   .regex(/^\d{6}$/, 'Enter a six-digit authenticator code');
@@ -505,6 +577,7 @@ export const TenantSchema = z.object({
   id: z.string(),
   name: z.string(),
   role: TenantRoleSchema,
+  kind: TenantKindSchema.default('bank'),
 });
 export const AuthSessionSchema = z.object({
   user: AuthUserSchema,
@@ -549,5 +622,6 @@ export type AuthLogin = z.infer<typeof AuthLoginSchema>;
 export type AuthSession = z.infer<typeof AuthSessionSchema>;
 export type Tenant = z.infer<typeof TenantSchema>;
 export type TenantRole = z.infer<typeof TenantRoleSchema>;
+export type TenantKind = z.infer<typeof TenantKindSchema>;
 export type Invitation = z.infer<typeof InvitationSchema>;
 export type Team = z.infer<typeof TeamSchema>;

@@ -5,7 +5,7 @@ import {
   parseTransactionInput,
   prepareBusinessImport,
 } from './import.ts';
-import { amountLabel, businessExport } from './format.ts';
+import { amountLabel, businessExport, transactionCsv } from './format.ts';
 import type { BusinessDetail } from '@wiut/contracts';
 
 // Deliberately fabricated records exercise parsing only; these are never product seeds.
@@ -90,7 +90,7 @@ test('legacy indexed and synthetic exports cannot be relabeled UZS', () => {
           }),
           'json',
         ),
-      /legacy indexed or synthetic/,
+      /legacy indexed or synthetic|generated showcase data/,
     );
   }
   assert.throws(
@@ -270,4 +270,84 @@ test('currency export round-trips while legacy export stays explicitly indexed',
   assert.equal(legacy.transactions[0].amount_index, transaction.amount);
   assert.equal('amount' in legacy.transactions[0], false);
   assert.equal(amountLabel(123, 'index'), '123 idx');
+});
+
+test('showcase exports preserve synthetic provenance and cannot enter bank imports', () => {
+  const showcase = {
+    ...profile,
+    id: 'showcase-format-fixture',
+    data_source: 'synthetic',
+    amount_unit: 'UZS',
+    showcase_provenance: {
+      generator_version: 'showcase-v1',
+      seed: 7261,
+      scenario: 'stable',
+      months: 24,
+      end_month: '2026-09',
+      monthly_revenue_uzs: 30000000,
+      batch_index: 0,
+    },
+    transactions: [{ ...transaction, amount_index: transaction.amount }],
+  } as unknown as BusinessDetail;
+  const exported = businessExport(showcase);
+  assert.equal(exported.data_source, 'synthetic');
+  assert.deepEqual(exported.showcase_provenance, showcase.showcase_provenance);
+  assert.ok('amount' in exported.transactions[0]);
+  assert.equal(exported.transactions[0].amount, transaction.amount);
+  assert.throws(
+    () => prepareBusinessImport(profile, JSON.stringify(exported), 'json'),
+    /generated showcase data/,
+  );
+  const exportedCsv = transactionCsv(showcase);
+  assert.match(
+    exportedCsv,
+    /^data_source,amount_unit,generator_version,seed,scenario,/,
+  );
+  assert.match(
+    exportedCsv,
+    /synthetic,UZS,showcase-v1,7261,stable,24,2026-09,30000000,0,/,
+  );
+  assert.throws(
+    () => prepareBusinessImport(profile, exportedCsv, 'csv'),
+    /generated showcase data/,
+  );
+  assert.throws(
+    () =>
+      parseTransactionInput(
+        exportedCsv.replace('synthetic,UZS', 'user_provided,UZS'),
+        'csv',
+      ),
+    /generated showcase data/,
+  );
+  assert.throws(
+    () =>
+      parseTransactionInput(
+        `data_source,${csv.replace('\n', '\nsynthetic,')}`,
+        'csv',
+      ),
+    /generated showcase data/,
+  );
+});
+
+test('actual transaction CSV export keeps its declared UZS import format', () => {
+  const business = {
+    ...profile,
+    data_source: 'user_provided',
+    amount_unit: 'UZS',
+    showcase_provenance: null,
+    transactions: [
+      {
+        ts: transaction.ts,
+        direction: transaction.direction,
+        channel: transaction.channel,
+        amount_index: transaction.amount,
+      },
+    ],
+  } as BusinessDetail;
+  assert.equal(transactionCsv(business), csv);
+  assert.deepEqual(
+    prepareBusinessImport(profile, transactionCsv(business), 'csv')
+      .transactions,
+    [transaction],
+  );
 });

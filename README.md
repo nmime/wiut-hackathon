@@ -33,6 +33,10 @@ an administrator's invitation link. Accounts use email and a password of at leas
 12 characters. Each workspace has an isolated portfolio. Import a business to
 begin. An upgraded installation retains its existing workspace and saved history;
 new registrations and additional workspaces receive no seeded businesses.
+For demonstrations and tests, open **Showcase lab** and opt in to a separate
+workspace with seeded, explicitly synthetic scenarios. Generated cases use the
+normal scoring and human-review flow and include provenance in their exports.
+They stay separate from bank portfolios. See [Showcase lab](docs/showcase.md).
 For authenticator setup, generate a persistent local encryption key with
 `openssl rand -hex 32` and put it in `AUTH_ENCRYPTION_KEY` in the ignored `.env`.
 Preserve that key across restarts and backups; production setup generates it automatically.

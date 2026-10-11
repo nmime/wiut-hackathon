@@ -11,6 +11,7 @@ import {
   TrendingDown,
   TrendingUp,
   Minus,
+  FlaskConical,
 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -59,10 +60,12 @@ export function BusinessesPage({
   businesses,
   onOpen,
   onImport,
+  showcase = false,
 }: {
   businesses: UseQueryResult<Awaited<ReturnType<typeof api.businesses>>, Error>;
   onOpen: (id: string) => void;
   onImport: () => void;
+  showcase?: boolean;
 }) {
   const [search, setSearch] = useState('');
   const [sector, setSector] = useState('all');
@@ -125,12 +128,14 @@ export function BusinessesPage({
             Businesses
           </h1>
           <p className="text-sm text-muted-foreground">
-            Manage business histories and the credit reviews that follow.
+            {showcase
+              ? 'Generated histories and practice reviews in this showcase workspace.'
+              : 'Manage business histories and the credit reviews that follow.'}
           </p>
         </div>
         <Button onClick={onImport}>
-          <Import />
-          Import business
+          {showcase ? <FlaskConical /> : <Import />}
+          {showcase ? 'Generate showcase cases' : 'Import business'}
         </Button>
       </div>
       <Card className="gap-0 shadow-none" aria-busy={businesses.isPending}>
@@ -239,12 +244,18 @@ export function BusinessesPage({
                   </EmptyTitle>
                   <EmptyDescription>
                     {items.length === 0
-                      ? 'Add a business and upload its transaction history in UZS.'
+                      ? showcase
+                        ? 'Create a scenario pack in the Showcase lab.'
+                        : 'Add a business and upload its transaction history in UZS.'
                       : 'Try another search or reset your filters.'}
                   </EmptyDescription>
                 </EmptyHeader>
                 {items.length === 0 ? (
-                  <Button onClick={onImport}>Import first business</Button>
+                  <Button onClick={onImport}>
+                    {showcase
+                      ? 'Generate showcase cases'
+                      : 'Import first business'}
+                  </Button>
                 ) : (
                   <Button
                     variant="outline"
@@ -443,7 +454,7 @@ export function BusinessesPage({
               ? 'Portfolio unavailable'
               : `${filtered.length} of ${items.length} businesses`}
           </span>
-          <span>Active portfolio</span>
+          <span>{showcase ? 'Active showcase cases' : 'Active portfolio'}</span>
         </CardFooter>
       </Card>
     </>

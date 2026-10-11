@@ -38,6 +38,7 @@ import {
   TrendingDown,
   TrendingUp,
   TriangleAlert,
+  FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -251,9 +252,15 @@ export function BusinessWorkspace({
     if (initialAssessmentId) setAssessmentError(null);
   }, [initialAssessmentId]);
   useEffect(() => {
-    if (business?.last_activity_date)
+    if (business?.showcase_provenance?.end_month) {
+      const end = new Date(
+        `${business.showcase_provenance.end_month}-01T00:00:00Z`,
+      );
+      end.setUTCMonth(end.getUTCMonth() + 1, 0);
+      setAssessmentDate(end.toISOString().slice(0, 10));
+    } else if (business?.last_activity_date)
       setAssessmentDate(business.last_activity_date);
-  }, [business?.last_activity_date]);
+  }, [business?.last_activity_date, business?.showcase_provenance?.end_month]);
   useEffect(() => {
     setDecisionError(null);
     setNotes('');
@@ -396,7 +403,11 @@ export function BusinessWorkspace({
               {business.name}
             </h1>
             <Badge variant="outline" className="gap-1.5 font-normal">
-              {business.archived_at ? 'Archived case' : 'Transaction history'}
+              {business.archived_at
+                ? 'Archived case'
+                : business.data_source === 'synthetic'
+                  ? 'Synthetic inputs'
+                  : 'Transaction history'}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -413,7 +424,7 @@ export function BusinessWorkspace({
             size="sm"
             onClick={() =>
               downloadJson(
-                `${business.id}-business-${business.amount_unit}.json`,
+                `${business.data_source === 'synthetic' ? 'showcase-synthetic-' : ''}${business.id}-business-${business.amount_unit}.json`,
                 businessExport(business),
               )
             }
@@ -426,6 +437,23 @@ export function BusinessWorkspace({
           </Badge>
         </div>
       </div>
+      {business.showcase_provenance && (
+        <Alert>
+          <FlaskConical />
+          <AlertTitle>
+            Generated scenario ·{' '}
+            {business.showcase_provenance.scenario.replaceAll('_', ' ')}
+          </AlertTitle>
+          <AlertDescription>
+            Synthetic UZS transactions · Seed{' '}
+            {business.showcase_provenance.seed} ·{' '}
+            {business.showcase_provenance.months} complete months through{' '}
+            {business.showcase_provenance.end_month} · Generator{' '}
+            {business.showcase_provenance.generator_version}. Assessments and
+            decisions here demonstrate the workflow using generated inputs.
+          </AlertDescription>
+        </Alert>
+      )}
       {business.archived_at && (
         <Alert>
           <Info />
@@ -1289,8 +1317,21 @@ export function BusinessWorkspace({
               size="sm"
               onClick={() =>
                 downloadJson(
-                  `${business.id}-${assessment.id}-assessment.json`,
-                  assessment,
+                  `${business.data_source === 'synthetic' ? 'showcase-synthetic-' : ''}${business.id}-${assessment.id}-assessment.json`,
+                  business.data_source === 'synthetic'
+                    ? {
+                        workspace_kind: business.showcase_provenance
+                          ? 'showcase'
+                          : 'legacy',
+                        input_provenance: {
+                          data_source: business.data_source,
+                          amount_unit: business.amount_unit,
+                          business_name: business.name,
+                          showcase_provenance: business.showcase_provenance,
+                        },
+                        assessment,
+                      }
+                    : assessment,
                 )
               }
             >

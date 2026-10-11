@@ -2,6 +2,7 @@ import type {
   BusinessDetail,
   MonthlyCashflow,
   Transaction,
+  ShowcaseProvenance,
 } from '@wiut/contracts';
 
 export interface StoredBusiness {
@@ -14,6 +15,7 @@ export interface StoredBusiness {
   data_source: 'user_provided' | 'synthetic';
   amount_unit: 'UZS' | 'index';
   archived_at: string | Date | null;
+  showcase_provenance?: ShowcaseProvenance | null;
 }
 
 export function monthlyCashflow(
@@ -89,6 +91,7 @@ export function businessDetail(business: StoredBusiness): BusinessDetail {
     last_activity_date: transactions.at(-1)!.ts.slice(0, 10),
     data_source: business.data_source,
     amount_unit: business.amount_unit,
+    showcase_provenance: business.showcase_provenance ?? null,
     archived_at: business.archived_at
       ? new Date(business.archived_at).toISOString()
       : null,

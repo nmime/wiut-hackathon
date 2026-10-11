@@ -129,28 +129,36 @@ complete auxiliary fields remains unmeasured.
 - Original teammate implementation: 49 supplied tests passed.
 - Private wrapper: 24 focused tests passed, including input limits, genuine
   interest totals, refusals, artifact identity and audit durability.
-- Candidate integration: eight end-to-end tests through Python, Nest,
+- Candidate integration: nine end-to-end tests through Python, Nest,
   PostgreSQL and React passed, including annuity/adaptive labels, requested
-  limits, immutable human review and tenant isolation.
-- Public HTTPS default-model flow: eleven checks passed, including actual
-  scoring, saved results, authentication, permissions and guarded removal of
-  temporary test records.
+  limits, immutable human review, tenant isolation, and generated showcase
+  scenarios with a persisted short-history refusal.
+- Default-model integration: six end-to-end tests passed, including all six
+  generated showcase scenarios, persisted model results and human review.
+- Public HTTPS default-model flow verified actual scoring, saved results,
+  authentication, permissions and guarded removal of temporary test records.
 - Both deployed scorer identities were checked against the exact frozen
   artifacts. These are working-system checks, not accuracy measurements.
 
+The [Showcase lab](showcase.md) generates explicitly synthetic inputs in separate
+workspaces. It leaves these artifacts and validation evidence unchanged; it does
+not add real training observations or establish model accuracy.
+
 ## Recommendation and sources
 
-Keep the real-revenue blend as the default: its revenue component now has
-substantially lower error than the frozen teammate transfer in a common real
-aggregate comparison, alongside its preserved data lineage and prior audits.
-The small gains from a real-trained LightGBM experiment do not meet the frozen
-replacement gates. Keep the teammate candidate optional for interest-bearing
-planning research; its synthetic uncertainty intervals should not be promoted as
-calibrated real-revenue intervals. Preserve both serving artifacts and the new
-experimental artifacts. Any further tuning consumes this comparison and needs
-new reserved outcome evidence.
+Serve the final combined scorer as the default: it retains the frozen incumbent
+real-revenue component, projects observed costs, uses real development-residual
+revenue bounds, and applies the verified teammate financial primitives at 24%
+annual interest. Actual seasonal affordability, three advisory verdicts and a
+sustained-decline guard are included. The improved third model's 2.181% fresh
+gain remains below the frozen 5% replacement threshold. Keep the historical
+endpoints for research and preserve all frozen artifacts and evidence. The
+Showcase lab remains isolated and explicitly synthetic. Future tuning needs new
+reserved outcomes; revenue intervals do not establish borrower repayment safety.
 
 - [Default implementation and data](../ml-service/README.md)
+- [Final default runtime](final-model-runtime.md)
+- [Fresh replacement evidence and final choice](../ml-service/reports/revenue-upgrade-fresh.md)
 - [Common real-revenue evidence and reproduction](../ml-service/reports/real-model-benchmark.md)
 - [Preregistered comparison protocol](model-benchmark-protocol.md)
 - [Frozen external revenue audit](../ml-service/reports/external-audit-v2-frozen.md)
