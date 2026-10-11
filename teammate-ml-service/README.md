@@ -1,8 +1,9 @@
-# Optional teammate scoring candidate
+# Frozen teammate source and research candidate
 
 This private FastAPI service adapts the teammate's frozen LightGBM forecast and
-capacity service to the existing Nest `/score` transport. The current real-revenue
-blend remains the product default. This candidate has **420 synthetic training
+capacity service to the existing Nest `/score` transport. The product serves the [final combined scorer](../docs/final-model-runtime.md),
+which reuses verified financial primitives from this source. This historical
+LightGBM bridge is retained for isolated research and regression only. This candidate has **420 synthetic training
 businesses and no validated real-borrower accuracy**. Its native synthetic
 evaluation is not evidence that it improves the existing real-data model.
 
@@ -42,9 +43,8 @@ ML_AUDIT_PATH=runtime/requests.jsonl OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 \
   uv run --frozen uvicorn teammate_bridge.api:app --host 127.0.0.1 --port 8111
 ```
 
-The service exposes `/health` and `/score`. Configure the Nest API's
-`ML_SERVICE_URL` to its private address to opt in; the browser continues to use
-the authenticated Nest API. No candidate port should be published to the
+The service exposes `/health` and `/score`. Only a separate research/test Nest instance may connect to this endpoint.
+Production Compose has one final `ml` service and does not select this candidate. No candidate port should be published to the
 internet. The Docker image runs as UID/GID 10001 and writes only to the durable
 audit volume at `/data/audit`. It retains one inference slot and caps numerical
 threading; it returns a retryable HTTP 429 while that slot is busy. There are no

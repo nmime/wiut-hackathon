@@ -1,4 +1,4 @@
-# Local payment capacity service
+# Final scorer and archived forecasting research
 
 The product now serves the [final combined model](../docs/final-model-runtime.md)
 through `final_model.api:app` in the separate `hybrid-runtime` environment. It
@@ -7,7 +7,7 @@ retains the selected real-revenue forecast, adds real-calibrated uncertainty,
 The original `capacity_ml` implementation and evidence below remain frozen for
 explicit reproduction and regression; its original 0% policy is historical.
 
-This FastAPI module blends a licensed real-data revenue forecast with separately validated borrower expense and synthetic net-flow models, then calculates an explainable payment capacity recommendation. Demonstration borrower transactions remain synthetic. It does not predict default or approve credit. NestJS persists every assessment and human officer decision; Python maintains a durable local audit for direct `/score` calls.
+The historical FastAPI module described below blends a licensed real-data revenue forecast with separately validated borrower expense and synthetic net-flow models, then calculates an explainable payment capacity recommendation. Demonstration borrower transactions remain synthetic. It does not predict default or approve credit. NestJS persists every assessment and human officer decision; Python maintains a durable local audit for direct `/score` calls.
 
 ## Reproduce, test and run
 
@@ -28,13 +28,13 @@ uv run ruff format --check .
 uv run uvicorn capacity_ml.api:app --host 127.0.0.1 --port 8000
 ```
 
-`GET /health` reports the loaded version, serving mode, configured base public-transfer weight, observed-history routing policy, effective validation-weight distribution, expense policy, source provenance and actual real-data training target count. The actual request weights are also returned as optional `forecast_provenance` and displayed in the review workspace; inactive-history zero forecasts omit estimator provenance. `POST /score` follows [the shared contract](../docs/ml-integration.md); interactive schema documentation is at `/docs`. NestJS uses `ML_SERVICE_URL=http://127.0.0.1:8000` locally or `http://ml:8000` in Compose.
+`GET /health` reports the loaded version, serving mode, configured base public-transfer weight, observed-history routing policy, effective validation-weight distribution, expense policy, source provenance and actual real-data training target count. The actual request weights are also returned as optional `forecast_provenance` and displayed in the review workspace; inactive-history zero forecasts omit estimator provenance. `POST /score` follows [the shared contract](../docs/ml-integration.md); interactive schema documentation is at `/docs`. Only an isolated research stack should connect to this historical endpoint. Product Compose serves the final assembled scorer instead.
 
 `model_version` identifies the training/scoring recipe and selected policy. The `model_artifact_sha256` in `/health` and every ML audit event identifies the exact serialized bytes loaded at startup. That identity stays fixed until restart, including if the artifact file on disk is subsequently replaced; replacement takes effect only when the service restarts. Builds of the same recipe may have different learned values and artifact hashes across platforms.
 
 `ML_MODEL_PATH` defaults to `runtime/model.joblib`; `ML_AUDIT_PATH` defaults to `runtime/audit.jsonl`. These files are ignored. Training explicitly regenerates a compact artifact; startup fails if it is absent, corrupt or stale relative to generator, features, training or scoring code. There is no hardcoded recommendation fallback. Only load artifacts built from trusted local source: joblib deserialization can execute Python code.
 
-The Dockerfile installs the frozen environment and trains during the build, then serves on port 8000 as uid/gid 10001. The trained artifact is read-only; `/data/audit` is writable. From the repository root, the optional Compose configuration is `docker compose -f docker-compose.yml -f docker-compose.ml.yml up --build`. Public deployment has not been performed; a public demonstration must use only synthetic business inputs. Production scoring requires a private bank network, access control and a durable audit volume.
+The historical `ml-service/Dockerfile` installs the frozen research environment and trains during its build. It is retained for reproduction and is not used by product Compose. The final image uses `hybrid-runtime/Dockerfile`, verifies committed accepted assets, and never retrains during a build. Public demonstrations use disclosed synthetic business inputs; production inference stays on a private network with durable audit storage.
 
 ## Data and forecasting
 
