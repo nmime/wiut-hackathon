@@ -23,17 +23,29 @@ class DeploymentEnvironmentTests(unittest.TestCase):
         self.bin.mkdir()
         self.calls = self.root / "docker-calls.jsonl"
         scripts = {
-            "docker": """#!/usr/bin/env python3
-import json,os,sys
-with open(os.environ['TEST_DOCKER_CALLS'],'a') as stream:
-    stream.write(json.dumps({'args':sys.argv[1:],'inherited_auth_key':'AUTH_ENCRYPTION_KEY' in os.environ})+'\\n')
-sys.exit(1 if sys.argv[1:3]==['volume','inspect'] else 0)
+            "docker": """#!/bin/bash
+# The tested deploy command supplies only fixed, quote-free CLI arguments.
+{
+  printf '{"args":['
+  comma=''
+  for argument in "$@"; do
+    printf '%s"%s"' "$comma" "$argument"
+    comma=','
+  done
+  inherited=false
+  [[ ${AUTH_ENCRYPTION_KEY+x} ]] && inherited=true
+  printf '],"inherited_auth_key":%s}\\n' "$inherited"
+} >> "$TEST_DOCKER_CALLS"
+[[ "$1" == volume && "$2" == inspect ]] && exit 1
+exit 0
 """,
-            "curl": """#!/usr/bin/env python3
-import sys
-if '--write-out' in sys.argv: print('403',end='')
+            "curl": """#!/bin/bash
+for argument in "$@"; do
+  [[ "$argument" == --write-out ]] && printf '403'
+done
+exit 0
 """,
-            "flock": "#!/usr/bin/env python3\n",
+            "flock": "#!/bin/bash\nexit 0\n",
         }
         for name, content in scripts.items():
             target = self.bin / name
