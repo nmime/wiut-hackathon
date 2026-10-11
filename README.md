@@ -1,5 +1,8 @@
 # FlowCredit · WIUT Hackathon
 
+An independent hackathon prototype for bank and credit teams. No bank or regulator
+affiliation, partnership or endorsement is claimed.
+
 FlowCredit helps an officer import a business's transactions, inspect cash flow, and review an
 explainable payment-capacity recommendation with a seasonal repayment plan.
 A human records the final decision; the score is **payment capacity, not default probability**.
@@ -21,8 +24,9 @@ uses the seasonal schedule actually offered. Principal, interest and total
 payments reconcile. Requested principal is checked against that capacity.
 
 Production serves `final_model.api:app` from `hybrid-runtime`; the frontend has
-no model selector. Historical implementations remain solely to reproduce frozen
-research and regression evidence. They are not additional production services.
+no model selector. Selected frozen forecast and financial modules are dependencies
+of the final scorer. Historical service entry points, artifacts and reports remain
+for reproducible research and regression evidence; they are not separately served.
 The [final runtime](docs/final-model-runtime.md) describes the component hashes,
 policy and audit. Inference makes **no external API calls**.
 

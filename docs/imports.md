@@ -2,7 +2,10 @@
 
 Workspaces start empty. An administrator or officer can import a business from
 CSV or JSON on the Businesses page. Imported records belong only to the active
-workspace. Upload at most 5 MB and 20,000 transactions per business.
+workspace. Import files must be smaller than 3 MB and contain at most 20,000
+transactions per business. The parsed JSON request must also fit the API's 3 MiB
+body limit; a compact CSV can expand during parsing. Split oversized histories
+before importing.
 
 CSV uses these exact required headers:
 

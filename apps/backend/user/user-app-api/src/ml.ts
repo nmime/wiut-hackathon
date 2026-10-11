@@ -12,13 +12,13 @@ export const MAX_ML_ERROR_BYTES = 16 * 1024;
 
 const rejectionReasons = {
   insufficient_history:
-    'The teammate candidate needs at least 6 complete months of transaction history. Import more history or use the real-data blend.',
+    'The scoring service needs at least 6 complete months of transaction history. Import more complete history before assessing.',
   month_end_required:
-    'The teammate candidate requires a completed calendar month-end assessment date. Select the latest completed month-end or use the real-data blend.',
+    'The scoring service requires a completed calendar month-end assessment date. Select the latest completed month-end.',
   unsupported_calendar:
-    'The candidate model does not support this assessment calendar. Choose a supported date.',
+    'The scoring service does not support this assessment calendar. Choose a supported date.',
   invalid_input:
-    'Candidate input could not be validated. Check transaction dates, amounts and supported UZS currency.',
+    'Assessment input could not be validated. Check transaction dates, amounts and supported UZS currency.',
 } as const;
 const rejectionSchema = z
   .object({

@@ -215,9 +215,9 @@ test('timeout aborts a slow upstream and reports504', async () => {
   await assert.rejects(ml.score(request, 'request'), status(504));
 });
 
-test('known candidate refusals retain a safe month-end explanation with HTTP502', async () => {
+test('known scoring refusals retain a safe month-end explanation with HTTP502', async () => {
   const detail =
-    'The teammate candidate requires a completed calendar month-end assessment date. Select the latest completed month-end or use the real-data blend.';
+    'The scoring service requires a completed calendar month-end assessment date. Select the latest completed month-end.';
   await assert.rejects(
     client(
       async () =>
