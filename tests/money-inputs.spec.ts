@@ -86,7 +86,9 @@ test('requested UZS amounts group while editing and submit the exact numeric val
       input.selectionEnd,
     ]),
   ).toEqual([3, 6]);
-  await amount.press('End');
+  await amount.evaluate((input: HTMLInputElement) =>
+    input.setSelectionRange(input.value.length, input.value.length),
+  );
   await amount.pressSequentially('1');
   await expect(amount).toHaveValue('12,500,000.50');
   await amount.press('ControlOrMeta+A');
