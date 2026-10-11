@@ -72,6 +72,10 @@ import {
   compactNumber,
   downloadJson,
   downloadTransactions,
+  isAmountPaste,
+  parseAmountInput,
+  skipAmountSeparator,
+  updateAmountInput,
 } from '@/lib/format';
 
 const scenarios = [
@@ -146,7 +150,7 @@ export function ShowcasePage({
   const [months, setMonths] = useState('24');
   const [count, setCount] = useState('6');
   const [seed, setSeed] = useState('7261');
-  const [revenue, setRevenue] = useState('30000000');
+  const [revenue, setRevenue] = useState('30,000,000');
   const [endMonth, setEndMonth] = useState(previousCompleteMonth);
   const [lastBatch, setLastBatch] = useState<ShowcaseGeneration | null>(null);
   const [returnWorkspace, setReturnWorkspace] = useState(banks[0]?.id ?? '');
@@ -173,7 +177,7 @@ export function ShowcasePage({
         seed: Number(seed),
         months: Number(months),
         count: Number(count),
-        monthly_revenue_uzs: Number(revenue),
+        monthly_revenue_uzs: parseAmountInput(revenue) ?? 0,
         end_month: endMonth,
       }),
     onSuccess: (batch) => {
@@ -428,15 +432,40 @@ export function ShowcasePage({
                       </Label>
                       <Input
                         id="showcase-revenue"
-                        type="number"
-                        min={1_000_000}
-                        max={1_000_000_000}
-                        step="any"
+                        type="text"
+                        inputMode="decimal"
                         required
                         value={revenue}
-                        onChange={(event) => setRevenue(event.target.value)}
+                        onChange={(event) =>
+                          updateAmountInput(
+                            event.currentTarget,
+                            revenue,
+                            setRevenue,
+                          )
+                        }
+                        onKeyDown={(event) =>
+                          skipAmountSeparator(event.currentTarget, event.key)
+                        }
+                        onPaste={(event) => {
+                          if (
+                            !isAmountPaste(event.clipboardData.getData('text'))
+                          ) {
+                            event.preventDefault();
+                            toast.error(
+                              'Use commas or spaces for thousands and a dot for decimals.',
+                            );
+                          }
+                        }}
+                        aria-describedby="showcase-revenue-help"
                         disabled={generate.isPending}
                       />
+                      <p
+                        id="showcase-revenue-help"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Enter the full UZS amount: 30,000,000 = 30 million.
+                        Allowed range: 1,000,000–1,000,000,000 UZS.
+                      </p>
                     </div>
                   </div>
                   <div className="space-y-2">

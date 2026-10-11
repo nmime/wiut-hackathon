@@ -345,8 +345,8 @@ export function OverviewPage({
                   2. Assess payment capacity
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                  The connected ML service returns a forecast and affordable
-                  repayment plan.
+                  Review the cash-flow forecast and loan recommendation,
+                  including elevated risk or a recommendation to decline.
                 </p>
               </div>
             </div>

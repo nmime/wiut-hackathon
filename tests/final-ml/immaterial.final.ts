@@ -191,7 +191,7 @@ for (const scenario of [
       await expect(
         page.getByText(
           scenario.rejectsDust
-            ? 'Affordable at elevated risk — officer decides'
+            ? 'Elevated risk — officer review required'
             : 'Affordable',
           { exact: true },
         ),

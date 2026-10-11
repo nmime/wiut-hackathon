@@ -66,6 +66,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Empty,
@@ -110,8 +111,12 @@ import {
   eventLabel,
   forecastMonthLabel,
   indexNumber,
+  isAmountPaste,
   monthLabel,
+  parseAmountInput,
+  skipAmountSeparator,
   timeLabel,
+  updateAmountInput,
 } from '@/lib/format';
 
 export function BusinessWorkspace({
@@ -190,14 +195,14 @@ export function BusinessWorkspace({
     ? {
         label: 'Affordable',
         detail:
-          'The offered seasonal schedule fits the main capacity tier. An officer records the final decision.',
+          'The conservative forecast supports the offered repayment schedule. An officer records the final decision.',
         decline: false,
       }
     : result?.flags.includes('verdict_elevated_risk')
       ? {
-          label: 'Affordable at elevated risk — officer decides',
+          label: 'Elevated risk — officer review required',
           detail:
-            'The main tier is not supported. Review the forecast uncertainty, observed costs and proposed schedule before deciding.',
+            'The conservative forecast cannot support a material loan. This offer uses a less conservative forecast; review income, costs and seasonal payments before deciding.',
           decline: false,
         }
       : result?.flags.includes('verdict_decline')
@@ -212,13 +217,45 @@ export function BusinessWorkspace({
   const paymentLabel = annuitySchedule ? 'Annuity payment' : 'Adaptive payment';
   const businessUnit = business?.amount_unit ?? 'index';
   const assessmentUnit = assessment?.amount_unit ?? 'index';
+  const search = transactionSearch.trim().toLowerCase();
+  const amountSearch = /^[\d,.\s]+$/.test(search)
+    ? search.replace(/[,\s]/g, '')
+    : null;
+  const reviewWarnings = [
+    [
+      'requested_amount_exceeds_offered_capacity',
+      'The requested loan exceeds assessed capacity. The recommendation shows the smaller supported amount.',
+    ],
+    [
+      'sustained_decline_guard',
+      'Recent revenue shows a persistent decline. The model recommends no loan under this policy.',
+    ],
+    [
+      'insufficient_observed_history',
+      'At least six observed months are required for a loan recommendation. Import a longer transaction history.',
+    ],
+    [
+      'no_actual_median_schedule_capacity',
+      'Projected income after costs cannot support a material repayment schedule.',
+    ],
+    [
+      'nonpositive_median_cashflow_viability',
+      'Projected cash flow is insufficient across too many months to recommend a loan.',
+    ],
+    [
+      'short_history_annuity_fallback',
+      'The history is too short to establish an annual seasonal pattern. This offer uses equal monthly payments.',
+    ],
+  ].filter(([flag]) => result?.flags.includes(flag!));
   const filteredTransactions = (business?.transactions ?? []).filter(
     (transaction) =>
       (direction === 'all' || transaction.direction === direction) &&
       (channel === 'all' || transaction.channel === channel) &&
-      `${transaction.ts} ${transaction.channel} ${transaction.amount_index}`
+      (`${transaction.ts} ${transaction.channel} ${transaction.amount_index}`
         .toLowerCase()
-        .includes(transactionSearch.toLowerCase()),
+        .includes(search) ||
+        (amountSearch !== null &&
+          String(transaction.amount_index).includes(amountSearch))),
   );
   const totalPages = Math.max(1, Math.ceil(filteredTransactions.length / 20));
   const currentPage = Math.min(transactionPage, totalPages - 1);
@@ -478,12 +515,12 @@ export function BusinessWorkspace({
         </Alert>
       )}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="gap-3 shadow-none">
+        <Card className="min-w-0 gap-3 shadow-none">
           <CardHeader>
             <CardDescription>Monthly inflow average</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
+            <p className="min-w-0 break-words text-2xl font-semibold tabular-nums">
               {indexNumber(business.avg_monthly_inflow_index)}
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
                 {' '}
@@ -495,12 +532,12 @@ export function BusinessWorkspace({
             </p>
           </CardContent>
         </Card>
-        <Card className="gap-3 shadow-none">
+        <Card className="min-w-0 gap-3 shadow-none">
           <CardHeader>
             <CardDescription>Monthly net surplus</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
+            <p className="min-w-0 break-words text-2xl font-semibold tabular-nums">
               {indexNumber(business.avg_monthly_surplus_index)}
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
                 {' '}
@@ -512,12 +549,12 @@ export function BusinessWorkspace({
             </p>
           </CardContent>
         </Card>
-        <Card className="gap-3 shadow-none">
+        <Card className="min-w-0 gap-3 shadow-none">
           <CardHeader>
             <CardDescription>Available history</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tabular-nums">
+            <p className="min-w-0 break-words text-2xl font-semibold tabular-nums">
               {business.history_months}
               <span className="ml-1.5 text-xs font-normal text-muted-foreground">
                 months
@@ -528,7 +565,7 @@ export function BusinessWorkspace({
             </p>
           </CardContent>
         </Card>
-        <Card className="gap-3 shadow-none">
+        <Card className="min-w-0 gap-3 shadow-none">
           <CardHeader>
             <CardDescription>Observed inflow trend</CardDescription>
           </CardHeader>
@@ -935,7 +972,7 @@ export function BusinessWorkspace({
             </Card>
           </TabsContent>
           <TabsContent value="assessments">
-            <Card className="shadow-none">
+            <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">Assessment attempts</CardTitle>
                 <CardDescription>
@@ -1046,7 +1083,7 @@ export function BusinessWorkspace({
             </Card>
           </TabsContent>
           <TabsContent value="audit">
-            <Card className="shadow-none">
+            <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">
                   Business audit trail
@@ -1147,10 +1184,7 @@ export function BusinessWorkspace({
                 setAssessmentRequestId(undefined);
                 const parsed = CreateAssessmentSchema.safeParse({
                   business_id: businessId,
-                  requested_amount:
-                    requestedAmount.trim() === ''
-                      ? null
-                      : Number(requestedAmount),
+                  requested_amount: parseAmountInput(requestedAmount),
                   as_of_date: assessmentDate,
                 });
                 if (!parsed.success) {
@@ -1172,15 +1206,38 @@ export function BusinessWorkspace({
                 </Label>
                 <Input
                   id="requested-amount"
-                  type="number"
-                  min="0"
-                  max="1000000000000000"
-                  step="any"
+                  type="text"
+                  inputMode="decimal"
                   value={requestedAmount}
-                  onChange={(event) => setRequestedAmount(event.target.value)}
+                  onChange={(event) =>
+                    updateAmountInput(
+                      event.currentTarget,
+                      requestedAmount,
+                      setRequestedAmount,
+                    )
+                  }
+                  onKeyDown={(event) =>
+                    skipAmountSeparator(event.currentTarget, event.key)
+                  }
+                  onPaste={(event) => {
+                    if (!isAmountPaste(event.clipboardData.getData('text'))) {
+                      event.preventDefault();
+                      toast.error(
+                        'Use commas or spaces for thousands and a dot for decimals.',
+                      );
+                    }
+                  }}
+                  aria-describedby="requested-amount-help"
                   placeholder="No requested amount"
                   disabled={assessMutation.isPending || !!business.archived_at}
                 />
+                <p
+                  id="requested-amount-help"
+                  className="text-xs text-muted-foreground"
+                >
+                  Enter the full UZS amount: 100,000,000 = 100 million. Use a
+                  dot for decimals; leave empty to assess maximum capacity.
+                </p>
                 <p className="text-xs leading-relaxed text-muted-foreground">
                   The requested amount is checked against payment capacity. If
                   it fits, the offered schedule uses that amount. Larger
@@ -1323,6 +1380,9 @@ export function BusinessWorkspace({
               {business.data_source === 'synthetic' && (
                 <Badge variant="outline">Showcase · Synthetic inputs</Badge>
               )}
+              {result.flags.includes('TEST_FIXTURE_ONLY') && (
+                <Badge variant="outline">TEST FIXTURE ONLY</Badge>
+              )}
               <p className="text-xs text-muted-foreground">
                 As of {dateLabel(result.as_of_date)} · Model{' '}
                 {result.model_version} · Created{' '}
@@ -1357,7 +1417,7 @@ export function BusinessWorkspace({
             </Button>
           </div>
           <div className="grid gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
-            <Card className="shadow-none">
+            <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">Payment capacity</CardTitle>
                 <CardDescription>
@@ -1401,7 +1461,7 @@ export function BusinessWorkspace({
                 </p>
               </CardContent>
             </Card>
-            <Card className="shadow-none">
+            <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">
                   Recommended loan structure
@@ -1418,7 +1478,7 @@ export function BusinessWorkspace({
                     <p className="text-xs text-muted-foreground">
                       Suggested principal
                     </p>
-                    <p className="mt-2 text-2xl font-semibold tabular-nums">
+                    <p className="mt-2 min-w-0 break-words text-2xl font-semibold tabular-nums">
                       {indexNumber(
                         result.recommended_loan.suggested_principal_index,
                       )}
@@ -1433,7 +1493,7 @@ export function BusinessWorkspace({
                         ? 'Highest offered payment'
                         : 'Affordable installment'}
                     </p>
-                    <p className="mt-2 text-2xl font-semibold tabular-nums">
+                    <p className="mt-2 min-w-0 break-words text-2xl font-semibold tabular-nums">
                       {indexNumber(
                         result.recommended_loan
                           .max_affordable_installment_index,
@@ -1447,7 +1507,7 @@ export function BusinessWorkspace({
                     <p className="text-xs text-muted-foreground">
                       Suggested term
                     </p>
-                    <p className="mt-2 text-2xl font-semibold tabular-nums">
+                    <p className="mt-2 min-w-0 break-words text-2xl font-semibold tabular-nums">
                       {result.recommended_loan.suggested_term_months}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">months</p>
@@ -1550,7 +1610,8 @@ export function BusinessWorkspace({
                 <div className="space-y-2">
                   <p className="text-xs font-medium">Model rationale</p>
                   <p className="text-sm leading-relaxed text-muted-foreground">
-                    {result.recommended_loan.rationale ||
+                    {(finalModel && modelVerdict?.detail) ||
+                      result.recommended_loan.rationale ||
                       'No rationale was supplied.'}
                   </p>
                 </div>
@@ -1566,7 +1627,7 @@ export function BusinessWorkspace({
               <AlertDescription>{modelVerdict.detail}</AlertDescription>
             </Alert>
           )}
-          <Card className="shadow-none">
+          <Card className="min-w-0 shadow-none">
             <CardHeader>
               <CardTitle role="heading" aria-level={3} className="text-base">
                 Model cash-flow summary
@@ -1581,7 +1642,7 @@ export function BusinessWorkspace({
                 <p className="text-xs text-muted-foreground">
                   Model average monthly inflow
                 </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums">
+                <p className="mt-2 min-w-0 break-words text-2xl font-semibold tabular-nums">
                   {indexNumber(
                     result.cashflow_summary.avg_monthly_inflow_index,
                   )}
@@ -1594,7 +1655,7 @@ export function BusinessWorkspace({
                 <p className="text-xs text-muted-foreground">
                   Model net monthly surplus
                 </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums">
+                <p className="mt-2 min-w-0 break-words text-2xl font-semibold tabular-nums">
                   {indexNumber(
                     result.cashflow_summary.net_monthly_surplus_index,
                   )}
@@ -1607,11 +1668,12 @@ export function BusinessWorkspace({
                 <p className="text-xs text-muted-foreground">
                   Inflow volatility
                 </p>
-                <p className="mt-2 text-2xl font-semibold tabular-nums">
+                <p className="mt-2 min-w-0 break-words text-2xl font-semibold tabular-nums">
                   {indexNumber(result.cashflow_summary.inflow_volatility)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  coefficient of variation (CV)
+                  Relative variation in monthly income; higher means less
+                  predictable income.
                 </p>
               </div>
               <div>
@@ -1627,22 +1689,16 @@ export function BusinessWorkspace({
               </div>
             </CardContent>
           </Card>
-          {result.flags.length > 0 && (
+          {reviewWarnings.length > 0 && (
             <Alert className="border-amber-200 bg-amber-50/60">
               <TriangleAlert className="text-amber-700" />
-              <AlertTitle>Consider these model flags</AlertTitle>
+              <AlertTitle>Before you decide</AlertTitle>
               <AlertDescription>
-                <div className="flex flex-wrap gap-2">
-                  {result.flags.map((flag, index) => (
-                    <Badge
-                      key={`${flag}-${index}`}
-                      variant="outline"
-                      className="font-normal"
-                    >
-                      {flag.replaceAll('_', ' ')}
-                    </Badge>
+                <ul className="list-disc space-y-2 pl-4">
+                  {reviewWarnings.map(([flag, text]) => (
+                    <li key={flag}>{text}</li>
                   ))}
-                </div>
+                </ul>
               </AlertDescription>
             </Alert>
           )}
@@ -1863,13 +1919,13 @@ export function BusinessWorkspace({
             </Card>
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card className="shadow-none">
+            <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">
                   What shaped this assessment
                 </CardTitle>
                 <CardDescription>
-                  Explanation factors and weights returned by the model.
+                  Explanation factors and reported values from the model.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1913,14 +1969,52 @@ export function BusinessWorkspace({
                   </div>
                 )}
               </CardContent>
+              {result.flags.length > 0 && (
+                <CardFooter>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Technical model details
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-h-[80vh] overflow-y-auto">
+                      <DialogHeader>
+                        <DialogTitle>Technical model details</DialogTitle>
+                        <DialogDescription>
+                          Original identifiers and policy flags are retained in
+                          the assessment and audit. Read the review notes for
+                          their practical limitations.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <p className="break-all text-xs text-muted-foreground">
+                        Model: {result.model_version}
+                      </p>
+                      <p className="text-sm leading-relaxed">
+                        Original model rationale:{' '}
+                        {result.recommended_loan.rationale}
+                      </p>
+                      <ul className="space-y-2">
+                        {result.flags.map((flag, index) => (
+                          <li
+                            key={`${flag}-${index}`}
+                            className="break-all font-mono text-xs"
+                          >
+                            {flag}
+                          </li>
+                        ))}
+                      </ul>
+                    </DialogContent>
+                  </Dialog>
+                </CardFooter>
+              )}
             </Card>
-            <Card className="shadow-none">
+            <Card className="min-w-0 shadow-none">
               <CardHeader>
                 <CardTitle className="text-base">
-                  Advice for the entrepreneur
+                  Review notes and model limitations
                 </CardTitle>
                 <CardDescription>
-                  Actionable guidance from this assessment.
+                  Read these qualifications before recording your decision.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1934,7 +2028,9 @@ export function BusinessWorkspace({
                       <li key={index} className="flex gap-3">
                         <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                         <p className="text-sm leading-relaxed text-muted-foreground">
-                          {advice}
+                          {finalModel && index === 0 && modelVerdict
+                            ? modelVerdict.detail
+                            : advice}
                         </p>
                       </li>
                     ))}
@@ -1943,7 +2039,7 @@ export function BusinessWorkspace({
               </CardContent>
             </Card>
           </div>
-          <Card className="shadow-none">
+          <Card className="min-w-0 shadow-none">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <ShieldCheck className="size-4 text-primary" />

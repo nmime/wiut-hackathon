@@ -28,6 +28,131 @@ export function businessExport(business: BusinessDetail) {
 
 export const indexNumber = (value: number) =>
   new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value);
+
+// Keep editable amounts as decimal strings: grouping never changes their UZS scale.
+export function formatAmountInputEdit(
+  value: string,
+  selectionStart = value.length,
+  selectionEnd = selectionStart,
+) {
+  const ungroup = (text: string) => text.replace(/[,\s]/g, '');
+  const raw = ungroup(value);
+  if (!/^\d*(?:\.\d{0,2})?$/.test(raw)) return null;
+  if (raw === '') return { value: '', selectionStart: 0, selectionEnd: 0 };
+  const [integer = '', fraction = ''] = raw.split('.');
+  const normalizedInteger = integer.replace(/^0+(?=\d)/, '') || '0';
+  const removedZeros = Math.max(0, integer.length - normalizedInteger.length);
+  const addedZero = integer === '' ? 1 : 0;
+  const formatted =
+    normalizedInteger.replace(/\B(?=(\d{3})+(?!\d))/g, ',') +
+    (raw.includes('.') ? `.${fraction}` : '');
+  const caret = (position: number) => {
+    const prefixLength = ungroup(value.slice(0, position)).length;
+    const count =
+      prefixLength - Math.min(prefixLength, removedZeros) + addedZero;
+    if (count === 0) return 0;
+    let seen = 0;
+    for (let index = 0; index < formatted.length; index++) {
+      if (formatted[index] !== ',' && ++seen === count) return index + 1;
+    }
+    return formatted.length;
+  };
+  return {
+    value: formatted,
+    selectionStart: caret(selectionStart),
+    selectionEnd: caret(selectionEnd),
+  };
+}
+
+export function parseAmountInput(value: string) {
+  if (value.trim() === '') return null;
+  if (!isAmountPaste(value)) return NaN;
+  const formatted = formatAmountInputEdit(value);
+  return formatted ? Number(formatted.value.replaceAll(',', '')) : NaN;
+}
+
+// Unlike typing, pasted grouping must be unambiguous before it is normalized.
+export function isAmountPaste(value: string) {
+  return /^(?:\d+|\d{1,3}(?:,\d{3})+|\d{1,3}(?:[\s]\d{3})+)(?:\.\d{0,2})?$/.test(
+    value.trim(),
+  );
+}
+
+export function updateAmountInput(
+  input: HTMLInputElement,
+  previous: string,
+  update: (next: string) => void,
+) {
+  const edited = formatAmountInputEdit(
+    input.value,
+    input.selectionStart ?? input.value.length,
+    input.selectionEnd ?? input.value.length,
+  );
+  if (!edited) {
+    // Recover the changed range before replacing the DOM value, which otherwise
+    // moves the cursor to the end even when a middle character was rejected.
+    const rejected = input.value;
+    const start = input.selectionStart ?? rejected.length;
+    const end = input.selectionEnd ?? start;
+    const insertedLength = rejected.length - previous.length;
+    const insertionStart = start - insertedLength;
+    if (
+      start === end &&
+      insertedLength > 0 &&
+      insertionStart >= 0 &&
+      rejected.slice(0, insertionStart) + rejected.slice(start) === previous
+    ) {
+      input.value = previous;
+      input.setSelectionRange(insertionStart, insertionStart);
+      return;
+    }
+    let prefix = 0;
+    while (
+      prefix < previous.length &&
+      prefix < rejected.length &&
+      previous[prefix] === rejected[prefix]
+    ) {
+      prefix++;
+    }
+    let previousEnd = previous.length;
+    let rejectedEnd = rejected.length;
+    while (
+      previousEnd > prefix &&
+      rejectedEnd > prefix &&
+      previous[previousEnd - 1] === rejected[rejectedEnd - 1]
+    ) {
+      previousEnd--;
+      rejectedEnd--;
+    }
+    const restorePosition = (position: number) =>
+      position <= prefix
+        ? position
+        : position >= rejectedEnd
+          ? position - rejectedEnd + previousEnd
+          : prefix;
+    input.value = previous;
+    if (previousEnd > prefix && rejectedEnd > prefix && start === end) {
+      input.setSelectionRange(prefix, previousEnd);
+    } else {
+      input.setSelectionRange(restorePosition(start), restorePosition(end));
+    }
+    return;
+  }
+  input.value = edited.value;
+  update(edited.value);
+  input.setSelectionRange(edited.selectionStart, edited.selectionEnd);
+}
+
+export function skipAmountSeparator(input: HTMLInputElement, key: string) {
+  const start = input.selectionStart;
+  if (start === null || start !== input.selectionEnd) return;
+  if (key === 'Backspace' && input.value[start - 1] === ',') {
+    input.setSelectionRange(start - 1, start - 1);
+  } else if (key === 'Delete' && input.value[start] === ',') {
+    input.setSelectionRange(start + 1, start + 1);
+  }
+}
+
 export const compactNumber = (value: number) =>
   new Intl.NumberFormat('en-US', {
     notation: 'compact',

@@ -227,6 +227,18 @@ test('an officer imports UZS history, assesses, records a decision, and reopens 
   await expect(
     page.getByText('TEST FIXTURE ONLY', { exact: true }),
   ).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Technical model details', exact: true })
+    .click();
+  const modelDetails = page.getByRole('dialog', {
+    name: 'Technical model details',
+  });
+  await expect(
+    modelDetails.getByText('TEST_FIXTURE_ONLY', { exact: true }),
+  ).toBeVisible();
+  await modelDetails
+    .getByRole('button', { name: 'Close', exact: true })
+    .click();
   await expect(
     page.getByRole('progressbar', { name: 'Capacity score 72 out of 100' }),
   ).toBeVisible();

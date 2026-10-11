@@ -269,6 +269,16 @@ test('desktop and mobile routes plus a declared showcase use the actual final mo
     path: test.info().outputPath('actual-final-showcase-desktop-full.png'),
     fullPage: true,
   });
+  for (const width of [640, 768, 1024]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await recommendation.scrollIntoViewIfNeeded();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+      `Assessment with full UZS amounts fits at ${width}px`,
+    ).toBe(true);
+  }
   await page.setViewportSize({ width: 390, height: 844 });
   await recommendation.scrollIntoViewIfNeeded();
   await recommendation.evaluate((heading) =>
