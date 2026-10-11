@@ -84,7 +84,50 @@ for service in api web ml; do
     current_image=$(docker inspect --format '{{.Image}}' "$current_container")
     [[ "$current_image" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
     rollback_tag="flowcredit-$service:rollback-$rollback_stamp"
-    docker image tag "$current_image" "$rollback_tag"
+    if docker image inspect "$current_image" >/dev/null 2>&1; then
+      docker image tag "$current_image" "$rollback_tag"
+    else
+      # Docker can retain a healthy container after its parent image was pruned.
+      # Recover only the unprivileged ML filesystem; mounted audit data is not
+      # included by docker commit. Never snapshot API/web runtime credentials.
+      [[ "$service" == ml ]] || { printf 'Active %s image is unavailable; rollback cannot be preserved.\n' "$service" >&2; exit 1; }
+      if ! docker inspect "$current_container" | python3 -c '
+import json, re, sys
+try:
+    rows = json.load(sys.stdin)
+    assert len(rows) == 1
+    data = rows[0]
+    assert data["Config"]["User"] == "10001:10001"
+    assert data["State"]["Running"] is True
+    assert data["HostConfig"]["Privileged"] is False
+    allowed = {"PATH", "LANG", "GPG_KEY", "PYTHON_VERSION", "PYTHON_SHA256",
+               "UV_COMPILE_BYTECODE", "UV_LINK_MODE", "PYTHONUNBUFFERED",
+               "ML_MODEL_PATH", "ML_AUDIT_PATH", "OMP_NUM_THREADS",
+               "OPENBLAS_NUM_THREADS", "PYTHONPATH", "FINAL_MODEL_BUNDLE"}
+    values = data["Config"]["Env"]
+    names = [value.split("=", 1)[0] for value in values]
+    assert len(set(names)) == len(names) and set(names) <= allowed
+    assert all("=" in value for value in values)
+    environment = dict(value.split("=", 1) for value in values)
+    assert environment.get("ML_AUDIT_PATH") == "/data/audit/requests.jsonl"
+    assert environment.get("ML_MODEL_PATH", "/app/runtime/model.joblib") == "/app/runtime/model.joblib"
+    assert environment.get("FINAL_MODEL_BUNDLE", "/app/ml-service/final_model/artifacts") == "/app/ml-service/final_model/artifacts"
+    mounts = data["Mounts"]
+    assert len(mounts) == 1 and mounts[0]["Type"] == "volume"
+    assert mounts[0]["Name"] == "flowcredit_ml-audit"
+    assert mounts[0]["Destination"] == "/data/audit"
+except (AssertionError, KeyError, TypeError, ValueError):
+    sys.exit(1)
+'; then
+        printf 'Active ML configuration is outside the safe rollback snapshot scope.\n' >&2
+        exit 1
+      fi
+      recovered_image=$(docker commit --pause=false "$current_container" "$rollback_tag")
+      [[ "$recovered_image" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+      docker image inspect "$recovered_image" >/dev/null
+      current_image=$recovered_image
+      printf 'Recovered the active ML filesystem into a private rollback image.\n'
+    fi
     printf '%s %s %s\n' "$service" "$rollback_tag" "$current_image" >> "$rollback_file"
   fi
 done

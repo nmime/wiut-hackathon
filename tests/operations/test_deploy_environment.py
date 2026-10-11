@@ -5,6 +5,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -37,6 +38,30 @@ class DeploymentEnvironmentTests(unittest.TestCase):
   printf '],"inherited_auth_key":%s}\\n' "$inherited"
 } >> "$TEST_DOCKER_CALLS"
 [[ "$1" == volume && "$2" == inspect ]] && exit 1
+if [[ -n "$TEST_IMAGE_SCENARIO" ]]; then
+  if [[ "$1" == compose && "$*" == *" ps --quiet "* ]]; then
+    case "${!#}" in
+      api) printf 'aaaaaaaaaaaa\\n';;
+      web) printf 'bbbbbbbbbbbb\\n';;
+      ml) printf 'cccccccccccc\\n';;
+    esac
+  elif [[ "$1" == inspect && "$2" == --format ]]; then
+    case "${!#}" in
+      aaaaaaaaaaaa) printf 'sha256:%064d\\n' 1;;
+      bbbbbbbbbbbb) printf 'sha256:%064d\\n' 2;;
+      cccccccccccc) printf 'sha256:%064d\\n' 3;;
+    esac
+  elif [[ "$1" == image && "$2" == inspect ]]; then
+    [[ "$TEST_IMAGE_SCENARIO" == missing-api && "$3" == *0001 ]] && exit 1
+    [[ "$TEST_IMAGE_SCENARIO" == missing-ml* && "$3" == *0003 ]] && exit 1
+  elif [[ "$1" == inspect && "$2" == cccccccccccc ]]; then
+    extra=''
+    [[ "$TEST_IMAGE_SCENARIO" == missing-ml-secret ]] && extra=',"DATABASE_PASSWORD=do-not-snapshot"'
+    printf '{"Config":{"User":"10001:10001","Env":["PATH=/app/.venv/bin:/usr/bin","ML_MODEL_PATH=/app/runtime/model.joblib","ML_AUDIT_PATH=/data/audit/requests.jsonl"%s]},"State":{"Running":true},"HostConfig":{"Privileged":false},"Mounts":[{"Type":"volume","Name":"flowcredit_ml-audit","Destination":"/data/audit"}]}' "$extra" | sed 's/^/[/;s/$/]/'
+  elif [[ "$1" == commit ]]; then
+    printf 'sha256:%064d\\n' 4
+  fi
+fi
 exit 0
 """,
             "curl": """#!/bin/bash
@@ -48,7 +73,7 @@ exit 0
             "flock": "#!/bin/bash\nexit 0\n",
             # Release publication is covered by the operations tests. Keep this
             # environment migration fixture isolated from real Git/model calls.
-            "python3": "#!/bin/bash\nexit 0\n",
+            "python3": f'#!/bin/bash\nif [[ "$1" == -c ]]; then exec "{sys.executable}" "$@"; fi\nexit 0\n',
         }
         for name, content in scripts.items():
             target = self.bin / name
@@ -63,12 +88,13 @@ exit 0
             "TRUSTED_PROXY_IP=172.30.84.1\n" + suffix
         )
 
-    def deploy(self):
+    def deploy(self, image_scenario=""):
         environment = os.environ.copy()
         environment.update(
             PATH=f"{self.bin}:{environment['PATH']}",
             TEST_DOCKER_CALLS=str(self.calls),
             AUTH_ENCRYPTION_KEY="f" * 64,
+            TEST_IMAGE_SCENARIO=image_scenario,
         )
         return subprocess.run(
             ["bash", str(self.root / "scripts/deploy.sh")],
@@ -161,6 +187,57 @@ exit 0
                 ]
                 self.assertFalse(any("build" in row for row in commands))
                 self.assertNotIn("b" * 64, result.stdout + result.stderr)
+
+    def test_pruned_ml_image_recovers_snapshot_before_build(self):
+        self.existing(f"AUTH_ENCRYPTION_KEY={'b' * 64}\n")
+        self.assert_success(self.deploy("missing-ml"))
+        commands = [
+            json.loads(row)["args"] for row in self.calls.read_text().splitlines()
+        ]
+        snapshots = [
+            index for index, command in enumerate(commands) if command[0] == "commit"
+        ]
+        self.assertEqual(len(snapshots), 1)
+        snapshot = commands[snapshots[0]]
+        self.assertEqual(snapshot[:3], ["commit", "--pause=false", "cccccccccccc"])
+        self.assertTrue(snapshot[3].startswith("flowcredit-ml:rollback-"))
+        build = next(
+            index for index, command in enumerate(commands) if "build" in command
+        )
+        self.assertLess(snapshots[0], build)
+        manifest = next(
+            (self.root / "artifacts/production-backups").glob("images-*.txt")
+        )
+        self.assertIn(f"sha256:{4:064d}", manifest.read_text())
+
+    def test_pruned_api_image_aborts_without_snapshot_or_build(self):
+        self.existing(f"AUTH_ENCRYPTION_KEY={'b' * 64}\n")
+        result = self.deploy("missing-api")
+        self.assertNotEqual(result.returncode, 0)
+        commands = [
+            json.loads(row)["args"] for row in self.calls.read_text().splitlines()
+        ]
+        self.assertFalse(
+            any(
+                command[0] == "commit" or "build" in command or "stop" in command
+                for command in commands
+            )
+        )
+
+    def test_pruned_ml_image_with_unexpected_secret_aborts_before_snapshot(self):
+        self.existing(f"AUTH_ENCRYPTION_KEY={'b' * 64}\n")
+        result = self.deploy("missing-ml-secret")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertNotIn("do-not-snapshot", result.stdout + result.stderr)
+        commands = [
+            json.loads(row)["args"] for row in self.calls.read_text().splitlines()
+        ]
+        self.assertFalse(
+            any(
+                command[0] == "commit" or "build" in command or "stop" in command
+                for command in commands
+            )
+        )
 
 
 if __name__ == "__main__":
